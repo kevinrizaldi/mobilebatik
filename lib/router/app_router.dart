@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
+import '../screens/detail_produk_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/katalog_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/reset_password_screen.dart';
@@ -33,6 +35,19 @@ class AppRouter {
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/katalog',
+        name: 'katalog',
+        builder: (context, state) => const KatalogScreen(),
+      ),
+      GoRoute(
+        path: '/detail-produk',
+        name: 'detail-produk',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return DetailProdukScreen(product: extra);
+        },
       ),
     ],
   );

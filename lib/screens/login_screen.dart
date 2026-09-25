@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/google_social_button.dart';
@@ -54,16 +55,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
     final mediaQuery = MediaQuery.of(context);
     final isLandscape = mediaQuery.orientation == Orientation.landscape || mediaQuery.size.height < 600;
 
     final verticalPadding = isLandscape ? 8.0 : 16.0;
-    final horizontalPadding = isLandscape ? 16.0 : 24.0;
+    final horizontalPadding = r.pagePaddingH;
     final cardPadding = isLandscape ? 16.0 : 24.0;
     final topSpacing = isLandscape ? 8.0 : 16.0;
     final headerSpacing = isLandscape ? 14.0 : 28.0;
     final formSpacing = isLandscape ? 16.0 : 24.0;
-    final elementSpacing = isLandscape ? 12.0 : 20.0;
 
     return Scaffold(
       body: SafeArea(
@@ -74,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
               vertical: verticalPadding,
             ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: BoxConstraints(maxWidth: r.formMaxWidth),
               child: Column(
                 children: [
                     SizedBox(height: topSpacing),
@@ -205,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: elementSpacing),
+                            SizedBox(height: isLandscape ? 12.0 : 20.0),
 
                             // Login Button CTA
                             ElevatedButton(
@@ -266,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    SizedBox(height: elementSpacing),
+                    SizedBox(height: isLandscape ? 12.0 : 20.0),
 
                     // Register Prompt Text
                     Row(
@@ -293,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
 
-                    SizedBox(height: elementSpacing),
+                    SizedBox(height: isLandscape ? 12.0 : 20.0),
 
                     // Curator & Staff Anchor Card
                     Container(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/heritage_footer.dart';
@@ -74,12 +75,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    final isLandscape = r.isLandscape;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: r.iconSm),
           color: AppTheme.primaryDark,
           onPressed: () => context.pop(),
         ),
@@ -87,13 +90,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: r.pagePaddingH, vertical: isLandscape ? 4 : 8),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: BoxConstraints(maxWidth: r.formMaxWidth),
               child: Column(
                 children: [
-                  const BatikHeaderLogo(tag: 'REGISTRASI PELANGGAN'),
-              const SizedBox(height: 24),
+                  BatikHeaderLogo(tag: 'REGISTRASI PELANGGAN', compact: isLandscape),
+              SizedBox(height: isLandscape ? 12 : 24),
 
               // Form Card Container
               Container(
