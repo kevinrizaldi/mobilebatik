@@ -506,6 +506,7 @@ class _PesananScreenState extends State<PesananScreen> {
     _OrderData? order,
     required bool outlined,
   }) {
+    final isPayAction = label == 'Bayar Sekarang';
     final isReviewAction = label == 'Beri Ulasan';
     final isDetailAction = label == 'Lihat Detail';
     final isTrackingAction = label == 'Lacak Pengiriman';

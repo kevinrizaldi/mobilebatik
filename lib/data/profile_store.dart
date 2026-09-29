@@ -103,6 +103,13 @@ class ProfileStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPrimaryAddress(String id) {
+    for (final item in addresses) {
+      item.isPrimary = (item.id == id);
+    }
+    notifyListeners();
+  }
+
   void removeAddress(String id) {
     addresses.removeWhere((address) => address.id == id);
     if (addresses.isNotEmpty &&

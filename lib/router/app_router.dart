@@ -1,4 +1,6 @@
 import 'package:go_router/go_router.dart';
+import '../screens/checkout_screen.dart';
+import '../screens/pembayaran_screen.dart';
 import '../screens/detail_produk_screen.dart';
 import '../screens/beri_ulasan_screen.dart';
 import '../screens/forgot_password_screen.dart';
@@ -52,6 +54,20 @@ class AppRouter {
         path: '/keranjang',
         name: 'keranjang',
         builder: (context, state) => const KeranjangScreen(),
+      ),
+      GoRoute(
+        path: '/checkout',
+        name: 'checkout',
+        builder: (context, state) => CheckoutScreen(
+          checkoutData: state.extra as Map<String, dynamic>?,
+        ),
+      ),
+      GoRoute(
+        path: '/pembayaran',
+        name: 'pembayaran',
+        builder: (context, state) => PembayaranScreen(
+          paymentData: state.extra as Map<String, dynamic>?,
+        ),
       ),
       GoRoute(
         path: '/pesanan',

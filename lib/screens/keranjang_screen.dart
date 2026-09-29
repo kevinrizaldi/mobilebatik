@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/cart_store.dart';
 import '../theme/app_theme.dart';
@@ -397,20 +398,7 @@ class KeranjangScreen extends StatelessWidget {
             height: 46,
             child: ElevatedButton.icon(
               onPressed: canCheckout
-                  ? () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Melanjutkan ${store.selectedItemCount} item ke checkout',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: AppTheme.primaryDark,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
+                  ? () => context.push('/checkout')
                   : null,
               iconAlignment: IconAlignment.end,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
