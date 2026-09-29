@@ -5,7 +5,6 @@ import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/heritage_footer.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -151,7 +150,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ],
               ),
 
-              const HeritageFooter(),
+              const SizedBox(height: 16),
                   ],
                 ),
               ),

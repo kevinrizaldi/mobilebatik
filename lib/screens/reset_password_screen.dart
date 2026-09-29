@@ -5,7 +5,6 @@ import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/heritage_footer.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -239,7 +238,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
 
-              const HeritageFooter(),
+              const SizedBox(height: 16),
                   ],
                 ),
               ),

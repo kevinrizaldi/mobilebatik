@@ -6,7 +6,6 @@ import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/google_social_button.dart';
-import '../widgets/heritage_footer.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -294,56 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
 
-                    SizedBox(height: isLandscape ? 12.0 : 20.0),
-
-                    // Curator & Staff Anchor Card
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.terracottaLight.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.terracottaBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.admin_panel_settings_outlined,
-                            color: AppTheme.terracotta,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Akses Portal Admin Kurator?',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Membuka Portal Kurator & Staff...'),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'MASUK DI SINI',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                                color: AppTheme.primaryDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const HeritageFooter(),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
