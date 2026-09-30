@@ -27,7 +27,7 @@ void main() {
     expect(find.text('Detail Produk'), findsOneWidget);
     expect(find.text('Kemeja Batik Parang Classic'), findsOneWidget);
     expect(find.text('Pilih Ukuran'), findsOneWidget);
-    expect(find.text('Pilihan Corak Motif'), findsOneWidget);
+    expect(find.text('Spesifikasi Produk'), findsOneWidget);
     expect(find.text('Jumlah Pembelian'), findsOneWidget);
     expect(find.text('Hamzah Official Store'), findsOneWidget);
 

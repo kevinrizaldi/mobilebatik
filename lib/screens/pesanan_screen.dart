@@ -69,7 +69,7 @@ class _PesananScreenState extends State<PesananScreen> {
       price: 650000,
       quantity: 1,
       imageUrl:
-          'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=300&q=80',
+          'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&q=80',
       notice: 'Diterima oleh Hamzah pada 30 Jan 2025',
       noticeDetail: '',
       primaryAction: 'Beri Ulasan',
@@ -506,7 +506,6 @@ class _PesananScreenState extends State<PesananScreen> {
     _OrderData? order,
     required bool outlined,
   }) {
-    final isPayAction = label == 'Bayar Sekarang';
     final isReviewAction = label == 'Beri Ulasan';
     final isDetailAction = label == 'Lihat Detail';
     final isTrackingAction = label == 'Lacak Pengiriman';

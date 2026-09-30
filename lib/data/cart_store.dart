@@ -39,7 +39,7 @@ class CartStore extends ChangeNotifier {
       name: 'Kemeja Batik Kawung',
       variant: 'Ukuran L · Lengan Panjang',
       imageUrl:
-          'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=300&q=80',
+          'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&q=80',
       unitPrice: 285000,
     ),
     CartItem(
@@ -47,7 +47,7 @@ class CartStore extends ChangeNotifier {
       name: 'Kemeja Batik Sogan',
       variant: 'Ukuran M · Lengan Panjang',
       imageUrl:
-          'https://images.unsplash.com/photo-1610448154563-39f80cc0faeb?w=300&q=80',
+          'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=300&q=80',
       unitPrice: 180000,
     ),
   ];

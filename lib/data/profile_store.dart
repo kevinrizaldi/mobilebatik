@@ -55,7 +55,7 @@ class ProfileStore extends ChangeNotifier {
       rating: 5,
       comment: 'Motifnya rapi dan kain terasa nyaman. Pengiriman juga cepat.',
       imageUrl:
-          'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=240&q=80',
+          'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=240&q=80',
     ),
     ProfileReview(
       product: 'Kemeja Batik Parang Seling',

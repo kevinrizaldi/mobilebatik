@@ -129,7 +129,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'name': 'Pouch Dompet Batik & Perca Kawung',
           'variant': 'Ukuran: Standar · Jumlah: 1',
           'imageUrl':
-              'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=300&q=80',
+              'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=300&q=80',
           'unitPrice': 120000,
           'quantity': 1,
         },

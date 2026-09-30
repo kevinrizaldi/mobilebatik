@@ -143,25 +143,25 @@ class _HomeScreenState extends State<HomeScreen> {
                         _CategoryCard(
                           r: r,
                           label: 'Baju Batik',
-                          imageUrl: 'https://images.unsplash.com/photo-1583391733958-d25e07fac661?w=300&q=80',
+                          imageUrl: 'https://images.unsplash.com/photo-1680345575812-2f6878d7d775?w=400&q=80',
                         ),
                         SizedBox(width: r.spacingSm),
                         _CategoryCard(
                           r: r,
                           label: 'Kain Batik',
-                          imageUrl: 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=300&q=80',
+                          imageUrl: 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=400&q=80',
                         ),
                         SizedBox(width: r.spacingSm),
                         _CategoryCard(
                           r: r,
                           label: 'Olahan Kain',
-                          imageUrl: 'https://images.unsplash.com/photo-1596766779493-2782e3d36015?w=300&q=80',
+                          imageUrl: 'https://images.unsplash.com/photo-1762111908782-fabda1a1fe1e?w=400&q=80',
                         ),
                         SizedBox(width: r.spacingSm),
                         _CategoryCard(
                           r: r,
                           label: 'Aksesoris',
-                          imageUrl: 'https://images.unsplash.com/photo-1610448154563-39f80cc0faeb?w=300&q=80',
+                          imageUrl: 'https://images.unsplash.com/photo-1762111908691-d949338d3242?w=400&q=80',
                         ),
                       ],
                     ),
@@ -221,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   originalPrice: 'Rp 350.000',
                   rating: '4.8',
                   sold: '124',
-                  imageUrl: 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=300&q=80',
+                  imageUrl: 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=600&q=80',
                   onTap: () => context.push(
                     '/detail-produk',
                     extra: {
@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'originalPrice': 'Rp 350.000',
                       'rating': '4.8',
                       'sold': '124',
-                      'imageUrl': 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80',
+                      'imageUrl': 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80',
                     },
                   ),
                 ),
@@ -242,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   price: 'Rp 450.000',
                   rating: '4.9',
                   sold: '89',
-                  imageUrl: 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=300&q=80',
+                  imageUrl: 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=600&q=80',
                   onTap: () => context.push(
                     '/detail-produk',
                     extra: {
@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'price': 'Rp 450.000',
                       'rating': '4.9',
                       'sold': '89',
-                      'imageUrl': 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=800&q=80',
+                      'imageUrl': 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=800&q=80',
                     },
                   ),
                 ),
@@ -263,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   originalPrice: 'Rp 390.000',
                   rating: '4.7',
                   sold: '67',
-                  imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=300&q=80',
+                  imageUrl: 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=600&q=80',
                   onTap: () => context.push(
                     '/detail-produk',
                     extra: {
@@ -273,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'originalPrice': 'Rp 390.000',
                       'rating': '4.7',
                       'sold': '67',
-                      'imageUrl': 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80',
+                      'imageUrl': 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=800&q=80',
                     },
                   ),
                 ),
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   price: 'Rp 195.000',
                   rating: '4.6',
                   sold: '203',
-                  imageUrl: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=300&q=80',
+                  imageUrl: 'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=600&q=80',
                   onTap: () => context.push(
                     '/detail-produk',
                     extra: {
@@ -293,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'price': 'Rp 195.000',
                       'rating': '4.6',
                       'sold': '203',
-                      'imageUrl': 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&q=80',
+                      'imageUrl': 'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=800&q=80',
                     },
                   ),
                 ),
@@ -305,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   originalPrice: 'Rp 310.000',
                   rating: '4.8',
                   sold: '55',
-                  imageUrl: 'https://images.unsplash.com/photo-1610448154563-39f80cc0faeb?w=300&q=80',
+                  imageUrl: 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=600&q=80',
                   onTap: () => context.push(
                     '/detail-produk',
                     extra: {
@@ -315,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'originalPrice': 'Rp 310.000',
                       'rating': '4.8',
                       'sold': '55',
-                      'imageUrl': 'https://images.unsplash.com/photo-1610448154563-39f80cc0faeb?w=800&q=80',
+                      'imageUrl': 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=800&q=80',
                     },
                   ),
                 ),
@@ -326,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   price: 'Rp 575.000',
                   rating: '5.0',
                   sold: '38',
-                  imageUrl: 'https://images.unsplash.com/photo-1583391733958-d25e07fac661?w=300&q=80',
+                  imageUrl: 'https://images.unsplash.com/photo-1762111908760-ce1cd8c135e4?w=600&q=80',
                   onTap: () => context.push(
                     '/detail-produk',
                     extra: {
@@ -335,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'price': 'Rp 575.000',
                       'rating': '5.0',
                       'sold': '38',
-                      'imageUrl': 'https://images.unsplash.com/photo-1583391733958-d25e07fac661?w=800&q=80',
+                      'imageUrl': 'https://images.unsplash.com/photo-1762111908760-ce1cd8c135e4?w=800&q=80',
                     },
                   ),
                 ),
@@ -435,7 +435,7 @@ class _HeroBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(r.cardRadius),
         image: const DecorationImage(
           image: NetworkImage(
-              'https://images.unsplash.com/photo-1583391733958-d25e07fac661?w=800&q=80'),
+              'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80'),
           fit: BoxFit.cover,
         ),
         boxShadow: [
@@ -542,39 +542,69 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.go('/katalog'),
-      child: Container(
+      child: SizedBox(
         width: r.categoryCardWidth,
         height: r.categoryCardHeight,
-        decoration: BoxDecoration(
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(r.cardRadius),
-          image: DecorationImage(
-            image: NetworkImage(imageUrl),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(r.cardRadius),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Padding(
-                padding: EdgeInsets.all(r.spacingSm),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: r.fontSm,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    height: 1.3,
+              Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: AppTheme.inputBg,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.terracotta,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: AppTheme.terracottaLight,
+                  child: const Center(
+                    child: Icon(
+                      Icons.category_rounded,
+                      color: AppTheme.terracotta,
+                      size: 24,
+                    ),
                   ),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(r.spacingSm),
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontSm,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -631,17 +661,42 @@ class _ProductCard extends StatelessWidget {
             // Product image
             Expanded(
               flex: 5,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(r.cardRadius)),
-                  image: DecorationImage(
-                    image: NetworkImage(imageUrl),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(r.cardRadius)),
                 child: Stack(
+                  fit: StackFit.expand,
                   children: [
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: AppTheme.inputBg,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.terracotta,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: AppTheme.terracottaLight,
+                        child: const Center(
+                          child: Icon(
+                            Icons.checkroom_rounded,
+                            size: 32,
+                            color: AppTheme.terracotta,
+                          ),
+                        ),
+                      ),
+                    ),
                     Positioned(
                       top: 8,
                       right: 8,

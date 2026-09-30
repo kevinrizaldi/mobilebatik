@@ -16,28 +16,11 @@ class DetailProdukScreen extends StatefulWidget {
 class _DetailProdukScreenState extends State<DetailProdukScreen> {
   int _selectedImageIndex = 0;
   String _selectedSize = 'L';
-  String _selectedMotif = 'Sogan Klasik';
   int _quantity = 1;
   bool _isFavorite = false;
   int _cartCount = 2;
-  int _selectedTabIndex = 0;
 
   final List<String> _sizes = ['S', 'M', 'L', 'XL', 'XXL'];
-
-  final List<Map<String, dynamic>> _motifs = [
-    {
-      'name': 'Sogan Klasik',
-      'color': const Color(0xFF6B4226),
-    },
-    {
-      'name': 'Mega Mendung',
-      'color': const Color(0xFF1E3A5F),
-    },
-    {
-      'name': 'Kawung Tembaga',
-      'color': const Color(0xFF9E6240),
-    },
-  ];
 
   Map<String, dynamic> get productData {
     return widget.product ?? {
@@ -47,20 +30,20 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
       'originalPrice': 'Rp 350.000',
       'rating': '4.8',
       'sold': '124',
-      'imageUrl': 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80',
+      'imageUrl': 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80',
     };
   }
 
   List<String> get galleryImages {
     final mainImage = (productData['imageUrl'] as String?)?.isNotEmpty == true
         ? productData['imageUrl'] as String
-        : 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80';
+        : 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80';
 
     return [
       mainImage,
-      'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=800&q=80',
-      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80',
-      'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&q=80',
+      'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=800&q=80',
+      'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=800&q=80',
+      'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=800&q=80',
     ];
   }
 
@@ -102,7 +85,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '$_quantity item ($_selectedSize, $_selectedMotif) masuk ke keranjang!',
+                '$_quantity item (Ukuran $_selectedSize) masuk ke keranjang!',
                 style: GoogleFonts.plusJakartaSans(color: Colors.white),
               ),
             ),
@@ -541,8 +524,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                       SizedBox(height: r.spacingMd),
                       _buildPriceCard(r),
                       SizedBox(height: r.spacingMd),
-                      _buildMotifSelector(r),
-                      SizedBox(height: r.spacingMd),
                       _buildSizeSelector(r),
                       SizedBox(height: r.spacingMd),
                       _buildQuantitySelector(r),
@@ -551,7 +532,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                       SizedBox(height: r.spacingLg),
                       _buildStoreCard(r),
                       SizedBox(height: r.spacingLg),
-                      _buildProductTabs(r),
+                      _buildProductSpecifications(r),
                       SizedBox(height: r.spacingLg),
                       _buildCustomerReviews(r),
                     ],
@@ -585,8 +566,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 SizedBox(height: r.spacingMd),
                 _buildPriceCard(r),
                 SizedBox(height: r.spacingMd),
-                _buildMotifSelector(r),
-                SizedBox(height: r.spacingMd),
                 _buildSizeSelector(r),
                 SizedBox(height: r.spacingMd),
                 _buildQuantitySelector(r),
@@ -595,7 +574,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 SizedBox(height: r.spacingLg),
                 _buildStoreCard(r),
                 SizedBox(height: r.spacingLg),
-                _buildProductTabs(r),
+                _buildProductSpecifications(r),
                 SizedBox(height: r.spacingLg),
                 _buildCustomerReviews(r),
                 SizedBox(height: r.spacingLg),
@@ -993,96 +972,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Motif Selector
-  Widget _buildMotifSelector(Responsive r) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Text(
-                'Pilihan Corak Motif',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
-                  fontSize: r.fontMd,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textMain,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _selectedMotif,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.terracotta,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: r.spacingSm),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: _motifs.map((motif) {
-            final isSelected = _selectedMotif == motif['name'];
-            return InkWell(
-              onTap: () => setState(() => _selectedMotif = motif['name']),
-              borderRadius: BorderRadius.circular(10),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primaryDark : AppTheme.bgCard,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? AppTheme.primaryDark : AppTheme.borderLight,
-                    width: 1.5,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.primaryDark.withValues(alpha: 0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: motif['color'] as Color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      motif['name'] as String,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontSm,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AppTheme.textMain,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
+
 
   // Size Selector
   Widget _buildSizeSelector(Responsive r) {
@@ -1416,47 +1306,20 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Product Tabs (Interactive Segmented Pills without nested Viewport)
-  Widget _buildProductTabs(Responsive r) {
-    final tabTitles = ['Deskripsi', 'Spesifikasi', 'Perawatan'];
-
+  // Product Specifications
+  Widget _buildProductSpecifications(Responsive r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: List.generate(tabTitles.length, (index) {
-            final isSelected = _selectedTabIndex == index;
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(right: index < tabTitles.length - 1 ? 8 : 0),
-                child: InkWell(
-                  onTap: () => setState(() => _selectedTabIndex = index),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primaryDark : AppTheme.bgCard,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected ? AppTheme.primaryDark : AppTheme.borderLight,
-                      ),
-                    ),
-                    child: Text(
-                      tabTitles[index],
-                      style: GoogleFonts.outfit(
-                        fontSize: r.fontSm,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AppTheme.textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
+        Text(
+          'Spesifikasi Produk',
+          style: GoogleFonts.outfit(
+            fontSize: r.fontMd,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textMain,
+          ),
         ),
-        SizedBox(height: r.spacingMd),
+        SizedBox(height: r.spacingSm),
         Container(
           width: double.infinity,
           padding: EdgeInsets.all(r.spacingMd),
@@ -1465,69 +1328,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
             border: Border.all(color: AppTheme.borderLight),
           ),
-          child: _buildActiveTabContent(r),
+          child: Column(
+            children: [
+              _specItem('Bahan Kain', 'Katun Primisima Sanforized (Grade A)', r),
+              _specItem('Proses Batik', 'Cap Kombinasi Tulis Canting Tangan', r),
+              _specItem('Lapisan Furing', 'Furing Katun Hero Adem & Menyerap', r),
+              _specItem('Pewarnaan', 'Sogan Alam Ekstra Ramah Lingkungan', r),
+              _specItem('Asal Pembuatan', 'Laweyan, Solo - Jawa Tengah', r),
+              _specItem('Berat Produk', '350 gram (1 kg muat 3 pcs)', r),
+            ],
+          ),
         ),
       ],
     );
-  }
-
-  Widget _buildActiveTabContent(Responsive r) {
-    switch (_selectedTabIndex) {
-      case 0:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Filosofi & Seni Parang Rusak',
-              style: GoogleFonts.outfit(
-                fontSize: r.fontMd,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textMain,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Motif Parang Rusak melambangkan keberanian, keteguhan hati, dan kesinambungan perjuangan manusia dalam mengarungi gelombang kehidupan. Dibuat dengan ketelitian tinggi oleh pengrajin maestro batik di Solo.',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                color: AppTheme.textMuted,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Potongan kemeja regular-fit modern dengan lapisan furing lembut yang sejuk seharian, sangat ideal untuk acara formal, resepsi pernikahan, dan busana kantor eksekutif.',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                color: AppTheme.textMuted,
-                height: 1.5,
-              ),
-            ),
-          ],
-        );
-      case 1:
-        return Column(
-          children: [
-            _specItem('Bahan Kain', 'Katun Primisima Sanforized (Grade A)', r),
-            _specItem('Proses Batik', 'Cap Kombinasi Tulis Canting Tangan', r),
-            _specItem('Lapisan Furing', 'Furing Katun Hero Adem & Menyerap', r),
-            _specItem('Pewarnaan', 'Sogan Alam Ekstra Ramah Lingkungan', r),
-            _specItem('Asal Pembuatan', 'Laweyan, Solo - Jawa Tengah', r),
-            _specItem('Berat Produk', '350 gram (1 kg muat 3 pcs)', r),
-          ],
-        );
-      case 2:
-      default:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _careTipItem('1', 'Gunakan sabun khusus lerak atau sampo bayi lembut.'),
-            _careTipItem('2', 'Hindari mencuci dengan mesin cuci atau pemutih pakaian.'),
-            _careTipItem('3', 'Jangan memeras kain terlalu kencang; cukup angin-anginkan di tempat teduh.'),
-            _careTipItem('4', 'Setrika dengan suhu sedang, utamakan menyetrika dari sisi bagian dalam.'),
-          ],
-        );
-    }
   }
 
   Widget _specItem(String label, String value, Responsive r) {
@@ -1555,45 +1368,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 fontSize: r.fontSm,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.textMain,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _careTipItem(String number, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppTheme.terracottaLight,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              number,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.terracotta,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                color: AppTheme.textMuted,
-                height: 1.4,
               ),
             ),
           ),
@@ -1752,19 +1526,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
         'name': 'Kain Batik Tulis Mega Mendung',
         'price': 'Rp 450.000',
         'rating': '4.9',
-        'imageUrl': 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=300&q=80',
+        'imageUrl': 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=400&q=80',
       },
       {
         'name': 'Dress Batik Kawung Modern',
         'price': 'Rp 320.000',
         'rating': '4.7',
-        'imageUrl': 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=300&q=80',
+        'imageUrl': 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=400&q=80',
       },
       {
         'name': 'Blouse Batik Sogan Elegan',
         'price': 'Rp 265.000',
         'rating': '4.8',
-        'imageUrl': 'https://images.unsplash.com/photo-1610448154563-39f80cc0faeb?w=300&q=80',
+        'imageUrl': 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=400&q=80',
       },
     ];
 
@@ -1984,7 +1758,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14),
               ),
               subtitle: Text(
-                '$_quantity item • $_selectedSize • $_selectedMotif',
+                '$_quantity item • Ukuran $_selectedSize',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSubtle),
               ),
               trailing: Text(
