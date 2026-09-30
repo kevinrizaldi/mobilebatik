@@ -530,8 +530,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                       SizedBox(height: r.spacingLg),
                       _buildActionButtonsRow(r),
                       SizedBox(height: r.spacingLg),
-                      _buildStoreCard(r),
-                      SizedBox(height: r.spacingLg),
                       _buildProductSpecifications(r),
                       SizedBox(height: r.spacingLg),
                       _buildCustomerReviews(r),
@@ -571,8 +569,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 _buildQuantitySelector(r),
                 SizedBox(height: r.spacingLg),
                 _buildTrustBadges(r),
-                SizedBox(height: r.spacingLg),
-                _buildStoreCard(r),
                 SizedBox(height: r.spacingLg),
                 _buildProductSpecifications(r),
                 SizedBox(height: r.spacingLg),
@@ -1218,93 +1214,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Store Card
-  Widget _buildStoreCard(Responsive r) {
-    return Container(
-      padding: EdgeInsets.all(r.spacingMd),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C130D),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                'HS',
-                style: GoogleFonts.cinzel(
-                  color: const Color(0xFFD4AF37),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: r.spacingSm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'Hamzah Official Store',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
-                          fontSize: r.fontSm,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textMain,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.verified_rounded,
-                        color: Color(0xFFD4AF37), size: 14),
-                  ],
-                ),
-                Text(
-                  'Kota Surakarta • Aktif 5 menit lalu',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: r.fontXs,
-                    color: AppTheme.textSubtle,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          OutlinedButton(
-            onPressed: () {
-              context.go('/katalog');
-            },
-            style: OutlinedButton.styleFrom(
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              side: const BorderSide(color: AppTheme.borderLight),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(
-              'Kunjungi',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontXs,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryDark,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   // Product Specifications
   Widget _buildProductSpecifications(Responsive r) {

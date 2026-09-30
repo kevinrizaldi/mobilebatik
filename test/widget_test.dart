@@ -29,7 +29,6 @@ void main() {
     expect(find.text('Pilih Ukuran'), findsOneWidget);
     expect(find.text('Spesifikasi Produk'), findsOneWidget);
     expect(find.text('Jumlah Pembelian'), findsOneWidget);
-    expect(find.text('Hamzah Official Store'), findsOneWidget);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
