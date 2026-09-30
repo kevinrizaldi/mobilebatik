@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -17,18 +16,10 @@ class PembayaranScreen extends StatefulWidget {
 }
 
 class _PembayaranScreenState extends State<PembayaranScreen> {
-  final TextEditingController _senderNameController =
-      TextEditingController(text: 'Budi Santoso (BCA)');
-  
   late Timer _timer;
   int _secondsRemaining = 23 * 3600 + 59 * 60 + 42; // ~24 hours countdown
   bool _isGuideExpanded = true;
   bool _isOrderSummaryExpanded = false;
-
-  // Uploaded file state
-  String? _uploadedFileName = 'struk_transfer_bca_871238.jpg';
-  String? _uploadedFileSize = '1.4 MB • Siap diverifikasi';
-  Uint8List? _uploadedImageBytes;
 
   static const String _bcaAccountNumber = '8820 4912 3340';
   static const String _bcaAccountClean = '882049123340';
@@ -54,7 +45,6 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
   @override
   void dispose() {
     _timer.cancel();
-    _senderNameController.dispose();
     super.dispose();
   }
 
@@ -108,60 +98,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
     );
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1600,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        final sizeInKb = bytes.lengthInBytes / 1024;
-        final sizeStr = sizeInKb > 1024
-            ? '${(sizeInKb / 1024).toStringAsFixed(1)} MB'
-            : '${sizeInKb.toStringAsFixed(0)} KB';
-
-        setState(() {
-          _uploadedFileName = pickedFile.name;
-          _uploadedFileSize = '$sizeStr • Siap diverifikasi';
-          _uploadedImageBytes = bytes;
-        });
-      }
-    } catch (_) {
-      // Fallback for simulated environments
-      setState(() {
-        _uploadedFileName = 'struk_transfer_bca_${DateTime.now().millisecondsSinceEpoch % 1000000}.jpg';
-        _uploadedFileSize = '1.8 MB • Siap diverifikasi';
-      });
-    }
-  }
-
-  void _removeUploadedFile() {
-    setState(() {
-      _uploadedFileName = null;
-      _uploadedFileSize = null;
-      _uploadedImageBytes = null;
-    });
-  }
-
   void _confirmPayment() {
-    if (_uploadedFileName == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Silakan unggah bukti transfer pembayaran terlebih dahulu.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: AppTheme.errorRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -188,7 +125,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
               ),
               const SizedBox(height: 14),
               Text(
-                'Bukti Transfer Terkirim!',
+                'Pembayaran Dikonfirmasi!',
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -198,7 +135,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Terima kasih! Bukti transfer untuk pesanan $_orderNumber telah kami terima dan sedang dalam proses verifikasi tim kami.',
+                'Terima kasih! Pembayaran untuk pesanan $_orderNumber sedang dalam proses verifikasi otomatis oleh tim kami.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   color: AppTheme.textMuted,
@@ -316,10 +253,6 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
                 _buildBankAccountCard(r),
                 const SizedBox(height: 12),
                 _buildTransferGuideAccordion(r),
-                const SizedBox(height: 14),
-                _buildUploadProofSection(r),
-                const SizedBox(height: 14),
-                _buildSenderNameSection(r),
                 const SizedBox(height: 18),
                 _buildConfirmButtonSection(r),
                 const SizedBox(height: 14),
@@ -937,7 +870,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
                     stepNum: '4',
                     title: 'Simpan Bukti Pembayaran',
                     desc:
-                        'Simpan atau tangkap layar (screenshot) bukti transfer berhasil untuk diunggah di bawah.',
+                        'Simpan bukti transfer sebagai arsip atau jika sewaktu-waktu dibutuhkan untuk verifikasi.',
                   ),
                 ],
               ),
@@ -1002,260 +935,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
     );
   }
 
-  // --- 6. UNGGAH BUKTI TRANSFER ---
-  Widget _buildUploadProofSection(Responsive r) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.upload_file_rounded,
-                size: 17,
-                color: AppTheme.primaryDark,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Unggah Bukti Transfer',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textMain,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'Format: JPG, PNG, PDF (Maks. 5MB)',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 8,
-                  color: AppTheme.textSubtle,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (_uploadedFileName == null) ...[
-            InkWell(
-              onTap: _pickImage,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  color: AppTheme.inputBg,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppTheme.terracottaBorder,
-                    style: BorderStyle.solid,
-                    width: 1.2,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 28,
-                      color: AppTheme.terracotta,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Pilih Berkas atau Tarik ke Sini',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textMain,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Ambil foto bukti transfer dari galeri atau kamera',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 9,
-                        color: AppTheme.textSubtle,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ] else ...[
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.inputBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppTheme.terracottaBorder,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppTheme.terracottaLight,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: _uploadedImageBytes != null
-                        ? Image.memory(
-                            _uploadedImageBytes!,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(
-                            Icons.receipt_rounded,
-                            color: AppTheme.terracotta,
-                            size: 20,
-                          ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _uploadedFileName!,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textMain,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 1),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              size: 10,
-                              color: AppTheme.successGreen,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _uploadedFileSize ?? 'Siap diverifikasi',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9,
-                                color: AppTheme.textSubtle,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Ganti atau hapus berkas',
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    color: AppTheme.textMuted,
-                    onPressed: _removeUploadedFile,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _pickImage,
-                icon: const Icon(Icons.refresh_rounded, size: 13),
-                label: Text(
-                  'Ganti Foto Bukti',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.terracotta,
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // --- 7. FORM NAMA PENGIRIM ---
-  Widget _buildSenderNameSection(Responsive r) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Nama Rekening Pengirim (sesuai mutasi rekening)',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textMain,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            height: 42,
-            child: TextField(
-              controller: _senderNameController,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                color: AppTheme.textMain,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Contoh: Budi Santoso (BCA)',
-                hintStyle: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  color: AppTheme.textSubtle,
-                ),
-                filled: true,
-                fillColor: AppTheme.inputBg,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(7),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Data ini digunakan untuk mempercepat proses pencocokan mutasi rekening oleh tim keuangan kami.',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 8.5,
-              color: AppTheme.textSubtle,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- 8. TOMBOL KONFIRMASI & SECURITY BADGE ---
+  // --- 6. TOMBOL KONFIRMASI & SECURITY BADGE ---
   Widget _buildConfirmButtonSection(Responsive r) {
     return Column(
       children: [

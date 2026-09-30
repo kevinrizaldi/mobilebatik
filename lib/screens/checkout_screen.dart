@@ -17,12 +17,9 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _notesController = TextEditingController();
-  final TextEditingController _promoController = TextEditingController();
 
   int _selectedCourierIndex = 0;
   int _selectedPaymentIndex = 0;
-  int _discount = 0;
-  String? _appliedPromoCode;
 
   final List<Map<String, dynamic>> _courierOptions = [
     {
@@ -140,7 +137,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     _notesController.dispose();
-    _promoController.dispose();
     super.dispose();
   }
 
@@ -160,7 +156,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _courierOptions[_selectedCourierIndex]['fee'] as int;
 
   int get _totalPayment =>
-      (_itemsSubtotal + _shippingFee - _discount).clamp(0, 999999999);
+      (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
 
   String _formatPrice(int price) {
     final digits = price.toString();
@@ -169,39 +165,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       (_) => '.',
     );
     return 'Rp $grouped';
-  }
-
-  void _applyPromo() {
-    final code = _promoController.text.trim().toUpperCase();
-    if (code.isEmpty) return;
-
-    if (code == 'BATIK20' || code == 'HAMZAH' || code == 'DISKON') {
-      setState(() {
-        _discount = 20000;
-        _appliedPromoCode = code;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Voucher $code berhasil digunakan! Hemat ${_formatPrice(20000)}',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: AppTheme.successGreen,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Kode voucher "$code" tidak valid atau telah kedaluwarsa.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: AppTheme.errorRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   void _proceedToPayment() {
@@ -230,7 +193,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'totalItems': _totalItemCount,
       'productSubtotal': _itemsSubtotal,
       'shippingFee': _shippingFee,
-      'discount': _discount,
+      'discount': 0,
       'uniqueCode': uniqueCode,
       'totalPayment': totalWithCode,
       'courier': selectedCourier,
@@ -303,8 +266,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 _buildPaymentMethodSection(r),
                 const SizedBox(height: 14),
                 _buildOrderNotesSection(r),
-                const SizedBox(height: 14),
-                _buildVoucherSection(r),
                 const SizedBox(height: 14),
                 _buildPaymentSummarySection(r),
               ],
@@ -427,132 +388,127 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // --- 1. ALAMAT PENGIRIMAN ---
   Widget _buildAddressSection(Responsive r) {
-    return AnimatedBuilder(
-      animation: ProfileStore.instance,
-      builder: (context, _) {
-        final address = ProfileStore.instance.addresses.firstWhere(
-          (a) => a.isPrimary,
-          orElse: () => ProfileStore.instance.addresses.isNotEmpty
-              ? ProfileStore.instance.addresses.first
-              : ProfileAddress(
-                  id: 'default',
-                  label: 'Utama',
-                  recipient: ProfileStore.instance.name,
-                  phone: ProfileStore.instance.phone,
-                  address:
-                      'Jl. Malioboro No. 56, Sosromenduran, Gedong Tengen, Kota Yogyakarta, D.I. Yogyakarta 55271',
-                  isPrimary: true,
-                ),
-        );
-
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppTheme.bgCard,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppTheme.borderLight.withValues(alpha: 0.7),
+    final address = ProfileStore.instance.addresses.firstWhere(
+      (a) => a.isPrimary,
+      orElse: () => ProfileStore.instance.addresses.isNotEmpty
+          ? ProfileStore.instance.addresses.first
+          : ProfileAddress(
+              id: 'default',
+              label: 'Utama',
+              recipient: ProfileStore.instance.name,
+              phone: ProfileStore.instance.phone,
+              address:
+                  'Jl. Malioboro No. 56, Sosromenduran, Gedong Tengen, Kota Yogyakarta, D.I. Yogyakarta 55271',
+              isPrimary: true,
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.bgCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.borderLight.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 17,
+              const Icon(
+                Icons.location_on_outlined,
+                size: 17,
+                color: AppTheme.terracotta,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Alamat Pengiriman',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textMain,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _showChangeAddressBottomSheet(context, r),
+                child: Text(
+                  'Ubah Alamat',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                     color: AppTheme.terracotta,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Alamat Pengiriman',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textMain,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => _showChangeAddressBottomSheet(context, r),
-                    child: Text(
-                      'Ubah Alamat',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.terracotta,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              address.recipient,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textMain,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.terracottaLight,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                address.label.toUpperCase(),
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.terracotta,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
                         Text(
-                          address.phone,
+                          address.recipient,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textMain,
                           ),
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          address.address,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: AppTheme.textSubtle,
-                            height: 1.35,
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.terracottaLight,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            address.label.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.terracotta,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 3),
+                    Text(
+                      address.phone,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      address.address,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppTheme.textSubtle,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -595,21 +551,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ...addresses.map(
                       (addr) => ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: Radio<String>(
-                          value: addr.id,
-                          groupValue: addresses
-                              .firstWhere((a) => a.isPrimary,
-                                  orElse: () => addresses.first)
-                              .id,
-                          activeColor: AppTheme.primaryDark,
-                          onChanged: (val) {
-                            if (val != null) {
-                              ProfileStore.instance.setPrimaryAddress(val);
-                            }
+                        leading: GestureDetector(
+                          onTap: () {
+                            ProfileStore.instance.setPrimaryAddress(addr.id);
                             setSheetState(() {});
                             setState(() {});
                             Navigator.of(context).pop();
                           },
+                          child: _RadioDot(
+                            selected: addr.id ==
+                                addresses
+                                    .firstWhere((a) => a.isPrimary,
+                                        orElse: () => addresses.first)
+                                    .id,
+                            activeColor: AppTheme.primaryDark,
+                          ),
                         ),
                         title: Text(
                           '${addr.recipient} (${addr.label})',
@@ -692,98 +648,99 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _checkoutItems.length,
-            separatorBuilder: (_, _) => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Divider(height: 1, color: AppTheme.borderLight),
-            ),
-            itemBuilder: (context, index) {
-              final item = _checkoutItems[index];
-              final name = item['name'] as String;
-              final variant = item['variant'] as String;
-              final imageUrl = item['imageUrl'] as String;
-              final unitPrice = item['unitPrice'] as int;
-              final quantity = (item['quantity'] as int?) ?? 1;
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(7),
-                    child: Image.network(
-                      imageUrl,
-                      width: 54,
-                      height: 58,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 54,
-                        height: 58,
-                        color: AppTheme.terracottaLight,
-                        child: const Icon(
-                          Icons.checkroom_rounded,
-                          color: AppTheme.terracotta,
-                          size: 20,
+          Column(
+            children: [
+              for (int i = 0; i < _checkoutItems.length; i++) ...[
+                if (i > 0)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(height: 1, color: AppTheme.borderLight),
+                  ),
+                Builder(builder: (context) {
+                  final item = _checkoutItems[i];
+                  final name = item['name'] as String;
+                  final variant = item['variant'] as String;
+                  final imageUrl = item['imageUrl'] as String;
+                  final unitPrice = item['unitPrice'] as int;
+                  final quantity = (item['quantity'] as int?) ?? 1;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: Image.network(
+                          imageUrl,
+                          width: 54,
+                          height: 58,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 54,
+                            height: 58,
+                            color: AppTheme.terracottaLight,
+                            child: const Icon(
+                              Icons.checkroom_rounded,
+                              color: AppTheme.terracotta,
+                              size: 20,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textMain,
-                            height: 1.25,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          variant,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            color: AppTheme.textSubtle,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _formatPrice(unitPrice),
-                              style: GoogleFonts.outfit(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryDark,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              'x $quantity',
+                              name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textMuted,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textMain,
+                                height: 1.25,
                               ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              variant,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: AppTheme.textSubtle,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  _formatPrice(unitPrice),
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryDark,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  'x $quantity',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ],
           ),
         ],
       ),
@@ -823,85 +780,78 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _courierOptions.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final courier = _courierOptions[index];
-              final isSelected = index == _selectedCourierIndex;
-
-              return InkWell(
-                onTap: () => setState(() => _selectedCourierIndex = index),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppTheme.inputBg
-                        : AppTheme.bgWarm.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppTheme.terracotta
-                          : AppTheme.borderLight,
-                      width: isSelected ? 1.2 : 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Radio<int>(
-                        value: index,
-                        groupValue: _selectedCourierIndex,
-                        activeColor: AppTheme.terracotta,
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                        onChanged: (val) =>
-                            setState(() => _selectedCourierIndex = val ?? 0),
+          Column(
+            children: [
+              for (int index = 0; index < _courierOptions.length; index++) ...[
+                if (index > 0) const SizedBox(height: 8),
+                Builder(builder: (context) {
+                  final courier = _courierOptions[index];
+                  final isSelected = index == _selectedCourierIndex;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCourierIndex = index),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              courier['name'] as String,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textMain,
-                              ),
-                            ),
-                            Text(
-                              courier['estimate'] as String,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9,
-                                color: AppTheme.textSubtle,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        _formatPrice(courier['fee'] as int),
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.inputBg
+                            : AppTheme.bgWarm.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
                           color: isSelected
                               ? AppTheme.terracotta
-                              : AppTheme.textMain,
+                              : AppTheme.borderLight,
+                          width: isSelected ? 1.2 : 0.8,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
+                      child: Row(
+                        children: [
+                          _RadioDot(
+                            selected: isSelected,
+                            activeColor: AppTheme.terracotta,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  courier['name'] as String,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.textMain,
+                                  ),
+                                ),
+                                Text(
+                                  courier['estimate'] as String,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            _formatPrice(courier['fee'] as int),
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? AppTheme.terracotta
+                                  : AppTheme.textMain,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ],
           ),
         ],
       ),
@@ -941,122 +891,115 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _paymentMethods.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final method = _paymentMethods[index];
-              final isSelected = index == _selectedPaymentIndex;
-
-              return InkWell(
-                onTap: () => setState(() => _selectedPaymentIndex = index),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppTheme.inputBg
-                        : AppTheme.bgWarm.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppTheme.terracotta
-                          : AppTheme.borderLight,
-                      width: isSelected ? 1.2 : 0.8,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+          Column(
+            children: [
+              for (int index = 0; index < _paymentMethods.length; index++) ...[
+                if (index > 0) const SizedBox(height: 8),
+                Builder(builder: (context) {
+                  final method = _paymentMethods[index];
+                  final isSelected = index == _selectedPaymentIndex;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedPaymentIndex = index),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.inputBg
+                            : AppTheme.bgWarm.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppTheme.terracotta
+                              : AppTheme.borderLight,
+                          width: isSelected ? 1.2 : 0.8,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Radio<int>(
-                            value: index,
-                            groupValue: _selectedPaymentIndex,
-                            activeColor: AppTheme.terracotta,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                            onChanged: (val) => setState(
-                                () => _selectedPaymentIndex = val ?? 0),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            method['icon'] as IconData,
-                            size: 16,
-                            color: isSelected
-                                ? AppTheme.terracotta
-                                : AppTheme.primaryDark,
-                          ),
-                          const SizedBox(width: 7),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  method['title'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.textMain,
-                                  ),
-                                ),
-                                Text(
-                                  method['subtitle'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    color: AppTheme.textSubtle,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.terracottaLight
-                                  : AppTheme.borderLight.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              method['badge'] as String,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
+                          Row(
+                            children: [
+                              _RadioDot(
+                                selected: isSelected,
+                                activeColor: AppTheme.terracotta,
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                method['icon'] as IconData,
+                                size: 16,
                                 color: isSelected
                                     ? AppTheme.terracotta
-                                    : AppTheme.textMuted,
+                                    : AppTheme.primaryDark,
+                              ),
+                              const SizedBox(width: 7),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      method['title'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.textMain,
+                                      ),
+                                    ),
+                                    Text(
+                                      method['subtitle'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: AppTheme.textSubtle,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppTheme.terracottaLight
+                                      : AppTheme.borderLight.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  method['badge'] as String,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                    color: isSelected
+                                        ? AppTheme.terracotta
+                                        : AppTheme.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isSelected &&
+                              (method['description'] as String).isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 36, right: 4),
+                              child: Text(
+                                method['description'] as String,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 9,
+                                  color: AppTheme.textMuted,
+                                  height: 1.35,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
-                      if (isSelected &&
-                          (method['description'] as String).isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 36, right: 4),
-                          child: Text(
-                            method['description'] as String,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9,
-                              color: AppTheme.textMuted,
-                              height: 1.35,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              );
-            },
+                    ),
+                  );
+                }),
+              ],
+            ],
           ),
         ],
       ),
@@ -1124,137 +1067,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // --- 6. VOUCHER & PROMO ---
-  Widget _buildVoucherSection(Responsive r) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.confirmation_number_outlined,
-                size: 17,
-                color: AppTheme.terracotta,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Kupon & Voucher Diskon',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textMain,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 38,
-                  child: TextField(
-                    controller: _promoController,
-                    textCapitalization: TextCapitalization.characters,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textMain,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Masukkan kode voucher (contoh: BATIK20)',
-                      hintStyle: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        color: AppTheme.textSubtle,
-                      ),
-                      filled: true,
-                      fillColor: AppTheme.inputBg,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                height: 38,
-                child: ElevatedButton(
-                  onPressed: _applyPromo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryDark,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                  ),
-                  child: Text(
-                    'Terapkan',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_appliedPromoCode != null) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  size: 13,
-                  color: AppTheme.successGreen,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'Voucher $_appliedPromoCode aktif (-${_formatPrice(_discount)})',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.successGreen,
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => setState(() {
-                    _discount = 0;
-                    _appliedPromoCode = null;
-                    _promoController.clear();
-                  }),
-                  child: Text(
-                    'Hapus',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      color: AppTheme.errorRed,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // --- 7. RINGKASAN PEMBAYARAN ---
+  // --- 6. RINGKASAN PEMBAYARAN ---
   Widget _buildPaymentSummarySection(Responsive r) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1309,14 +1122,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             'Biaya Pengiriman (${_courierOptions[_selectedCourierIndex]['name']})',
             _formatPrice(_shippingFee),
           ),
-          if (_discount > 0) ...[
-            const SizedBox(height: 6),
-            _summaryRow(
-              'Diskon Voucher ($_appliedPromoCode)',
-              '-${_formatPrice(_discount)}',
-              isDiscount: true,
-            ),
-          ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Divider(height: 1, color: AppTheme.borderLight),
@@ -1435,6 +1240,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryBlack,
                   foregroundColor: Colors.white,
+                  minimumSize: Size.zero,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1444,6 +1250,46 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Lightweight custom radio dot — no MouseRegion, no deprecated API.
+class _RadioDot extends StatelessWidget {
+  final bool selected;
+  final Color activeColor;
+  const _RadioDot({required this.selected, required this.activeColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: Center(
+        child: Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selected ? activeColor : AppTheme.borderLight,
+              width: selected ? 1.5 : 1.2,
+            ),
+          ),
+          child: selected
+              ? Center(
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: activeColor,
+                    ),
+                  ),
+                )
+              : null,
+        ),
       ),
     );
   }
