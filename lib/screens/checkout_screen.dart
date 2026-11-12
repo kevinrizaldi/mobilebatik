@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/cart_store.dart';
 import '../data/profile_store.dart';
+import '../services/api_client.dart';
+import '../services/api_config.dart';
+import '../services/order_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -86,14 +89,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   ];
 
   late List<Map<String, dynamic>> _checkoutItems;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _initItems();
+    ProfileStore.instance.syncAddressesFromServer();
   }
 
   void _initItems() {
+    final directItem = widget.checkoutData?['directItem'];
+    if (directItem is Map<String, dynamic>) {
+      _checkoutItems = [directItem];
+      return;
+    }
+
     final storeSelected = CartStore.instance.items
         .where((item) => item.isSelected)
         .toList();
@@ -102,6 +113,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _checkoutItems = storeSelected
           .map((item) => {
                 'id': item.id,
+                'cartItemId': item.cartItemId,
+                'productId': item.productId,
                 'name': item.name,
                 'variant': item.variant,
                 'imageUrl': item.imageUrl,
@@ -158,16 +171,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int get _totalPayment =>
       (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
 
-  String _formatPrice(int price) {
-    final digits = price.toString();
-    final grouped = digits.replaceAllMapped(
-      RegExp(r'(?=(?:\d{3})+(?!\d))'),
-      (_) => '.',
-    );
-    return 'Rp $grouped';
-  }
+  String _formatPrice(int price) => ApiConfig.formatRupiah(price);
 
-  void _proceedToPayment() {
+  Future<void> _proceedToPayment() async {
+    if (_isSubmitting) return;
+
     final selectedCourier = _courierOptions[_selectedCourierIndex];
     final selectedPayment = _paymentMethods[_selectedPaymentIndex];
     final primaryAddress = ProfileStore.instance.addresses.firstWhere(
@@ -183,7 +191,106 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
     );
 
-    // Generate random 3 digit unique code for manual bank transfer (matching Rp 871.238 in Figma)
+    final token = await ApiClient.instance.getToken();
+    final cartItemIds = _checkoutItems
+        .map((e) => e['cartItemId'])
+        .whereType<int>()
+        .toList();
+    final directItems = _checkoutItems
+        .where((e) => e['cartItemId'] == null && e['productId'] != null)
+        .map((e) => {
+              'product_id': e['productId'],
+              if (e['size'] != null) 'size': e['size'],
+              'quantity': e['quantity'] ?? 1,
+            })
+        .toList();
+
+    if (token == null || token.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Silakan login terlebih dahulu untuk melanjutkan checkout.'),
+          backgroundColor: AppTheme.errorRed,
+          action: SnackBarAction(
+            label: 'Login',
+            textColor: Colors.white,
+            onPressed: () => context.go('/login'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (cartItemIds.isNotEmpty || directItems.isNotEmpty) {
+      setState(() => _isSubmitting = true);
+      try {
+        final res = await OrderService.instance.checkout(
+          customerName: primaryAddress.recipient,
+          phone: primaryAddress.phone,
+          address: primaryAddress.address,
+          shippingOption: selectedCourier['name'].toString(),
+          shippingCost: (_shippingFee).toDouble(),
+          paymentMethod: selectedPayment['title'].toString(),
+          notes: _notesController.text.trim(),
+          cartItemIds: cartItemIds.isNotEmpty ? cartItemIds : null,
+          directItems: directItems.isNotEmpty ? directItems : null,
+        );
+
+        if (cartItemIds.isNotEmpty) {
+          await CartStore.instance.syncFromServer();
+        }
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+
+        final order = (res['data'] as Map<String, dynamic>?) ?? {};
+        final totals = (res['totals'] as Map<String, dynamic>?) ?? {};
+        final serverTotal = (totals['grand_total'] is num)
+            ? (totals['grand_total'] as num).round()
+            : _totalPayment;
+        final serverShipping = (totals['shipping'] is num)
+            ? (totals['shipping'] as num).round()
+            : _shippingFee;
+        final serverDiscount = (totals['discount'] is num)
+            ? (totals['discount'] as num).round()
+            : 0;
+
+        final orderSummary = {
+          'orderId': order['id'],
+          'orderNumber': order['code']?.toString() ?? 'ORD-BARU',
+          'items': _checkoutItems,
+          'totalItems': _totalItemCount,
+          'productSubtotal': _itemsSubtotal,
+          'shippingFee': serverShipping,
+          'discount': serverDiscount,
+          'uniqueCode': 0,
+          'totalPayment': serverTotal,
+          'courier': selectedCourier,
+          'paymentMethod': selectedPayment,
+          'address': {
+            'recipient': primaryAddress.recipient,
+            'phone': primaryAddress.phone,
+            'address': primaryAddress.address,
+            'label': primaryAddress.label,
+          },
+          'notes': _notesController.text.trim(),
+          'orderedAt': order['created_at']?.toString() ?? 'Baru saja',
+        };
+
+        context.push('/pembayaran', extra: orderSummary);
+        return;
+      } on ApiException catch (e) {
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+        return;
+      }
+    }
+
     final uniqueCode = _selectedPaymentIndex == 0 ? 238 : 0;
     final totalWithCode = _totalPayment + uniqueCode;
 
@@ -205,9 +312,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'label': primaryAddress.label,
       },
       'notes': _notesController.text.trim(),
-      'orderedAt': '18 Feb 2025 · 10:15 WIB',
+      'orderedAt': 'Baru saja',
     };
 
+    if (!mounted) return;
     context.push('/pembayaran', extra: orderSummary);
   }
 
@@ -1227,11 +1335,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: SizedBox(
               height: 44,
               child: ElevatedButton.icon(
-                onPressed: _proceedToPayment,
+                onPressed: _isSubmitting ? null : _proceedToPayment,
                 iconAlignment: IconAlignment.end,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                icon: _isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.arrow_forward_rounded, size: 16),
                 label: Text(
-                  'Bayar Sekarang',
+                  _isSubmitting ? 'Memproses...' : 'Bayar Sekarang',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/profile_store.dart';
+import '../services/api_client.dart';
+import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -152,16 +154,39 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+
     ProfileStore.instance.updateProfile(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      phone: _phoneController.text.trim(),
+      name: name,
+      email: email,
+      phone: phone,
       birthDate: _birthDate,
       gender: _gender,
     );
-    context.pop();
+
+    try {
+      final token = await ApiClient.instance.getToken();
+      if (token != null && token.isNotEmpty) {
+        await ProfileService.instance.updateProfile(
+          name: name,
+          email: email,
+          phone: phone,
+        );
+      }
+      if (mounted) context.pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+    }
   }
 }
 

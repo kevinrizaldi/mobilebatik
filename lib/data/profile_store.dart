@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../services/api_client.dart';
+import '../services/profile_service.dart';
 
 class ProfileAddress {
   final String id;
@@ -83,12 +85,48 @@ class ProfileStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setFromUserJson(Map<String, dynamic> user) {
+    final newName = user['name']?.toString();
+    final newEmail = user['email']?.toString();
+    final newPhone = user['phone']?.toString();
+    if (newName != null && newName.isNotEmpty) name = newName;
+    if (newEmail != null && newEmail.isNotEmpty) email = newEmail;
+    if (newPhone != null && newPhone.isNotEmpty) phone = newPhone;
+    notifyListeners();
+  }
+
   void setPhoto(Uint8List bytes) {
     photoBytes = bytes;
     notifyListeners();
   }
 
-  void saveAddress(ProfileAddress address) {
+  Future<void> syncAddressesFromServer() async {
+    final token = await ApiClient.instance.getToken();
+    if (token == null || token.isEmpty) return;
+
+    try {
+      final serverList = await ProfileService.instance.fetchAddresses();
+      addresses
+        ..clear()
+        ..addAll(
+          serverList.map(
+            (raw) => ProfileAddress(
+              id: raw['id'].toString(),
+              label: raw['label']?.toString() ?? 'Rumah',
+              recipient: raw['recipient_name']?.toString() ?? name,
+              phone: raw['phone']?.toString() ?? phone,
+              address: raw['full_address']?.toString() ?? '',
+              isPrimary: raw['is_primary'] == true,
+            ),
+          ),
+        );
+      notifyListeners();
+    } catch (_) {
+      // Pertahankan state alamat terakhir bila gagal sync.
+    }
+  }
+
+  Future<void> saveAddress(ProfileAddress address) async {
     final index = addresses.indexWhere((item) => item.id == address.id);
     if (index < 0) {
       addresses.add(address);
@@ -101,22 +139,65 @@ class ProfileStore extends ChangeNotifier {
       }
     }
     notifyListeners();
+
+    final token = await ApiClient.instance.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        final numericId = int.tryParse(address.id);
+        if (index >= 0 && numericId != null) {
+          await ProfileService.instance.updateAddress(
+            numericId,
+            label: address.label,
+            recipientName: address.recipient,
+            phone: address.phone,
+            fullAddress: address.address,
+            isPrimary: address.isPrimary,
+          );
+        } else {
+          await ProfileService.instance.createAddress(
+            label: address.label,
+            recipientName: address.recipient,
+            phone: address.phone,
+            fullAddress: address.address,
+            isPrimary: address.isPrimary,
+          );
+        }
+        await syncAddressesFromServer();
+      } catch (_) {}
+    }
   }
 
-  void setPrimaryAddress(String id) {
+  Future<void> setPrimaryAddress(String id) async {
     for (final item in addresses) {
       item.isPrimary = (item.id == id);
     }
     notifyListeners();
+
+    final token = await ApiClient.instance.getToken();
+    final numericId = int.tryParse(id);
+    if (token != null && token.isNotEmpty && numericId != null) {
+      try {
+        await ProfileService.instance.updateAddress(numericId, isPrimary: true);
+      } catch (_) {}
+    }
   }
 
-  void removeAddress(String id) {
+  Future<void> removeAddress(String id) async {
     addresses.removeWhere((address) => address.id == id);
     if (addresses.isNotEmpty &&
         !addresses.any((address) => address.isPrimary)) {
       addresses.first.isPrimary = true;
     }
     notifyListeners();
+
+    final token = await ApiClient.instance.getToken();
+    final numericId = int.tryParse(id);
+    if (token != null && token.isNotEmpty && numericId != null) {
+      try {
+        await ProfileService.instance.deleteAddress(numericId);
+        await syncAddressesFromServer();
+      } catch (_) {}
+    }
   }
 
   void addReview(ProfileReview review) {

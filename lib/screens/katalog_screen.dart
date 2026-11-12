@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_client.dart';
+import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -16,18 +18,55 @@ class _KatalogScreenState extends State<KatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Semua';
   String _selectedSort = 'Terpopuler';
-  final List<String> _categories = ['Semua', 'Baju Batik', 'Kain Batik', 'Olahan Kain', 'Aksesoris'];
+  List<String> _categories = ['Semua', 'Baju Batik', 'Kain Batik', 'Olahan Kain', 'Aksesoris'];
+  List<Map<String, dynamic>> _products = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  final List<Map<String, dynamic>> _products = [
-    {'name': 'Kemeja Batik Parang Classic', 'price': 'Rp 285.000', 'originalPrice': 'Rp 350.000', 'rating': '4.8', 'sold': '124', 'imageUrl': 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=600&q=80', 'category': 'Baju Batik'},
-    {'name': 'Kain Batik Tulis Mega Mendung', 'price': 'Rp 450.000', 'rating': '4.9', 'sold': '89', 'imageUrl': 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=600&q=80', 'category': 'Kain Batik'},
-    {'name': 'Dress Batik Kawung Modern', 'price': 'Rp 320.000', 'originalPrice': 'Rp 390.000', 'rating': '4.7', 'sold': '67', 'imageUrl': 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=600&q=80', 'category': 'Baju Batik'},
-    {'name': 'Sarung Batik Lereng Premium', 'price': 'Rp 195.000', 'rating': '4.6', 'sold': '203', 'imageUrl': 'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=600&q=80', 'category': 'Kain Batik'},
-    {'name': 'Blouse Batik Sogan Elegan', 'price': 'Rp 265.000', 'originalPrice': 'Rp 310.000', 'rating': '4.8', 'sold': '55', 'imageUrl': 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=600&q=80', 'category': 'Baju Batik'},
-    {'name': 'Set Batik Couple Sido Mukti', 'price': 'Rp 575.000', 'rating': '5.0', 'sold': '38', 'imageUrl': 'https://images.unsplash.com/photo-1762111908760-ce1cd8c135e4?w=600&q=80', 'category': 'Baju Batik'},
-    {'name': 'Tas Anyaman Batik Nusantara', 'price': 'Rp 175.000', 'rating': '4.5', 'sold': '91', 'imageUrl': 'https://images.unsplash.com/photo-1762111908691-d949338d3242?w=600&q=80', 'category': 'Aksesoris'},
-    {'name': 'Selendang Batik Motif Truntum', 'price': 'Rp 130.000', 'rating': '4.7', 'sold': '145', 'imageUrl': 'https://images.unsplash.com/photo-1762111929236-28b1d0d284c0?w=600&q=80', 'category': 'Aksesoris'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final sortParam = switch (_selectedSort) {
+        'Harga Terendah' => 'price_low',
+        'Harga Tertinggi' => 'price_high',
+        'Terbaru' => 'latest',
+        _ => 'latest',
+      };
+
+      final results = await Future.wait([
+        ProductService.instance.fetchCategories(),
+        ProductService.instance.fetchProducts(sort: sortParam),
+      ]);
+
+      if (!mounted) return;
+      final fetchedCategories = results[0] as List<String>;
+      final fetchedProducts = results[1] as List<Map<String, dynamic>>;
+
+      setState(() {
+        if (fetchedCategories.length > 1) {
+          _categories = fetchedCategories;
+        }
+        _products = fetchedProducts;
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+    }
+  }
 
   List<Map<String, dynamic>> get _filteredProducts {
     var list = _selectedCategory == 'Semua' ? _products : _products.where((p) => p['category'] == _selectedCategory).toList();
@@ -69,7 +108,11 @@ class _KatalogScreenState extends State<KatalogScreen> {
             ...['Terpopuler', 'Harga Terendah', 'Harga Tertinggi', 'Terbaru'].map((sort) => ListTile(
               title: Text(sort, style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, fontWeight: _selectedSort == sort ? FontWeight.w600 : FontWeight.w400, color: _selectedSort == sort ? AppTheme.terracotta : AppTheme.textMuted)),
               trailing: _selectedSort == sort ? Icon(Icons.check_rounded, color: AppTheme.terracotta, size: r.iconSm) : null,
-              onTap: () { setState(() => _selectedSort = sort); Navigator.pop(ctx); },
+              onTap: () {
+                setState(() => _selectedSort = sort);
+                Navigator.pop(ctx);
+                _loadCatalog();
+              },
               contentPadding: EdgeInsets.zero,
               dense: true,
             )),
@@ -240,42 +283,83 @@ class _KatalogScreenState extends State<KatalogScreen> {
 
           // Product grid (responsive)
           Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off_rounded, size: r.isTablet ? 64 : 48, color: AppTheme.borderLight),
-                        SizedBox(height: r.spacingSm),
-                        Text('Produk tidak ditemukan',
-                            style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textSubtle)),
-                      ],
-                    ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.terracotta),
                   )
-                : GridView.builder(
-                    padding: EdgeInsets.fromLTRB(pad, 0, pad, 24),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: r.productGridColumns,
-                      childAspectRatio: r.productGridAspectRatio,
-                      crossAxisSpacing: r.spacingMd,
-                      mainAxisSpacing: r.spacingMd,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final p = filtered[index];
-                      return _KatalogProductCard(
-                        r: r,
-                        name: p['name'],
-                        category: p['category'],
-                        price: p['price'],
-                        originalPrice: p['originalPrice'],
-                        rating: p['rating'],
-                        sold: p['sold'],
-                        imageUrl: p['imageUrl'],
-                        onTap: () => context.push('/detail-produk', extra: p),
-                      );
-                    },
-                  ),
+                : _errorMessage != null
+                    ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: pad),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.cloud_off_rounded, size: r.isTablet ? 64 : 48, color: AppTheme.borderLight),
+                              SizedBox(height: r.spacingSm),
+                              Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textSubtle),
+                              ),
+                              SizedBox(height: r.spacingMd),
+                              ElevatedButton(
+                                onPressed: _loadCatalog,
+                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryDark),
+                                child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : filtered.isEmpty
+                        ? RefreshIndicator(
+                            color: AppTheme.terracotta,
+                            onRefresh: _loadCatalog,
+                            child: ListView(
+                              children: [
+                                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                                Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.search_off_rounded, size: r.isTablet ? 64 : 48, color: AppTheme.borderLight),
+                                      SizedBox(height: r.spacingSm),
+                                      Text('Produk tidak ditemukan',
+                                          style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textSubtle)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            color: AppTheme.terracotta,
+                            onRefresh: _loadCatalog,
+                            child: GridView.builder(
+                              padding: EdgeInsets.fromLTRB(pad, 0, pad, 24),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: r.productGridColumns,
+                                childAspectRatio: r.productGridAspectRatio,
+                                crossAxisSpacing: r.spacingMd,
+                                mainAxisSpacing: r.spacingMd,
+                              ),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final p = filtered[index];
+                                return _KatalogProductCard(
+                                  r: r,
+                                  name: p['name']?.toString() ?? '',
+                                  category: p['category']?.toString() ?? '',
+                                  price: p['price']?.toString() ?? 'Rp 0',
+                                  originalPrice: p['originalPrice']?.toString(),
+                                  rating: p['rating']?.toString() ?? '5.0',
+                                  sold: p['sold']?.toString() ?? '0',
+                                  imageUrl: p['imageUrl']?.toString() ?? '',
+                                  onTap: () => context.push('/detail-produk', extra: p),
+                                );
+                              },
+                            ),
+                          ),
           ),
         ],
       ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/profile_store.dart';
+import '../services/api_client.dart';
+import '../services/api_config.dart';
+import '../services/order_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -16,72 +19,108 @@ class PesananScreen extends StatefulWidget {
 class _PesananScreenState extends State<PesananScreen> {
   final TextEditingController _searchController = TextEditingController();
   int _selectedStatus = 0;
+  List<_OrderData> _orders = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  final List<_OrderData> _orders = const [
-    _OrderData(
-      orderNumber: 'HSO-20250218-0190',
-      date: '18 Feb 2025',
-      status: 'Menunggu Pembayaran',
-      productName: 'Kemeja Batik Parang Seling',
-      variant: 'L · Ukuran L (Slim Fit)',
-      price: 871000,
-      quantity: 1,
-      imageUrl:
-          'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=300&q=80',
-      notice: 'Sisa waktu: 05 Jam 21 menit',
-      noticeDetail: 'Batas bayar 19:12 WIB',
-      primaryAction: 'Bayar Sekarang',
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final token = await ApiClient.instance.getToken();
+    if (token == null || token.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _orders = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final serverOrders = await OrderService.instance.fetchOrders();
+      if (!mounted) return;
+      setState(() {
+        _orders = serverOrders.map(_mapOrder).toList();
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+    }
+  }
+
+  _OrderData _mapOrder(Map<String, dynamic> raw) {
+    final items = raw['items'] is List
+        ? (raw['items'] as List).whereType<Map<String, dynamic>>().toList()
+        : <Map<String, dynamic>>[];
+    final firstItem = items.isNotEmpty ? items.first : <String, dynamic>{};
+
+    final statusIndex = raw['status_index'] is int
+        ? raw['status_index'] as int
+        : int.tryParse('${raw['status_index']}') ?? 1;
+    final status = raw['status']?.toString() ?? 'Menunggu Pembayaran';
+    final totalPrice = raw['total_price'] is num
+        ? (raw['total_price'] as num).round()
+        : int.tryParse('${raw['total_price']}') ?? 0;
+    final shippingCost = raw['shipping_cost'] is num
+        ? (raw['shipping_cost'] as num).round()
+        : int.tryParse('${raw['shipping_cost']}') ?? 0;
+    final totalQty = items.fold<int>(
+      0,
+      (sum, item) =>
+          sum +
+          (item['quantity'] is int
+              ? item['quantity'] as int
+              : int.tryParse('${item['quantity']}') ?? 1),
+    );
+    final courier = raw['courier']?.toString() ?? 'JNE Reguler';
+    final tracking = raw['tracking_number']?.toString();
+    final createdAt = (raw['created_at']?.toString() ?? '').split('T').first;
+
+    final primaryAction = switch (statusIndex) {
+      1 => 'Bayar Sekarang',
+      3 => 'Lacak Pengiriman',
+      4 => 'Beri Ulasan',
+      _ => 'Lihat Detail',
+    };
+
+    return _OrderData(
+      orderNumber: raw['code']?.toString() ?? 'ORD',
+      date: createdAt.isNotEmpty ? createdAt : 'Baru saja',
+      status: status,
+      productName: firstItem['name']?.toString() ?? 'Pesanan Batik',
+      variant: items.length > 1
+          ? '+ ${items.length - 1} produk lainnya'
+          : (raw['payment_method']?.toString() ?? 'Pembayaran Online'),
+      price: totalPrice,
+      quantity: totalQty > 0 ? totalQty : 1,
+      imageUrl: firstItem['image_url']?.toString() ?? '',
+      notice: tracking != null && tracking.isNotEmpty
+          ? 'Resi: $tracking'
+          : 'Metode: ${raw['payment_method'] ?? '-'}',
+      noticeDetail: 'Kurir: $courier',
+      primaryAction: primaryAction,
       secondaryAction: 'Lihat Detail',
-      statusIndex: 1,
-      orderedAt: '18 Feb 2025 · 10:15 WIB',
-      courier: 'JNE Reguler',
-      trackingNumber: null,
-      shippingFee: 20000,
-      voucherDiscount: 20000,
-    ),
-    _OrderData(
-      orderNumber: 'HSO-20250214-0182',
-      date: '14 Feb 2025',
-      status: 'Dikirim',
-      productName: 'Artisan Patchwork Batik Tote Bag',
-      variant: 'Edisi Terbatas (Batik Indigo)',
-      price: 265000,
-      quantity: 1,
-      imageUrl:
-          'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=300&q=80',
-      notice: 'Paket dalam perjalanan via JNE Reguler',
-      noticeDetail: 'Resi: JNE-8820193921',
-      primaryAction: 'Lacak Pengiriman',
-      secondaryAction: 'Lihat Detail',
-      statusIndex: 3,
-      orderedAt: '14 Feb 2025 · 10:15 WIB',
-      courier: 'JNE Reguler',
-      trackingNumber: 'JNE-8820193921',
-      shippingFee: 20000,
-      voucherDiscount: 20000,
-    ),
-    _OrderData(
-      orderNumber: 'HSO-20250129-0164',
-      date: '29 Jan 2025',
-      status: 'Selesai',
-      productName: 'Kain Batik Tulis Motif Truntum',
-      variant: 'Panjang 2.5 m · 1.15 m',
-      price: 650000,
-      quantity: 1,
-      imageUrl:
-          'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&q=80',
-      notice: 'Diterima oleh Hamzah pada 30 Jan 2025',
-      noticeDetail: '',
-      primaryAction: 'Beri Ulasan',
-      secondaryAction: 'Beli Lagi',
-      statusIndex: 4,
-      orderedAt: '29 Jan 2025 · 09:20 WIB',
-      courier: 'JNE Reguler',
-      trackingNumber: 'JNE-2901250164',
-      shippingFee: 20000,
-      voucherDiscount: 20000,
-    ),
-  ];
+      statusIndex: statusIndex,
+      orderedAt: createdAt.isNotEmpty ? createdAt : 'Baru saja',
+      courier: courier,
+      trackingNumber: tracking,
+      shippingFee: shippingCost,
+      voucherDiscount: 0,
+    );
+  }
 
   static const List<String> _statuses = [
     'Semua',
@@ -271,23 +310,67 @@ class _PesananScreenState extends State<PesananScreen> {
           ),
           const SizedBox(height: 5),
           Expanded(
-            child: orders.isEmpty
-                ? _buildEmptyState(r)
-                : ListView.separated(
-                    padding: EdgeInsets.fromLTRB(
-                      r.pagePaddingH,
-                      8,
-                      r.pagePaddingH,
-                      16,
-                    ),
-                    itemCount: orders.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) => AnimatedBuilder(
-                      animation: ProfileStore.instance,
-                      builder: (context, _) =>
-                          _buildOrderCard(context, r, orders[index]),
-                    ),
-                  ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.terracotta),
+                  )
+                : _errorMessage != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: r.fontSm,
+                                color: AppTheme.textSubtle,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: _loadOrders,
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryDark),
+                              child: const Text('Coba Lagi',
+                                  style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      )
+                    : orders.isEmpty
+                        ? RefreshIndicator(
+                            color: AppTheme.terracotta,
+                            onRefresh: _loadOrders,
+                            child: ListView(
+                              children: [
+                                SizedBox(
+                                    height: MediaQuery.of(context).size.height *
+                                        0.2),
+                                _buildEmptyState(r),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            color: AppTheme.terracotta,
+                            onRefresh: _loadOrders,
+                            child: ListView.separated(
+                              padding: EdgeInsets.fromLTRB(
+                                r.pagePaddingH,
+                                8,
+                                r.pagePaddingH,
+                                16,
+                              ),
+                              itemCount: orders.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) => AnimatedBuilder(
+                                animation: ProfileStore.instance,
+                                builder: (context, _) =>
+                                    _buildOrderCard(context, r, orders[index]),
+                              ),
+                            ),
+                          ),
           ),
         ],
       ),
@@ -656,14 +739,7 @@ class _PesananScreenState extends State<PesananScreen> {
     );
   }
 
-  String _formatPrice(int price) {
-    final digits = price.toString();
-    final grouped = digits.replaceAllMapped(
-      RegExp(r'(?=(?:\d{3})+(?!\d))'),
-      (_) => '.',
-    );
-    return 'Rp $grouped';
-  }
+  String _formatPrice(int price) => ApiConfig.formatRupiah(price);
 }
 
 class _OrderData {

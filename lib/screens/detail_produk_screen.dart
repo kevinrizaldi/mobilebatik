@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../data/cart_store.dart';
+import '../services/api_client.dart';
+import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -18,33 +21,86 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   String _selectedSize = 'L';
   int _quantity = 1;
   bool _isFavorite = false;
-  int _cartCount = 2;
+  bool _isAddingToCart = false;
+  Map<String, dynamic>? _fetchedProduct;
 
-  final List<String> _sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  List<String> get _sizes {
+    final sizeStock = productData['sizeStock'];
+    if (sizeStock is Map && sizeStock.isNotEmpty) {
+      return sizeStock.keys.map((e) => e.toString()).toList();
+    }
+    return const ['S', 'M', 'L', 'XL', 'XXL'];
+  }
+
+  int get _cartCount => CartStore.instance.itemCount;
 
   Map<String, dynamic> get productData {
-    return widget.product ?? {
-      'name': 'Kemeja Batik Parang Classic',
-      'category': 'Baju Batik Pria',
-      'price': 'Rp 285.000',
-      'originalPrice': 'Rp 350.000',
-      'rating': '4.8',
-      'sold': '124',
-      'imageUrl': 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80',
-    };
+    return _fetchedProduct ??
+        widget.product ??
+        {
+          'name': 'Kemeja Batik Parang Classic',
+          'category': 'Baju Batik Pria',
+          'price': 'Rp 285.000',
+          'rating': '4.8',
+          'sold': '124',
+          'imageUrl': '',
+        };
   }
 
   List<String> get galleryImages {
-    final mainImage = (productData['imageUrl'] as String?)?.isNotEmpty == true
-        ? productData['imageUrl'] as String
-        : 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80';
-
-    return [
-      mainImage,
-      'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=800&q=80',
-      'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=800&q=80',
-      'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=800&q=80',
+    final mainImage = (productData['imageUrl'] as String?) ?? '';
+    final others = productData['otherImages'];
+    final list = <String>[
+      if (mainImage.isNotEmpty) mainImage,
+      if (others is List)
+        ...others.map((e) => e.toString()).where((e) => e.isNotEmpty),
     ];
+    if (list.isEmpty) {
+      return [''];
+    }
+    return list;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    CartStore.instance.addListener(_onCartChanged);
+    _syncSizesSelection();
+    _loadDetailIfNeeded();
+  }
+
+  void _onCartChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    CartStore.instance.removeListener(_onCartChanged);
+    super.dispose();
+  }
+
+  void _syncSizesSelection() {
+    final available = _sizes;
+    if (available.isNotEmpty && !available.contains(_selectedSize)) {
+      _selectedSize = available.first;
+    }
+  }
+
+  Future<void> _loadDetailIfNeeded() async {
+    final rawId = widget.product?['id'];
+    final id = rawId is int ? rawId : int.tryParse('$rawId');
+    if (id == null) return;
+
+    try {
+      final detail = await ProductService.instance.fetchProductDetail(id);
+      if (!mounted || detail.isEmpty) return;
+      setState(() {
+        _fetchedProduct = detail;
+        _syncSizesSelection();
+      });
+    } catch (_) {
+      // Tetap tampilkan data awal dari katalog jika request detail gagal.
+    }
   }
 
   void _navigateBack() {
@@ -74,29 +130,68 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  void _addToCart() {
-    setState(() => _cartCount += _quantity);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '$_quantity item (Ukuran $_selectedSize) masuk ke keranjang!',
-                style: GoogleFonts.plusJakartaSans(color: Colors.white),
+  Future<void> _addToCart() async {
+    if (_isAddingToCart) return;
+    setState(() => _isAddingToCart = true);
+
+    final rawId = productData['id'];
+    final productId = rawId is int ? rawId : int.tryParse('$rawId');
+    final rawPrice = productData['rawPrice'];
+    final unitPrice = rawPrice is num
+        ? rawPrice.round()
+        : int.tryParse(
+              (productData['price']?.toString() ?? '0')
+                  .replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0;
+
+    try {
+      await CartStore.instance.addProduct(
+        productId: productId,
+        name: productData['name']?.toString() ?? 'Produk Batik',
+        size: _selectedSize,
+        imageUrl: galleryImages.first,
+        unitPrice: unitPrice,
+        quantity: _quantity,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '$_quantity item (Ukuran $_selectedSize) masuk ke keranjang!',
+                  style: GoogleFonts.plusJakartaSans(color: Colors.white),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: AppTheme.successGreen,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        backgroundColor: AppTheme.successGreen,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isAddingToCart = false);
+    }
   }
 
   void _showSizeGuide(BuildContext context, Responsive r) {
@@ -833,10 +928,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             ),
             const Spacer(),
             Text(
-              'Stok: 12 Tersedia',
+              'Stok: ${productData['stock'] ?? 12} ${productData['status'] ?? 'Tersedia'}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: r.fontXs,
-                color: AppTheme.successGreen,
+                color: (productData['stock'] is int && (productData['stock'] as int) <= 0)
+                    ? AppTheme.errorRed
+                    : AppTheme.successGreen,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -882,7 +979,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             ),
             const Text('•', style: TextStyle(color: AppTheme.textSubtle)),
             Text(
-              '48 Ulasan',
+              '${productData['sold'] ?? 0} Ulasan',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: r.fontSm,
                 color: AppTheme.terracotta,
@@ -1239,13 +1336,24 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             border: Border.all(color: AppTheme.borderLight),
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _specItem('Bahan Kain', 'Katun Primisima Sanforized (Grade A)', r),
-              _specItem('Proses Batik', 'Cap Kombinasi Tulis Canting Tangan', r),
-              _specItem('Lapisan Furing', 'Furing Katun Hero Adem & Menyerap', r),
-              _specItem('Pewarnaan', 'Sogan Alam Ekstra Ramah Lingkungan', r),
-              _specItem('Asal Pembuatan', 'Laweyan, Solo - Jawa Tengah', r),
-              _specItem('Berat Produk', '350 gram (1 kg muat 3 pcs)', r),
+              _specItem(
+                'Bahan Kain',
+                (productData['material']?.toString().isNotEmpty == true)
+                    ? productData['material'].toString()
+                    : 'Katun Primisima',
+                r,
+              ),
+              _specItem(
+                'Kategori',
+                productData['category']?.toString() ?? 'Batik',
+                r,
+              ),
+              if (productData['sku'] != null)
+                _specItem('SKU', productData['sku'].toString(), r),
+              if (productData['description']?.toString().isNotEmpty == true)
+                _specItem('Deskripsi', productData['description'].toString(), r),
             ],
           ),
         ),
@@ -1288,6 +1396,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
 
   // Customer Reviews Section
   Widget _buildCustomerReviews(Responsive r) {
+    final rawReviews = productData['reviews'];
+    final reviews = rawReviews is List
+        ? rawReviews.whereType<Map>().toList()
+        : <Map>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1296,7 +1409,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           children: [
             Flexible(
               child: Text(
-                'Ulasan Pembeli (48)',
+                'Ulasan Pembeli (${reviews.isNotEmpty ? reviews.length : (productData['sold'] ?? 0)})',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.outfit(
@@ -1318,25 +1431,32 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           ],
         ),
         SizedBox(height: r.spacingSm),
-        _reviewCard(
-          name: 'Raden Bagus Nugroho',
-          date: '2 hari lalu',
-          rating: 5,
-          comment:
-              'Kualitas batiknya luar biasa halus. Motifnya nyambung rapi di bagian depan dan kancingnya tersembunyi elegan. Furingnya adem dipakai siang hari.',
-          variant: 'Ukuran: L • Sogan Klasik',
-          r: r,
-        ),
-        SizedBox(height: r.spacingSm),
-        _reviewCard(
-          name: 'Anindya Kirana',
-          date: '1 minggu lalu',
-          rating: 5,
-          comment:
-              'Dibeli untuk kado suami, ukurannya pas banget sesuai panduan ukuran. Pengiriman cepat dan kotak pembungkusnya sangat mewah!',
-          variant: 'Ukuran: XL • Mega Mendung',
-          r: r,
-        ),
+        if (reviews.isEmpty)
+          Text(
+            'Belum ada ulasan untuk produk ini.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: r.fontSm,
+              color: AppTheme.textSubtle,
+            ),
+          )
+        else
+          ...reviews.map(
+            (rev) => Padding(
+              padding: EdgeInsets.only(bottom: r.spacingSm),
+              child: _reviewCard(
+                name: (rev['user_name']?.toString().isNotEmpty == true)
+                    ? rev['user_name'].toString()
+                    : 'Pelanggan',
+                date: (rev['created_at']?.toString().split('T').first) ?? '',
+                rating: rev['rating'] is int
+                    ? rev['rating'] as int
+                    : int.tryParse('${rev['rating']}') ?? 5,
+                comment: rev['comment']?.toString() ?? '',
+                variant: 'Pembeli Terverifikasi',
+                r: r,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1615,128 +1735,31 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   }
 
   void _showCheckoutConfirmation(Responsive r) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.bgWarm,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(r.cardRadius)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          r.spacingLg,
-          r.spacingMd,
-          r.spacingLg,
-          MediaQuery.of(ctx).padding.bottom + r.spacingLg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.borderLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            SizedBox(height: r.spacingMd),
-            Text(
-              'Konfirmasi Pesanan',
-              style: GoogleFonts.outfit(
-                fontSize: r.fontLg,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textMain,
-              ),
-            ),
-            SizedBox(height: r.spacingSm),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: _safeImage(
-                  galleryImages.first,
-                  width: 50,
-                  height: 50,
-                ),
-              ),
-              title: Text(
-                productData['name']?.toString() ?? '',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14),
-              ),
-              subtitle: Text(
-                '$_quantity item • Ukuran $_selectedSize',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSubtle),
-              ),
-              trailing: Text(
-                productData['price']?.toString() ?? '',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.terracotta,
-                ),
-              ),
-            ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total Pembayaran',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                Text(
-                  productData['price']?.toString() ?? '',
-                  style: GoogleFonts.outfit(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryDark,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: r.spacingLg),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Pesanan berhasil dibuat! Melanjutkan ke pembayaran...',
-                        style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                      ),
-                      backgroundColor: AppTheme.successGreen,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryDark,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Text(
-                  'Lanjutkan ke Pembayaran',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final rawId = productData['id'];
+    final productId = rawId is int ? rawId : int.tryParse('$rawId');
+    final rawPrice = productData['rawPrice'];
+    final unitPrice = rawPrice is num
+        ? rawPrice.round()
+        : int.tryParse(
+              (productData['price']?.toString() ?? '0')
+                  .replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0;
+
+    context.push(
+      '/checkout',
+      extra: {
+        'directItem': {
+          'id': 'direct_${productId ?? productData['name']}_$_selectedSize',
+          'productId': productId,
+          'name': productData['name']?.toString() ?? 'Produk Batik',
+          'size': _selectedSize,
+          'variant': 'Ukuran $_selectedSize',
+          'imageUrl': galleryImages.first,
+          'unitPrice': unitPrice,
+          'quantity': _quantity,
+        },
+      },
     );
   }
 }

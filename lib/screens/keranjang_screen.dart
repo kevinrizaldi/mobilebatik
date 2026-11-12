@@ -2,21 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/cart_store.dart';
+import '../services/api_config.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-class KeranjangScreen extends StatelessWidget {
+class KeranjangScreen extends StatefulWidget {
   const KeranjangScreen({super.key});
 
-  String _formatPrice(int price) {
-    final digits = price.toString();
-    final grouped = digits.replaceAllMapped(
-      RegExp(r'(?=(?:\d{3})+(?!\d))'),
-      (_) => '.',
-    );
-    return 'Rp $grouped';
+  @override
+  State<KeranjangScreen> createState() => _KeranjangScreenState();
+}
+
+class _KeranjangScreenState extends State<KeranjangScreen> {
+  @override
+  void initState() {
+    super.initState();
+    CartStore.instance.syncFromServer();
   }
+
+  String _formatPrice(int price) => ApiConfig.formatRupiah(price);
 
   @override
   Widget build(BuildContext context) {
@@ -162,20 +167,37 @@ class KeranjangScreen extends StatelessWidget {
                   ),
                 ),
               Expanded(
-                child: store.items.isEmpty
-                    ? _buildEmptyCart(r)
-                    : ListView.separated(
-                        padding: EdgeInsets.fromLTRB(
-                          r.pagePaddingH,
-                          4,
-                          r.pagePaddingH,
-                          20,
-                        ),
-                        itemCount: store.items.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) =>
-                            _buildCartItem(r, store.items[index], store),
-                      ),
+                child: store.isSyncing && store.items.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(color: AppTheme.terracotta),
+                      )
+                    : store.items.isEmpty
+                        ? RefreshIndicator(
+                            color: AppTheme.terracotta,
+                            onRefresh: store.syncFromServer,
+                            child: ListView(
+                              children: [
+                                SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                                _buildEmptyCart(r),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            color: AppTheme.terracotta,
+                            onRefresh: store.syncFromServer,
+                            child: ListView.separated(
+                              padding: EdgeInsets.fromLTRB(
+                                r.pagePaddingH,
+                                4,
+                                r.pagePaddingH,
+                                20,
+                              ),
+                              itemCount: store.items.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) =>
+                                  _buildCartItem(r, store.items[index], store),
+                            ),
+                          ),
               ),
             ],
           ),

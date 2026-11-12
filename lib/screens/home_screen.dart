@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../data/cart_store.dart';
+import '../services/api_client.dart';
+import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -13,6 +16,44 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<Map<String, dynamic>> _categories = [];
+  List<Map<String, dynamic>> _featuredProducts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHomeData();
+    CartStore.instance.syncFromServer();
+  }
+
+  Future<void> _loadHomeData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        ProductService.instance.fetchCategoryObjects(),
+        ProductService.instance.fetchProducts(sort: 'latest'),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _categories = results[0];
+        _featuredProducts = results[1];
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
@@ -31,26 +72,29 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: r.spacingMd, vertical: r.spacingSm),
-                      decoration: BoxDecoration(
-                        color: AppTheme.inputBg,
-                        borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.search_rounded,
-                              size: r.iconSm, color: AppTheme.textSubtle),
-                          SizedBox(width: r.spacingSm),
-                          Text(
-                            'Cari produk batik...',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: r.fontMd,
-                              color: AppTheme.textSubtle,
+                    child: GestureDetector(
+                      onTap: () => context.go('/katalog'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: r.spacingMd, vertical: r.spacingSm),
+                        decoration: BoxDecoration(
+                          color: AppTheme.inputBg,
+                          borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.search_rounded,
+                                size: r.iconSm, color: AppTheme.textSubtle),
+                            SizedBox(width: r.spacingSm),
+                            Text(
+                              'Cari produk batik...',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: r.fontMd,
+                                color: AppTheme.textSubtle,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -136,35 +180,44 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: r.spacingMd),
                   SizedBox(
                     height: r.categoryCardHeight,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: pad),
-                      children: [
-                        _CategoryCard(
-                          r: r,
-                          label: 'Baju Batik',
-                          imageUrl: 'https://images.unsplash.com/photo-1680345575812-2f6878d7d775?w=400&q=80',
-                        ),
-                        SizedBox(width: r.spacingSm),
-                        _CategoryCard(
-                          r: r,
-                          label: 'Kain Batik',
-                          imageUrl: 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=400&q=80',
-                        ),
-                        SizedBox(width: r.spacingSm),
-                        _CategoryCard(
-                          r: r,
-                          label: 'Olahan Kain',
-                          imageUrl: 'https://images.unsplash.com/photo-1762111908782-fabda1a1fe1e?w=400&q=80',
-                        ),
-                        SizedBox(width: r.spacingSm),
-                        _CategoryCard(
-                          r: r,
-                          label: 'Aksesoris',
-                          imageUrl: 'https://images.unsplash.com/photo-1762111908691-d949338d3242?w=400&q=80',
-                        ),
-                      ],
-                    ),
+                    child: _categories.isEmpty
+                        ? ListView(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.symmetric(horizontal: pad),
+                            children: [
+                              _CategoryCard(
+                                r: r,
+                                label: 'Baju Batik',
+                                imageUrl: '',
+                              ),
+                              SizedBox(width: r.spacingSm),
+                              _CategoryCard(
+                                r: r,
+                                label: 'Kain Batik',
+                                imageUrl: '',
+                              ),
+                              SizedBox(width: r.spacingSm),
+                              _CategoryCard(
+                                r: r,
+                                label: 'Olahan Kain Sisa',
+                                imageUrl: '',
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.symmetric(horizontal: pad),
+                            itemCount: _categories.length,
+                            separatorBuilder: (_, _) => SizedBox(width: r.spacingSm),
+                            itemBuilder: (context, index) {
+                              final cat = _categories[index];
+                              return _CategoryCard(
+                                r: r,
+                                label: cat['name']?.toString() ?? 'Batik',
+                                imageUrl: cat['image_url']?.toString() ?? '',
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -203,145 +256,68 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // Product Grid (responsive columns)
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(pad, 0, pad, 32),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: r.productGridColumns,
-                childAspectRatio: r.productGridAspectRatio,
-                crossAxisSpacing: r.spacingMd,
-                mainAxisSpacing: r.spacingMd,
+          if (_isLoading)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppTheme.terracotta),
+                ),
               ),
-              delegate: SliverChildListDelegate([
-                _ProductCard(
-                  r: r,
-                  name: 'Kemeja Batik Parang Classic',
-                  category: 'Baju Batik',
-                  price: 'Rp 285.000',
-                  originalPrice: 'Rp 350.000',
-                  rating: '4.8',
-                  sold: '124',
-                  imageUrl: 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=600&q=80',
-                  onTap: () => context.push(
-                    '/detail-produk',
-                    extra: {
-                      'name': 'Kemeja Batik Parang Classic',
-                      'category': 'Baju Batik',
-                      'price': 'Rp 285.000',
-                      'originalPrice': 'Rp 350.000',
-                      'rating': '4.8',
-                      'sold': '124',
-                      'imageUrl': 'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80',
-                    },
-                  ),
+            )
+          else if (_errorMessage != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: pad, vertical: 32),
+                child: Column(
+                  children: [
+                    Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: r.fontSm,
+                        color: AppTheme.textSubtle,
+                      ),
+                    ),
+                    SizedBox(height: r.spacingSm),
+                    ElevatedButton(
+                      onPressed: _loadHomeData,
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryDark),
+                      child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
                 ),
-                _ProductCard(
-                  r: r,
-                  name: 'Kain Batik Tulis Mega Mendung',
-                  category: 'Kain Batik',
-                  price: 'Rp 450.000',
-                  rating: '4.9',
-                  sold: '89',
-                  imageUrl: 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=600&q=80',
-                  onTap: () => context.push(
-                    '/detail-produk',
-                    extra: {
-                      'name': 'Kain Batik Tulis Mega Mendung',
-                      'category': 'Kain Batik',
-                      'price': 'Rp 450.000',
-                      'rating': '4.9',
-                      'sold': '89',
-                      'imageUrl': 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=800&q=80',
-                    },
-                  ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(pad, 0, pad, 32),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: r.productGridColumns,
+                  childAspectRatio: r.productGridAspectRatio,
+                  crossAxisSpacing: r.spacingMd,
+                  mainAxisSpacing: r.spacingMd,
                 ),
-                _ProductCard(
-                  r: r,
-                  name: 'Dress Batik Kawung Modern',
-                  category: 'Baju Batik',
-                  price: 'Rp 320.000',
-                  originalPrice: 'Rp 390.000',
-                  rating: '4.7',
-                  sold: '67',
-                  imageUrl: 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=600&q=80',
-                  onTap: () => context.push(
-                    '/detail-produk',
-                    extra: {
-                      'name': 'Dress Batik Kawung Modern',
-                      'category': 'Baju Batik',
-                      'price': 'Rp 320.000',
-                      'originalPrice': 'Rp 390.000',
-                      'rating': '4.7',
-                      'sold': '67',
-                      'imageUrl': 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=800&q=80',
-                    },
-                  ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final p = _featuredProducts[index];
+                    return _ProductCard(
+                      r: r,
+                      name: p['name']?.toString() ?? '',
+                      category: p['category']?.toString() ?? '',
+                      price: p['price']?.toString() ?? 'Rp 0',
+                      originalPrice: p['originalPrice']?.toString(),
+                      rating: p['rating']?.toString() ?? '5.0',
+                      sold: p['sold']?.toString() ?? '0',
+                      imageUrl: p['imageUrl']?.toString() ?? '',
+                      onTap: () => context.push('/detail-produk', extra: p),
+                    );
+                  },
+                  childCount: _featuredProducts.length > 6 ? 6 : _featuredProducts.length,
                 ),
-                _ProductCard(
-                  r: r,
-                  name: 'Sarung Batik Lereng Premium',
-                  category: 'Kain Batik',
-                  price: 'Rp 195.000',
-                  rating: '4.6',
-                  sold: '203',
-                  imageUrl: 'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=600&q=80',
-                  onTap: () => context.push(
-                    '/detail-produk',
-                    extra: {
-                      'name': 'Sarung Batik Lereng Premium',
-                      'category': 'Kain Batik',
-                      'price': 'Rp 195.000',
-                      'rating': '4.6',
-                      'sold': '203',
-                      'imageUrl': 'https://images.unsplash.com/photo-1762111908716-4e42d554e9ce?w=800&q=80',
-                    },
-                  ),
-                ),
-                _ProductCard(
-                  r: r,
-                  name: 'Blouse Batik Sogan Elegan',
-                  category: 'Baju Batik',
-                  price: 'Rp 265.000',
-                  originalPrice: 'Rp 310.000',
-                  rating: '4.8',
-                  sold: '55',
-                  imageUrl: 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=600&q=80',
-                  onTap: () => context.push(
-                    '/detail-produk',
-                    extra: {
-                      'name': 'Blouse Batik Sogan Elegan',
-                      'category': 'Baju Batik',
-                      'price': 'Rp 265.000',
-                      'originalPrice': 'Rp 310.000',
-                      'rating': '4.8',
-                      'sold': '55',
-                      'imageUrl': 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=800&q=80',
-                    },
-                  ),
-                ),
-                _ProductCard(
-                  r: r,
-                  name: 'Set Batik Couple Sido Mukti',
-                  category: 'Baju Batik',
-                  price: 'Rp 575.000',
-                  rating: '5.0',
-                  sold: '38',
-                  imageUrl: 'https://images.unsplash.com/photo-1762111908760-ce1cd8c135e4?w=600&q=80',
-                  onTap: () => context.push(
-                    '/detail-produk',
-                    extra: {
-                      'name': 'Set Batik Couple Sido Mukti',
-                      'category': 'Baju Batik',
-                      'price': 'Rp 575.000',
-                      'rating': '5.0',
-                      'sold': '38',
-                      'imageUrl': 'https://images.unsplash.com/photo-1762111908760-ce1cd8c135e4?w=800&q=80',
-                    },
-                  ),
-                ),
-              ]),
+              ),
             ),
-          ),
         ],
       ),
     );

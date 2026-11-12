@@ -3,12 +3,25 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/profile_store.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-class ProfilScreen extends StatelessWidget {
+class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
+
+  @override
+  State<ProfilScreen> createState() => _ProfilScreenState();
+}
+
+class _ProfilScreenState extends State<ProfilScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.fetchCurrentUser().catchError((_) => null);
+    ProfileStore.instance.syncAddressesFromServer();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +86,10 @@ class ProfilScreen extends StatelessWidget {
             SizedBox(
               height: 42,
               child: TextButton.icon(
-                onPressed: () => context.go('/login'),
+                onPressed: () async {
+                  await AuthService.instance.logout();
+                  if (context.mounted) context.go('/login');
+                },
                 icon: const Icon(Icons.logout_rounded, size: 16),
                 label: Text(
                   'Keluar dari Akun',
