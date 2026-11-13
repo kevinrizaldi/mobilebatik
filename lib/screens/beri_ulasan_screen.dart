@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/profile_store.dart';
+import '../services/api_client.dart';
+import '../services/order_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -44,7 +46,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
   String get _productName =>
       widget.order['productName'] as String? ?? 'Produk Batik';
   String get _orderId =>
-      widget.order['orderNumber'] as String? ?? 'HSO-DUMMY-0001';
+      widget.order['orderNumber'] as String? ?? 'Pesanan';
   String get _variant => widget.order['variant'] as String? ?? 'Ukuran L';
   String get _imageUrl => widget.order['imageUrl'] as String? ?? '';
 
@@ -657,31 +659,84 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
 
   Future<void> _submitReview() async {
     if (_rating == 0 || _reviewController.text.trim().length < 30) return;
+
+    final orderId = int.tryParse('${widget.order['orderId'] ?? ''}');
+    if (orderId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'ID pesanan tidak ditemukan. Buka ulasan dari daftar pesanan.',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
-    ProfileStore.instance.addReview(
-      ProfileReview(
-        product: _productName,
-        date: _formatToday(),
+    try {
+      await OrderService.instance.submitReview(
+        orderId: orderId,
+        productId: int.tryParse('${widget.order['productId'] ?? ''}'),
         rating: _rating,
         comment: _reviewController.text.trim(),
-        imageUrl: _imageUrl,
-        orderId: _orderId,
-        tags: _selectedTags.toList(),
-        photos: List.unmodifiable(_photos),
-      ),
-    );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Ulasan berhasil dikirim. Terima kasih!',
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
+      );
+      if (!mounted) return;
+      ProfileStore.instance.addReview(
+        ProfileReview(
+          product: _productName,
+          date: _formatToday(),
+          rating: _rating,
+          comment: _reviewController.text.trim(),
+          imageUrl: _imageUrl,
+          orderId: _orderId,
+          tags: _selectedTags.toList(),
+          photos: List.unmodifiable(_photos),
         ),
-        backgroundColor: AppTheme.successGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    context.pop();
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Ulasan berhasil dikirim. Terima kasih!',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.successGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      context.pop();
+    } on ApiException catch (e) {
+      // 422 dari backend: status bukan Selesai / sudah pernah ulasan, dsb.
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal mengirim ulasan. Periksa koneksi Anda.',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _sectionLabel(String label) => Text(
