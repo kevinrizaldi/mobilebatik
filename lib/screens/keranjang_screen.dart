@@ -18,7 +18,32 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   @override
   void initState() {
     super.initState();
+    CartStore.instance.onError = _showCartError;
     CartStore.instance.syncFromServer();
+  }
+
+  @override
+  void dispose() {
+    if (CartStore.instance.onError == _showCartError) {
+      CartStore.instance.onError = null;
+    }
+    super.dispose();
+  }
+
+  void _showCartError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   String _formatPrice(int price) => ApiConfig.formatRupiah(price);

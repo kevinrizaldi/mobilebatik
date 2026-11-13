@@ -34,6 +34,21 @@ class CartStore extends ChangeNotifier {
   final List<CartItem> items = [];
   bool isSyncing = false;
 
+  /// Callback untuk menampilkan error aksi keranjang ke user (SnackBar).
+  /// Layar yang memuat keranjang (mis. `keranjang_screen`) menyetel ini;
+  /// jika tidak diset, error tetap tidak crash tapi tidak ditampilkan.
+  void Function(String message)? onError;
+
+  void _reportError(Object error) {
+    final handler = onError;
+    if (handler == null) return;
+    handler(
+      error is ApiException
+          ? error.message
+          : 'Gagal memperbarui keranjang. Periksa koneksi Anda.',
+    );
+  }
+
   int get itemCount => items.fold(0, (total, item) => total + item.quantity);
 
   int get selectedItemCount => items
@@ -140,7 +155,12 @@ class CartStore extends ChangeNotifier {
     for (final item in items) {
       item.isSelected = selected;
       if (item.cartItemId != null) {
-        CartService.instance.updateItem(item.cartItemId!, selected: selected).catchError((_) => <String, dynamic>{});
+        CartService.instance
+            .updateItem(item.cartItemId!, selected: selected)
+            .catchError((Object e) {
+          _reportError(e);
+          return <String, dynamic>{};
+        });
       }
     }
     notifyListeners();
@@ -153,7 +173,10 @@ class CartStore extends ChangeNotifier {
     if (item.cartItemId != null) {
       CartService.instance
           .updateItem(item.cartItemId!, selected: item.isSelected)
-          .catchError((_) => <String, dynamic>{});
+          .catchError((Object e) {
+        _reportError(e);
+        return <String, dynamic>{};
+      });
     }
   }
 
@@ -164,7 +187,10 @@ class CartStore extends ChangeNotifier {
     if (item.cartItemId != null) {
       CartService.instance
           .updateItem(item.cartItemId!, quantity: item.quantity)
-          .catchError((_) => <String, dynamic>{});
+          .catchError((Object e) {
+        _reportError(e);
+        return <String, dynamic>{};
+      });
     }
   }
 
@@ -174,9 +200,11 @@ class CartStore extends ChangeNotifier {
     final removed = items.removeAt(idx);
     notifyListeners();
     if (removed.cartItemId != null) {
-      CartService.instance
-          .removeItem(removed.cartItemId!)
-          .catchError((_) {});
+      CartService.instance.removeItem(removed.cartItemId!).catchError(
+        (Object e) {
+          _reportError(e);
+        },
+      );
     }
   }
 
@@ -186,7 +214,11 @@ class CartStore extends ChangeNotifier {
     notifyListeners();
     for (final item in toRemove) {
       if (item.cartItemId != null) {
-        CartService.instance.removeItem(item.cartItemId!).catchError((_) {});
+        CartService.instance.removeItem(item.cartItemId!).catchError(
+          (Object e) {
+            _reportError(e);
+          },
+        );
       }
     }
   }
