@@ -46,13 +46,13 @@ class OrderService {
     );
   }
 
-  Future<void> submitReview({
+  Future<Map<String, dynamic>> submitReview({
     required int orderId,
     int? productId,
     required int rating,
     required String comment,
   }) async {
-    await ApiClient.instance.post(
+    return ApiClient.instance.post(
       '/orders/$orderId/reviews',
       body: {
         'product_id': ?productId,
@@ -60,6 +60,14 @@ class OrderService {
         'comment': comment.trim(),
       },
     );
+  }
+
+  Future<Map<String, dynamic>> confirmReceived(int orderId) {
+    return ApiClient.instance.post('/orders/$orderId/confirm');
+  }
+
+  Future<Map<String, dynamic>> cancelOrder(int orderId) {
+    return ApiClient.instance.post('/orders/$orderId/cancel');
   }
 }
 

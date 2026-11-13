@@ -61,6 +61,103 @@ class _PesananScreenState extends State<PesananScreen> {
     }
   }
 
+  Future<void> _confirmReceived(_OrderData order) async {
+    if (order.id == null) return;
+    try {
+      final res = await OrderService.instance.confirmReceived(order.id!);
+      if (!mounted) return;
+      _showActionSnackBar(
+        res['message']?.toString() ?? 'Pesanan telah dikonfirmasi diterima.',
+        color: AppTheme.successGreen,
+      );
+      await _loadOrders();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showActionSnackBar(e.message, color: AppTheme.errorRed);
+    }
+  }
+
+  Future<void> _cancelOrder(_OrderData order) async {
+    if (order.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Text(
+          'Batalkan Pesanan?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textMain,
+          ),
+        ),
+        content: Text(
+          'Pesanan #${order.orderNumber} akan dibatalkan dan stok produk '
+          'dikembalikan. Tindakan ini tidak dapat dibatalkan.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            color: AppTheme.textMuted,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              'Kembali',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: AppTheme.textSubtle,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              'Ya, Batalkan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.errorRed,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final res = await OrderService.instance.cancelOrder(order.id!);
+      if (!mounted) return;
+      _showActionSnackBar(
+        res['message']?.toString() ?? 'Pesanan berhasil dibatalkan.',
+        color: AppTheme.successGreen,
+      );
+      await _loadOrders();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showActionSnackBar(e.message, color: AppTheme.errorRed);
+    }
+  }
+
+  void _showActionSnackBar(String message, {Color? color}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: color ?? AppTheme.primaryDark,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   _OrderData _mapOrder(Map<String, dynamic> raw) {
     final items = raw['items'] is List
         ? (raw['items'] as List).whereType<Map<String, dynamic>>().toList()
@@ -88,15 +185,37 @@ class _PesananScreenState extends State<PesananScreen> {
     final courier = raw['courier']?.toString() ?? 'JNE Reguler';
     final tracking = raw['tracking_number']?.toString();
     final createdAt = (raw['created_at']?.toString() ?? '').split('T').first;
+    final hasReview =
+        raw['has_review'] == true ||
+        ProfileStore.instance.reviewedOrderIds
+            .contains(raw['code']?.toString());
 
-    final primaryAction = switch (statusIndex) {
-      1 => 'Bayar Sekarang',
-      3 => 'Lacak Pengiriman',
-      4 => 'Beri Ulasan',
-      _ => 'Lihat Detail',
-    };
+    // Status sesuai kontrak backend (OrderController::formatOrder).
+    // - index 1: belum dibayar → bayar / batalkan
+    // - index 3: dikirim → terima barang / lacak
+    // - index 4: selesai → ulasan
+    // Order yang sudah dibatalkan tidak menawarkan aksi bayar/batal.
+    final isCancelled = status.toLowerCase().contains('batal');
+    final primaryAction = isCancelled
+        ? 'Lihat Detail'
+        : switch (statusIndex) {
+            1 => 'Bayar Sekarang',
+            3 => 'Terima Barang',
+            4 => hasReview ? 'Ulasan Terkirim' : 'Beri Ulasan',
+            _ => 'Lihat Detail',
+          };
+    final secondaryAction = isCancelled
+        ? 'Lihat Detail'
+        : switch (statusIndex) {
+            1 => 'Batalkan',
+            3 => 'Lacak Pengiriman',
+            _ => 'Lihat Detail',
+          };
 
     return _OrderData(
+      id: raw['id'] is int
+          ? raw['id'] as int
+          : int.tryParse('${raw['id']}'),
       orderNumber: raw['code']?.toString() ?? 'ORD',
       date: createdAt.isNotEmpty ? createdAt : 'Baru saja',
       status: status,
@@ -107,13 +226,18 @@ class _PesananScreenState extends State<PesananScreen> {
       price: totalPrice,
       quantity: totalQty > 0 ? totalQty : 1,
       imageUrl: firstItem['image_url']?.toString() ?? '',
+      productId: firstItem['product_id'] is int
+          ? firstItem['product_id'] as int
+          : int.tryParse('${firstItem['product_id']}'),
       notice: tracking != null && tracking.isNotEmpty
           ? 'Resi: $tracking'
           : 'Metode: ${raw['payment_method'] ?? '-'}',
       noticeDetail: 'Kurir: $courier',
       primaryAction: primaryAction,
-      secondaryAction: 'Lihat Detail',
+      secondaryAction: secondaryAction,
       statusIndex: statusIndex,
+      hasReview: hasReview,
+      paymentDeadline: raw['payment_deadline']?.toString(),
       orderedAt: createdAt.isNotEmpty ? createdAt : 'Baru saja',
       courier: courier,
       trackingNumber: tracking,
@@ -378,9 +502,9 @@ class _PesananScreenState extends State<PesananScreen> {
   }
 
   Widget _buildOrderCard(BuildContext context, Responsive r, _OrderData order) {
-    final reviewSubmitted = ProfileStore.instance.reviewedOrderIds.contains(
-      order.orderNumber,
-    );
+    final reviewSubmitted =
+        order.hasReview ||
+        ProfileStore.instance.reviewedOrderIds.contains(order.orderNumber);
     final primaryAction = reviewSubmitted
         ? 'Ulasan Terkirim'
         : order.primaryAction;
@@ -592,10 +716,15 @@ class _PesananScreenState extends State<PesananScreen> {
     final isReviewAction = label == 'Beri Ulasan';
     final isDetailAction = label == 'Lihat Detail';
     final isTrackingAction = label == 'Lacak Pengiriman';
+    final isPayAction = label == 'Bayar Sekarang';
+    final isConfirmAction = label == 'Terima Barang';
+    final isCancelAction = label == 'Batalkan';
     final isCompletedReview = label == 'Ulasan Terkirim';
     final icon = switch (label) {
       'Bayar Sekarang' => Icons.arrow_forward_rounded,
       'Lacak Pengiriman' => Icons.local_shipping_outlined,
+      'Terima Barang' => Icons.check_circle_outline_rounded,
+      'Batalkan' => Icons.cancel_outlined,
       'Beri Ulasan' => Icons.rate_review_outlined,
       'Ulasan Terkirim' => Icons.check_circle_outline_rounded,
       'Lihat Detail' => Icons.receipt_long_outlined,
@@ -603,68 +732,52 @@ class _PesananScreenState extends State<PesananScreen> {
       _ => Icons.receipt_long_outlined,
     };
 
+    final orderExtra = order == null
+        ? null
+        : <String, dynamic>{
+            'orderId': order.id,
+            'orderNumber': order.orderNumber,
+            'productName': order.productName,
+            'productId': order.productId,
+            'variant': order.variant,
+            'price': order.price,
+            'quantity': order.quantity,
+            'imageUrl': order.imageUrl,
+            'status': order.status,
+            'orderedAt': order.orderedAt,
+            'courier': order.courier,
+            'trackingNumber': order.trackingNumber,
+            'isPaid': order.statusIndex > 1,
+            'shippingFee': order.shippingFee,
+            'voucherDiscount': order.voucherDiscount,
+          };
+
     return SizedBox(
       height: 34,
       child: OutlinedButton.icon(
         onPressed: isCompletedReview
             ? null
+            : isPayAction && order != null
+            ? () => context.push(
+                '/pembayaran',
+                extra: {
+                  'orderId': order.id,
+                  'orderNumber': order.orderNumber,
+                  'totalPayment': order.price,
+                  'paymentDeadline': order.paymentDeadline,
+                  'productName': order.productName,
+                },
+              )
             : isReviewAction && order != null
-            ? () => context.push(
-                '/beri-ulasan',
-                extra: {
-                  'orderNumber': order.orderNumber,
-                  'productName': order.productName,
-                  'variant': order.variant,
-                  'price': order.price,
-                  'quantity': order.quantity,
-                  'imageUrl': order.imageUrl,
-                  'status': order.status,
-                  'orderedAt': order.orderedAt,
-                  'courier': order.courier,
-                  'trackingNumber': order.trackingNumber,
-                  'isPaid': order.statusIndex > 1,
-                  'shippingFee': order.shippingFee,
-                  'voucherDiscount': order.voucherDiscount,
-                },
-              )
+            ? () => context.push('/beri-ulasan', extra: orderExtra)
             : isDetailAction && order != null
-            ? () => context.push(
-                '/detail-pesanan',
-                extra: {
-                  'orderNumber': order.orderNumber,
-                  'productName': order.productName,
-                  'variant': order.variant,
-                  'price': order.price,
-                  'quantity': order.quantity,
-                  'imageUrl': order.imageUrl,
-                  'status': order.status,
-                  'orderedAt': order.orderedAt,
-                  'courier': order.courier,
-                  'trackingNumber': order.trackingNumber,
-                  'isPaid': order.statusIndex > 1,
-                  'shippingFee': order.shippingFee,
-                  'voucherDiscount': order.voucherDiscount,
-                },
-              )
+            ? () => context.push('/detail-pesanan', extra: orderExtra)
             : isTrackingAction && order != null
-            ? () => context.push(
-                '/lacak-pesanan',
-                extra: {
-                  'orderNumber': order.orderNumber,
-                  'productName': order.productName,
-                  'variant': order.variant,
-                  'price': order.price,
-                  'quantity': order.quantity,
-                  'imageUrl': order.imageUrl,
-                  'status': order.status,
-                  'orderedAt': order.orderedAt,
-                  'courier': order.courier,
-                  'trackingNumber': order.trackingNumber,
-                  'isPaid': order.statusIndex > 1,
-                  'shippingFee': order.shippingFee,
-                  'voucherDiscount': order.voucherDiscount,
-                },
-              )
+            ? () => context.push('/lacak-pesanan', extra: orderExtra)
+            : isConfirmAction && order != null
+            ? () => _confirmReceived(order)
+            : isCancelAction && order != null
+            ? () => _cancelOrder(order)
             : () {
                 ScaffoldMessenger.of(context)
                   ..hideCurrentSnackBar()
@@ -743,6 +856,7 @@ class _PesananScreenState extends State<PesananScreen> {
 }
 
 class _OrderData {
+  final int? id;
   final String orderNumber;
   final String date;
   final String status;
@@ -751,11 +865,14 @@ class _OrderData {
   final int price;
   final int quantity;
   final String imageUrl;
+  final int? productId;
   final String notice;
   final String noticeDetail;
   final String primaryAction;
   final String secondaryAction;
   final int statusIndex;
+  final bool hasReview;
+  final String? paymentDeadline;
   final String orderedAt;
   final String courier;
   final String? trackingNumber;
@@ -763,6 +880,7 @@ class _OrderData {
   final int voucherDiscount;
 
   const _OrderData({
+    required this.id,
     required this.orderNumber,
     required this.date,
     required this.status,
@@ -771,11 +889,14 @@ class _OrderData {
     required this.price,
     required this.quantity,
     required this.imageUrl,
+    required this.productId,
     required this.notice,
     required this.noticeDetail,
     required this.primaryAction,
     required this.secondaryAction,
     required this.statusIndex,
+    required this.hasReview,
+    required this.paymentDeadline,
     required this.orderedAt,
     required this.courier,
     required this.trackingNumber,

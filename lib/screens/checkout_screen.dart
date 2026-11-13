@@ -109,43 +109,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         .where((item) => item.isSelected)
         .toList();
 
-    if (storeSelected.isNotEmpty) {
-      _checkoutItems = storeSelected
-          .map((item) => {
-                'id': item.id,
-                'cartItemId': item.cartItemId,
-                'productId': item.productId,
-                'name': item.name,
-                'variant': item.variant,
-                'imageUrl': item.imageUrl,
-                'unitPrice': item.unitPrice,
-                'quantity': item.quantity,
-              })
-          .toList();
-    } else {
-      // Default sample items matching Figma mock
-      _checkoutItems = [
-        {
-          'id': 'parang-barong',
-          'name': 'Kemeja Lengan Panjang Parang Barong',
-          'variant': 'Ukuran: L · Jumlah: 1',
-          'imageUrl':
-              'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=300&q=80',
-          'unitPrice': 550000,
-          'quantity': 1,
-        },
-        {
-          'id': 'pouch-kawung',
-          'name': 'Pouch Dompet Batik & Perca Kawung',
-          'variant': 'Ukuran: Standar · Jumlah: 1',
-          'imageUrl':
-              'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=300&q=80',
-          'unitPrice': 120000,
-          'quantity': 1,
-        },
-      ];
-    }
+    _checkoutItems = storeSelected
+        .map((item) => {
+              'id': item.id,
+              'cartItemId': item.cartItemId,
+              'productId': item.productId,
+              'name': item.name,
+              'variant': item.variant,
+              'imageUrl': item.imageUrl,
+              'unitPrice': item.unitPrice,
+              'quantity': item.quantity,
+            })
+        .toList();
   }
+
+  bool get _hasItems => _checkoutItems.isNotEmpty;
 
   @override
   void dispose() {
@@ -175,6 +153,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _proceedToPayment() async {
     if (_isSubmitting) return;
+
+    if (!_hasItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Keranjang kosong. Tambahkan produk terlebih dahulu.',
+          ),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      return;
+    }
 
     final selectedCourier = _courierOptions[_selectedCourierIndex];
     final selectedPayment = _paymentMethods[_selectedPaymentIndex];
@@ -221,102 +211,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    if (cartItemIds.isNotEmpty || directItems.isNotEmpty) {
-      setState(() => _isSubmitting = true);
-      try {
-        final res = await OrderService.instance.checkout(
-          customerName: primaryAddress.recipient,
-          phone: primaryAddress.phone,
-          address: primaryAddress.address,
-          shippingOption: selectedCourier['name'].toString(),
-          shippingCost: (_shippingFee).toDouble(),
-          paymentMethod: selectedPayment['title'].toString(),
-          notes: _notesController.text.trim(),
-          cartItemIds: cartItemIds.isNotEmpty ? cartItemIds : null,
-          directItems: directItems.isNotEmpty ? directItems : null,
-        );
+    setState(() => _isSubmitting = true);
+    try {
+      final res = await OrderService.instance.checkout(
+        customerName: primaryAddress.recipient,
+        phone: primaryAddress.phone,
+        address: primaryAddress.address,
+        shippingOption: selectedCourier['name'].toString(),
+        shippingCost: (_shippingFee).toDouble(),
+        paymentMethod: selectedPayment['title'].toString(),
+        notes: _notesController.text.trim(),
+        cartItemIds: cartItemIds.isNotEmpty ? cartItemIds : null,
+        directItems: directItems.isNotEmpty ? directItems : null,
+      );
 
-        if (cartItemIds.isNotEmpty) {
-          await CartStore.instance.syncFromServer();
-        }
-        if (!mounted) return;
-        setState(() => _isSubmitting = false);
-
-        final order = (res['data'] as Map<String, dynamic>?) ?? {};
-        final totals = (res['totals'] as Map<String, dynamic>?) ?? {};
-        final serverTotal = (totals['grand_total'] is num)
-            ? (totals['grand_total'] as num).round()
-            : _totalPayment;
-        final serverShipping = (totals['shipping'] is num)
-            ? (totals['shipping'] as num).round()
-            : _shippingFee;
-        final serverDiscount = (totals['discount'] is num)
-            ? (totals['discount'] as num).round()
-            : 0;
-
-        final orderSummary = {
-          'orderId': order['id'],
-          'orderNumber': order['code']?.toString() ?? 'ORD-BARU',
-          'items': _checkoutItems,
-          'totalItems': _totalItemCount,
-          'productSubtotal': _itemsSubtotal,
-          'shippingFee': serverShipping,
-          'discount': serverDiscount,
-          'uniqueCode': 0,
-          'totalPayment': serverTotal,
-          'courier': selectedCourier,
-          'paymentMethod': selectedPayment,
-          'address': {
-            'recipient': primaryAddress.recipient,
-            'phone': primaryAddress.phone,
-            'address': primaryAddress.address,
-            'label': primaryAddress.label,
-          },
-          'notes': _notesController.text.trim(),
-          'orderedAt': order['created_at']?.toString() ?? 'Baru saja',
-        };
-
-        context.push('/pembayaran', extra: orderSummary);
-        return;
-      } on ApiException catch (e) {
-        if (!mounted) return;
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
-        return;
+      if (cartItemIds.isNotEmpty) {
+        await CartStore.instance.syncFromServer();
       }
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      final data = (res['data'] as Map<String, dynamic>?) ?? {};
+      final order = (data['order'] as Map<String, dynamic>?) ??
+          (data['id'] != null ? data : <String, dynamic>{});
+      final totals = (res['totals'] as Map<String, dynamic>?) ?? {};
+      final serverTotal = (totals['grand_total'] is num)
+          ? (totals['grand_total'] as num).round()
+          : _totalPayment;
+      final serverShipping = (totals['shipping'] is num)
+          ? (totals['shipping'] as num).round()
+          : _shippingFee;
+      final serverDiscount = (totals['discount'] is num)
+          ? (totals['discount'] as num).round()
+          : 0;
+      final snapRedirectUrl = data['snap_redirect_url']?.toString();
+      final snapToken = data['snap_token']?.toString();
+
+      final orderSummary = {
+        'orderId': order['id'],
+        'orderNumber': order['code']?.toString() ?? 'ORD-BARU',
+        'totalPayment': serverTotal,
+        'paymentDeadline': order['payment_deadline']?.toString(),
+        'snapRedirectUrl': (snapRedirectUrl == null || snapRedirectUrl.isEmpty)
+            ? null
+            : snapRedirectUrl,
+        'snapToken':
+            (snapToken == null || snapToken.isEmpty) ? null : snapToken,
+        'items': _checkoutItems,
+        'totalItems': _totalItemCount,
+        'productSubtotal': _itemsSubtotal,
+        'shippingFee': serverShipping,
+        'discount': serverDiscount,
+        'uniqueCode': 0,
+        'courier': selectedCourier,
+        'paymentMethod': selectedPayment,
+        'address': {
+          'recipient': primaryAddress.recipient,
+          'phone': primaryAddress.phone,
+          'address': primaryAddress.address,
+          'label': primaryAddress.label,
+        },
+        'notes': _notesController.text.trim(),
+        'orderedAt': order['created_at']?.toString() ?? 'Baru saja',
+      };
+
+      if (!mounted) return;
+      context.push('/pembayaran', extra: orderSummary);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
     }
-
-    final uniqueCode = _selectedPaymentIndex == 0 ? 238 : 0;
-    final totalWithCode = _totalPayment + uniqueCode;
-
-    final orderSummary = {
-      'orderNumber': 'HSO-20250218-0190',
-      'items': _checkoutItems,
-      'totalItems': _totalItemCount,
-      'productSubtotal': _itemsSubtotal,
-      'shippingFee': _shippingFee,
-      'discount': 0,
-      'uniqueCode': uniqueCode,
-      'totalPayment': totalWithCode,
-      'courier': selectedCourier,
-      'paymentMethod': selectedPayment,
-      'address': {
-        'recipient': primaryAddress.recipient,
-        'phone': primaryAddress.phone,
-        'address': primaryAddress.address,
-        'label': primaryAddress.label,
-      },
-      'notes': _notesController.text.trim(),
-      'orderedAt': 'Baru saja',
-    };
-
-    if (!mounted) return;
-    context.push('/pembayaran', extra: orderSummary);
   }
 
   @override
@@ -756,9 +726,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Column(
-            children: [
-              for (int i = 0; i < _checkoutItems.length; i++) ...[
+          if (!_hasItems)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Tidak ada produk untuk dibayar. Tambahkan produk ke '
+                'keranjang terlebih dahulu.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
+                  height: 1.4,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: [
+                for (int i = 0; i < _checkoutItems.length; i++) ...[
                 if (i > 0)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
@@ -1335,7 +1319,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: SizedBox(
               height: 44,
               child: ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _proceedToPayment,
+                onPressed: (_isSubmitting || !_hasItems)
+                    ? null
+                    : _proceedToPayment,
                 iconAlignment: IconAlignment.end,
                 icon: _isSubmitting
                     ? const SizedBox(
@@ -1348,7 +1334,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       )
                     : const Icon(Icons.arrow_forward_rounded, size: 16),
                 label: Text(
-                  _isSubmitting ? 'Memproses...' : 'Bayar Sekarang',
+                  !_hasItems
+                      ? 'Keranjang Kosong'
+                      : _isSubmitting
+                          ? 'Memproses...'
+                          : 'Bayar Sekarang',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
