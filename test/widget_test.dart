@@ -52,7 +52,7 @@ void main() {
     // Verify wide screen elements exist
     expect(find.text('Detail Produk'), findsOneWidget);
     expect(find.text('Batik Tulis Premium'), findsOneWidget);
-    expect(find.text('Ulasan Pembeli (48)'), findsOneWidget);
+    expect(find.text('Ulasan Pembeli (124)'), findsOneWidget);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();

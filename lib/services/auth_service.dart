@@ -19,12 +19,16 @@ class AuthService {
       },
     );
 
-    final token = res['token'] as String?;
+    final data = res['data'] is Map<String, dynamic>
+        ? res['data'] as Map<String, dynamic>
+        : null;
+
+    final token = (data?['token'] ?? res['token'])?.toString();
     if (token != null && token.isNotEmpty) {
       await ApiClient.instance.setToken(token);
     }
 
-    final user = res['user'];
+    final user = data?['user'] ?? res['user'];
     if (user is Map<String, dynamic>) {
       ProfileStore.instance.setFromUserJson(user);
     }
@@ -51,12 +55,16 @@ class AuthService {
       },
     );
 
-    final token = res['token'] as String?;
+    final data = res['data'] is Map<String, dynamic>
+        ? res['data'] as Map<String, dynamic>
+        : null;
+
+    final token = (data?['token'] ?? res['token'])?.toString();
     if (token != null && token.isNotEmpty) {
       await ApiClient.instance.setToken(token);
     }
 
-    final user = res['user'];
+    final user = data?['user'] ?? res['user'];
     if (user is Map<String, dynamic>) {
       ProfileStore.instance.setFromUserJson(user);
     }
@@ -68,8 +76,11 @@ class AuthService {
     final token = await ApiClient.instance.getToken();
     if (token == null || token.isEmpty) return null;
 
-    final res = await ApiClient.instance.get('/user');
-    final user = res['user'];
+    final res = await ApiClient.instance.get('/me');
+    final data = res['data'] is Map<String, dynamic>
+        ? res['data'] as Map<String, dynamic>
+        : null;
+    final user = data?['user'] ?? res['user'];
     if (user is Map<String, dynamic>) {
       ProfileStore.instance.setFromUserJson(user);
       return user;

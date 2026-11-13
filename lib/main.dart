@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'router/app_router.dart';
+import 'services/api_client.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Muat token tersimpan sebelum router membaca isLoggedIn (guard redirect).
+  await ApiClient.instance.getToken();
   runApp(const MobileBatikAuthApp());
 }
 

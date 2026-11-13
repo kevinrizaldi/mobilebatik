@@ -23,6 +23,11 @@ class ApiClient {
 
   String? _cachedToken;
 
+  /// Status login sinkron untuk guard router.
+  /// Token di-priming di `main()` sebelum runApp, sehingga flag ini
+  /// sudah mewakili state sesungguhnya saat redirect pertama berjalan.
+  bool get isLoggedIn => _cachedToken != null && _cachedToken!.isNotEmpty;
+
   Future<String?> getToken() async {
     if (_cachedToken != null) return _cachedToken;
     final prefs = await SharedPreferences.getInstance();

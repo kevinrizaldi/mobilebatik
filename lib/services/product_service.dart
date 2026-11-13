@@ -62,6 +62,24 @@ class ProductService {
     return {};
   }
 
+  /// Kategori produk sebagai string nama untuk layar.
+  /// API kanonik mengirim `category` sebagai objek `{id, name}`;
+  /// bentuk legacy string dan `category_name` tetap ditangani sebagai fallback.
+  String _categoryName(Map<String, dynamic> raw) {
+    final category = raw['category'];
+    if (category is Map) {
+      final name = category['name']?.toString() ?? '';
+      if (name.isNotEmpty) return name;
+    } else if (category is String && category.isNotEmpty) {
+      return category;
+    }
+
+    final legacyName = raw['category_name']?.toString() ?? '';
+    if (legacyName.isNotEmpty) return legacyName;
+
+    return 'Batik';
+  }
+
   /// Menyamakan format JSON Laravel ke map yang dipakai layar Flutter.
   Map<String, dynamic> toUiProduct(Map<String, dynamic> raw) {
     final numPrice = (raw['price'] is num)
@@ -76,7 +94,7 @@ class ProductService {
       'id': raw['id'],
       'sku': raw['sku'],
       'name': raw['name']?.toString() ?? 'Produk Batik',
-      'category': raw['category']?.toString() ?? 'Batik',
+      'category': _categoryName(raw),
       'price': ApiConfig.formatRupiah(numPrice),
       'rawPrice': numPrice,
       'stock': raw['stock'] ?? 0,
