@@ -51,7 +51,7 @@ void main() {
 
     // Verify wide screen elements exist
     expect(find.text('Detail Produk'), findsOneWidget);
-    expect(find.text('Batik Tulis Premium'), findsOneWidget);
+    expect(find.text('Kemeja Batik Parang Classic'), findsOneWidget);
     expect(find.text('Ulasan Pembeli (124)'), findsOneWidget);
 
     addTearDown(() {
