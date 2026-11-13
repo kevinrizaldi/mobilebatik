@@ -5,12 +5,19 @@ class ApiConfig {
 
   static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL');
 
+  /// Override base URL khusus pengujian (produksi mengatur lewat
+  /// `--dart-define=API_BASE_URL=...`). `null` = perilaku normal.
+  @visibleForTesting
+  static String? debugBaseUrlOverride;
+
   /// Base URL untuk Laravel API.
   /// - Android Emulator memakai `10.0.2.2` untuk mengarah ke `127.0.0.1` laptop.
   /// - Web / Desktop / iOS Simulator memakai `127.0.0.1`.
   /// - Untuk HP fisik via WiFi, jalankan dengan:
   ///   `flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8000/api`
   static String get baseUrl {
+    final override = debugBaseUrlOverride;
+    if (override != null) return override;
     if (_envBaseUrl.isNotEmpty) {
       return _envBaseUrl;
     }

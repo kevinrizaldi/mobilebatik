@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_config.dart';
@@ -20,6 +21,13 @@ class ApiClient {
   static final ApiClient instance = ApiClient._();
   static const String _tokenKey = 'sanctum_api_token';
   static const Duration _timeout = Duration(seconds: 12);
+
+  /// Seam pengujian: mengganti transport HTTP (mis. `MockClient` dari
+  /// `package:http/testing.dart`) supaya test tidak membuka jaringan nyata.
+  /// `null` (default) = memakai fungsi `http` seperti biasa; perilaku
+  /// produksi tidak berubah.
+  @visibleForTesting
+  static http.Client? debugClientOverride;
 
   String? _cachedToken;
 
@@ -66,15 +74,45 @@ class ApiClient {
     return uri.replace(queryParameters: query);
   }
 
+  /// Transport satu pintu: pakai `debugClientOverride` bila diset (test),
+  /// selain itu fungsi `http` top-level seperti biasa (produksi).
+  Future<http.Response> _dispatch(
+    String method,
+    Uri uri,
+    Map<String, String> headers, [
+    String? body,
+  ]) async {
+    final override = debugClientOverride;
+    if (override != null) {
+      final request = http.Request(method, uri)..headers.addAll(headers);
+      if (body != null) request.body = body;
+      return http.Response.fromStream(await override.send(request));
+    }
+    switch (method) {
+      case 'GET':
+        return http.get(uri, headers: headers);
+      case 'POST':
+        return http.post(uri, headers: headers, body: body);
+      case 'PATCH':
+        return http.patch(uri, headers: headers, body: body);
+      case 'DELETE':
+        return http.delete(uri, headers: headers);
+      default:
+        throw UnsupportedError('Metode HTTP tidak didukung: $method');
+    }
+  }
+
   Future<Map<String, dynamic>> get(
     String path, {
     Map<String, String>? query,
     bool auth = true,
   }) async {
     return _send(
-      () async => http
-          .get(_buildUri(path, query), headers: await _buildHeaders(auth: auth))
-          .timeout(_timeout),
+      () async => _dispatch(
+        'GET',
+        _buildUri(path, query),
+        await _buildHeaders(auth: auth),
+      ).timeout(_timeout),
     );
   }
 
@@ -84,13 +122,12 @@ class ApiClient {
     bool auth = true,
   }) async {
     return _send(
-      () async => http
-          .post(
-            _buildUri(path),
-            headers: await _buildHeaders(auth: auth),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(_timeout),
+      () async => _dispatch(
+        'POST',
+        _buildUri(path),
+        await _buildHeaders(auth: auth),
+        body != null ? jsonEncode(body) : null,
+      ).timeout(_timeout),
     );
   }
 
@@ -100,13 +137,12 @@ class ApiClient {
     bool auth = true,
   }) async {
     return _send(
-      () async => http
-          .patch(
-            _buildUri(path),
-            headers: await _buildHeaders(auth: auth),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(_timeout),
+      () async => _dispatch(
+        'PATCH',
+        _buildUri(path),
+        await _buildHeaders(auth: auth),
+        body != null ? jsonEncode(body) : null,
+      ).timeout(_timeout),
     );
   }
 
@@ -115,9 +151,11 @@ class ApiClient {
     bool auth = true,
   }) async {
     return _send(
-      () async => http
-          .delete(_buildUri(path), headers: await _buildHeaders(auth: auth))
-          .timeout(_timeout),
+      () async => _dispatch(
+        'DELETE',
+        _buildUri(path),
+        await _buildHeaders(auth: auth),
+      ).timeout(_timeout),
     );
   }
 
