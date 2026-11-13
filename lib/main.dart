@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'router/app_router.dart';
 import 'services/api_client.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Muat token tersimpan sebelum router membaca isLoggedIn (guard redirect).
+  // Muat token tersimpan lalu validasi (GET /me) sebelum router membaca
+  // isLoggedIn: sesi mati → /login, sesi hidup → /home, server mati → /home.
   await ApiClient.instance.getToken();
+  await AuthService.instance.restoreSession();
   runApp(const MobileBatikAuthApp());
 }
 

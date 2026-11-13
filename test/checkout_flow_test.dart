@@ -163,5 +163,15 @@ void main() {
       expect(currentPath(), '/home');
       expect(find.byType(HomeScreen), findsOneWidget);
     });
+
+    testWidgets('dengan sesi tersimpan, aplikasi terbuka langsung di /home',
+        (tester) async {
+      ignoreNetworkImageErrors();
+      await ApiClient.instance.setToken('token-tes');
+      await pumpApp(tester);
+
+      expect(currentPath(), '/home');
+      expect(find.byType(HomeScreen), findsOneWidget);
+    });
   });
 }
