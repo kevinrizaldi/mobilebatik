@@ -17,7 +17,7 @@ Base URL API dibaca dari compile-time define `API_BASE_URL` (`lib/services/api_c
 |---|---|---|
 | Android emulator | `http://10.0.2.2:8000/api` (→ `127.0.0.1` laptop) | – |
 | iOS simulator / web / desktop | `http://127.0.0.1:8000/api` | – |
-| HP fisik via Wi-Fi | – | `flutter run --dart-define=http://<IP_LAPTOP>:8000/api` |
+| HP fisik via Wi-Fi | – | `flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8000/api` |
 | Produksi | – | `flutter run --dart-define=API_BASE_URL=https://<domain>/api` |
 
 Contoh produksi / build APK:
@@ -45,7 +45,7 @@ Route yang butuh login (guard `lib/router/app_router.dart`): `/checkout`, `/pemb
 ## Analisis & test
 
 ```bash
-flutter analyze        # lint statis (baseline bersih)
+flutter analyze        # lint statis (0 error/warning; 18 info pre-existing)
 flutter test           # 34 test (api client, cart store, checkout flow, produk, widget)
 ```
 
