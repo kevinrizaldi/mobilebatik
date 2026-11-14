@@ -9,7 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   final store = CartStore.instance;
 
-  const serverItemJson = '{"data":[{'
+  const serverItemJson =
+      '{"data":[{'
       '"id":42,"product_id":7,"name":"Kemeja Batik",'
       '"size":"L","variant":"Batik Tulis","image_url":"k.jpg",'
       '"unit_price":285000,"quantity":2,"selected":true}]}';
@@ -32,27 +33,30 @@ void main() {
   });
 
   group('local cart logic (no token, API+local fallback)', () {
-    test('addProduct keeps item locally and raises itemCount (regression)', () async {
-      var notified = 0;
-      store.addListener(() => notified++);
+    test(
+      'addProduct keeps item locally and raises itemCount (regression)',
+      () async {
+        var notified = 0;
+        store.addListener(() => notified++);
 
-      await store.addProduct(
-        productId: 7,
-        name: 'Kemeja Batik',
-        size: 'L',
-        imageUrl: 'k.jpg',
-        unitPrice: 285000,
-        quantity: 2,
-      );
+        await store.addProduct(
+          productId: 7,
+          name: 'Kemeja Batik',
+          size: 'L',
+          imageUrl: 'k.jpg',
+          unitPrice: 285000,
+          quantity: 2,
+        );
 
-      // Regresi bug detail_produk: add pada store harus menaikkan itemCount.
-      expect(store.items, hasLength(1));
-      expect(store.itemCount, 2);
-      expect(store.items.single.quantity, 2);
-      expect(store.items.single.variant, 'Ukuran L');
-      expect(store.items.single.isSelected, isTrue);
-      expect(notified, greaterThan(0));
-    });
+        // Regresi bug detail_produk: add pada store harus menaikkan itemCount.
+        expect(store.items, hasLength(1));
+        expect(store.itemCount, 2);
+        expect(store.items.single.quantity, 2);
+        expect(store.items.single.variant, 'Ukuran L');
+        expect(store.items.single.isSelected, isTrue);
+        expect(notified, greaterThan(0));
+      },
+    );
 
     test('addProduct same product+size increments and clamps at 99', () async {
       await store.addProduct(
@@ -142,44 +146,47 @@ void main() {
       expect(store.itemCount, 3);
     });
 
-    test('selection flags drive selectedItemCount/subtotal/allSelected', () async {
-      store.items.addAll([
-        CartItem(
-          id: 'a',
-          productId: 1,
-          name: 'A',
-          variant: 'Ukuran M',
-          imageUrl: '',
-          unitPrice: 10000,
-          quantity: 2,
-          isSelected: false,
-        ),
-        CartItem(
-          id: 'b',
-          productId: 2,
-          name: 'B',
-          variant: 'Ukuran M',
-          imageUrl: '',
-          unitPrice: 5000,
-          quantity: 1,
-          isSelected: true,
-        ),
-      ]);
+    test(
+      'selection flags drive selectedItemCount/subtotal/allSelected',
+      () async {
+        store.items.addAll([
+          CartItem(
+            id: 'a',
+            productId: 1,
+            name: 'A',
+            variant: 'Ukuran M',
+            imageUrl: '',
+            unitPrice: 10000,
+            quantity: 2,
+            isSelected: false,
+          ),
+          CartItem(
+            id: 'b',
+            productId: 2,
+            name: 'B',
+            variant: 'Ukuran M',
+            imageUrl: '',
+            unitPrice: 5000,
+            quantity: 1,
+            isSelected: true,
+          ),
+        ]);
 
-      expect(store.selectedItemCount, 1);
-      expect(store.selectedSubtotal, 5000);
-      expect(store.allSelected, isFalse);
+        expect(store.selectedItemCount, 1);
+        expect(store.selectedSubtotal, 5000);
+        expect(store.allSelected, isFalse);
 
-      store.toggleItem('a');
-      expect(store.selectedItemCount, 3);
-      expect(store.selectedSubtotal, 25000);
-      expect(store.allSelected, isTrue);
+        store.toggleItem('a');
+        expect(store.selectedItemCount, 3);
+        expect(store.selectedSubtotal, 25000);
+        expect(store.allSelected, isTrue);
 
-      store.toggleAll(false);
-      expect(store.selectedItemCount, 0);
-      expect(store.selectedSubtotal, 0);
-      expect(store.allSelected, isFalse);
-    });
+        store.toggleAll(false);
+        expect(store.selectedItemCount, 0);
+        expect(store.selectedSubtotal, 0);
+        expect(store.allSelected, isFalse);
+      },
+    );
   });
 
   group('server-backed cart (plan Task 11: MockClient)', () {

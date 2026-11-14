@@ -40,8 +40,7 @@ class OrderService {
         if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
         if (cartItemIds != null && cartItemIds.isNotEmpty)
           'cart_item_ids': cartItemIds,
-        if (directItems != null && directItems.isNotEmpty)
-          'items': directItems,
+        if (directItems != null && directItems.isNotEmpty) 'items': directItems,
       },
     );
   }
@@ -70,4 +69,3 @@ class OrderService {
     return ApiClient.instance.post('/orders/$orderId/cancel');
   }
 }
-

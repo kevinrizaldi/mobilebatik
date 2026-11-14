@@ -140,10 +140,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     final unitPrice = rawPrice is num
         ? rawPrice.round()
         : int.tryParse(
-              (productData['price']?.toString() ?? '0')
-                  .replaceAll(RegExp(r'[^0-9]'), ''),
-            ) ??
-            0;
+                (productData['price']?.toString() ?? '0').replaceAll(
+                  RegExp(r'[^0-9]'),
+                  '',
+                ),
+              ) ??
+              0;
 
     try {
       await CartStore.instance.addProduct(
@@ -160,7 +162,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -173,7 +179,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           backgroundColor: AppTheme.successGreen,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } on ApiException catch (e) {
@@ -263,7 +271,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 },
                 children: [
                   TableRow(
-                    decoration: const BoxDecoration(color: AppTheme.terracottaLight),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.terracottaLight,
+                    ),
                     children: [
                       _tableHeader('Size'),
                       _tableHeader('Lingkar Dada'),
@@ -287,8 +297,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded,
-                        size: 18, color: AppTheme.terracotta),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: AppTheme.terracotta,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -376,7 +389,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  Widget _safeImage(String url, {double? width, double? height, BoxFit fit = BoxFit.cover}) {
+  Widget _safeImage(
+    String url, {
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.cover,
+  }) {
     return Image.network(
       url,
       width: width,
@@ -395,7 +413,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                     : null,
                 strokeWidth: 2,
                 color: AppTheme.terracotta,
@@ -435,14 +453,16 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
-    final isWideScreen = r.screenWidth >= 768 || (r.isLandscape && r.screenWidth >= 600);
+    final isWideScreen =
+        r.screenWidth >= 768 || (r.isLandscape && r.screenWidth >= 600);
 
     return Scaffold(
       backgroundColor: AppTheme.bgWarm,
       appBar: _buildAppBar(r),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 768 ||
+          final isWide =
+              constraints.maxWidth >= 768 ||
               (r.isLandscape && constraints.maxWidth >= 600);
           return isWide
               ? _buildWideTwoColumnLayout(r, constraints)
@@ -731,7 +751,10 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               top: 14,
               left: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryDark.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(20),
@@ -739,8 +762,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.verified_rounded,
-                        color: Color(0xFFD4AF37), size: 14),
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: Color(0xFFD4AF37),
+                      size: 14,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       'Batik Tulis Premium',
@@ -775,8 +801,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                     ],
                   ),
                   child: Icon(
-                    _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                    color: _isFavorite ? AppTheme.errorRed : AppTheme.primaryDark,
+                    _isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: _isFavorite
+                        ? AppTheme.errorRed
+                        : AppTheme.primaryDark,
                     size: 20,
                   ),
                 ),
@@ -835,7 +865,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? AppTheme.terracotta : AppTheme.borderLight,
+                    color: isSelected
+                        ? AppTheme.terracotta
+                        : AppTheme.borderLight,
                     width: isSelected ? 2.5 : 1,
                   ),
                 ),
@@ -858,7 +890,10 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   // Trust Badges
   Widget _buildTrustBadges(Responsive r) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: r.spacingMd, vertical: r.spacingSm),
+      padding: EdgeInsets.symmetric(
+        horizontal: r.spacingMd,
+        vertical: r.spacingSm,
+      ),
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
@@ -866,11 +901,21 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
       ),
       child: Row(
         children: [
-          Expanded(child: _trustBadgeItem(Icons.verified_outlined, '100% Asli', r)),
+          Expanded(
+            child: _trustBadgeItem(Icons.verified_outlined, '100% Asli', r),
+          ),
           Container(width: 1, height: 24, color: AppTheme.borderLight),
-          Expanded(child: _trustBadgeItem(Icons.replay_rounded, 'Garansi 7 Hari', r)),
+          Expanded(
+            child: _trustBadgeItem(Icons.replay_rounded, 'Garansi 7 Hari', r),
+          ),
           Container(width: 1, height: 24, color: AppTheme.borderLight),
-          Expanded(child: _trustBadgeItem(Icons.local_shipping_outlined, 'Kirim Cepat', r)),
+          Expanded(
+            child: _trustBadgeItem(
+              Icons.local_shipping_outlined,
+              'Kirim Cepat',
+              r,
+            ),
+          ),
         ],
       ),
     );
@@ -901,7 +946,8 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
 
   // Product Header
   Widget _buildProductHeader(Responsive r) {
-    final name = productData['name']?.toString() ?? 'Kemeja Batik Parang Classic';
+    final name =
+        productData['name']?.toString() ?? 'Kemeja Batik Parang Classic';
     final category = productData['category']?.toString() ?? 'Baju Batik Pria';
     final rating = productData['rating']?.toString() ?? '4.8';
     final sold = productData['sold']?.toString() ?? '124';
@@ -931,7 +977,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               'Stok: ${productData['stock'] ?? 12} ${productData['status'] ?? 'Tersedia'}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: r.fontXs,
-                color: (productData['stock'] is int && (productData['stock'] as int) <= 0)
+                color:
+                    (productData['stock'] is int &&
+                        (productData['stock'] as int) <= 0)
                     ? AppTheme.errorRed
                     : AppTheme.successGreen,
                 fontWeight: FontWeight.w600,
@@ -958,7 +1006,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.star_rounded, color: Color(0xFFE5A93C), size: 18),
+                const Icon(
+                  Icons.star_rounded,
+                  color: Color(0xFFE5A93C),
+                  size: 18,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   rating,
@@ -1035,7 +1087,10 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.errorRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -1065,8 +1120,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-
-
   // Size Selector
   Widget _buildSizeSelector(Responsive r) {
     return Column(
@@ -1091,8 +1144,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.straighten_rounded,
-                      size: 15, color: AppTheme.terracotta),
+                  const Icon(
+                    Icons.straighten_rounded,
+                    size: 15,
+                    color: AppTheme.terracotta,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Panduan Ukuran',
@@ -1126,13 +1182,17 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                       color: isSelected ? AppTheme.terracotta : AppTheme.bgCard,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? AppTheme.terracotta : AppTheme.borderLight,
+                        color: isSelected
+                            ? AppTheme.terracotta
+                            : AppTheme.borderLight,
                         width: 1.5,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppTheme.terracotta.withValues(alpha: 0.2),
+                                color: AppTheme.terracotta.withValues(
+                                  alpha: 0.2,
+                                ),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -1248,12 +1308,17 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             side: const BorderSide(color: AppTheme.borderLight),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.chat_bubble_outline_rounded,
-                  color: AppTheme.primaryDark, size: 18),
+              const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: AppTheme.primaryDark,
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Text(
                 'Chat',
@@ -1282,7 +1347,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               foregroundColor: AppTheme.terracotta,
               side: const BorderSide(color: AppTheme.terracotta, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ),
@@ -1296,7 +1363,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: Text(
               'Beli Sekarang',
@@ -1310,8 +1379,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
       ],
     );
   }
-
-
 
   // Product Specifications
   Widget _buildProductSpecifications(Responsive r) {
@@ -1353,7 +1420,11 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               if (productData['sku'] != null)
                 _specItem('SKU', productData['sku'].toString(), r),
               if (productData['description']?.toString().isNotEmpty == true)
-                _specItem('Deskripsi', productData['description'].toString(), r),
+                _specItem(
+                  'Deskripsi',
+                  productData['description'].toString(),
+                  r,
+                ),
             ],
           ),
         ),
@@ -1531,7 +1602,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               (i) => Icon(
                 Icons.star_rounded,
                 size: 14,
-                color: i < rating ? const Color(0xFFE5A93C) : AppTheme.borderLight,
+                color: i < rating
+                    ? const Color(0xFFE5A93C)
+                    : AppTheme.borderLight,
               ),
             ),
           ),
@@ -1556,19 +1629,22 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
         'name': 'Kain Batik Tulis Mega Mendung',
         'price': 'Rp 450.000',
         'rating': '4.9',
-        'imageUrl': 'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=400&q=80',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=400&q=80',
       },
       {
         'name': 'Dress Batik Kawung Modern',
         'price': 'Rp 320.000',
         'rating': '4.7',
-        'imageUrl': 'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=400&q=80',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=400&q=80',
       },
       {
         'name': 'Blouse Batik Sogan Elegan',
         'price': 'Rp 265.000',
         'rating': '4.8',
-        'imageUrl': 'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=400&q=80',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=400&q=80',
       },
     ];
 
@@ -1603,7 +1679,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(9)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(9),
+                      ),
                       child: _safeImage(
                         item['imageUrl']!,
                         height: 100,
@@ -1665,9 +1743,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             offset: const Offset(0, -4),
           ),
         ],
-        border: const Border(
-          top: BorderSide(color: AppTheme.borderLight),
-        ),
+        border: const Border(top: BorderSide(color: AppTheme.borderLight)),
       ),
       child: Row(
         children: [
@@ -1704,7 +1780,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 foregroundColor: AppTheme.terracotta,
                 side: const BorderSide(color: AppTheme.terracotta, width: 1.5),
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -1718,7 +1796,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: Text(
                 'Beli Sekarang',
@@ -1741,10 +1821,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     final unitPrice = rawPrice is num
         ? rawPrice.round()
         : int.tryParse(
-              (productData['price']?.toString() ?? '0')
-                  .replaceAll(RegExp(r'[^0-9]'), ''),
-            ) ??
-            0;
+                (productData['price']?.toString() ?? '0').replaceAll(
+                  RegExp(r'[^0-9]'),
+                  '',
+                ),
+              ) ??
+              0;
 
     context.push(
       '/checkout',

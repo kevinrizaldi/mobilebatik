@@ -85,4 +85,3 @@ class ProfileService {
     await ApiClient.instance.delete('/addresses/$id');
   }
 }
-

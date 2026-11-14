@@ -5,42 +5,51 @@ import '../theme/app_theme.dart';
 class GoogleSocialButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String label;
+  final bool isLoading;
 
   const GoogleSocialButton({
     super.key,
     required this.onPressed,
     this.label = 'Masuk dengan Google',
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(50),
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.primaryDark,
         side: const BorderSide(color: AppTheme.borderLight, width: 1.2),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const GoogleLogo(size: 20),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textMain,
+      child: isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const GoogleLogo(size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textMain,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -55,10 +64,7 @@ class GoogleLogo extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        size: Size(size, size),
-        painter: _GoogleLogoPainter(),
-      ),
+      child: CustomPaint(size: Size(size, size), painter: _GoogleLogoPainter()),
     );
   }
 }
@@ -75,19 +81,47 @@ class _GoogleLogoPainter extends CustomPainter {
       ..lineTo(12.00 * s, 9.80 * s)
       ..lineTo(12.00 * s, 14.47 * s)
       ..lineTo(18.44 * s, 14.47 * s)
-      ..cubicTo(18.16 * s, 15.96 * s, 17.31 * s, 17.23 * s, 16.04 * s, 18.08 * s)
+      ..cubicTo(
+        18.16 * s,
+        15.96 * s,
+        17.31 * s,
+        17.23 * s,
+        16.04 * s,
+        18.08 * s,
+      )
       ..lineTo(16.04 * s, 21.08 * s)
       ..lineTo(19.92 * s, 21.08 * s)
-      ..cubicTo(22.19 * s, 18.99 * s, 23.49 * s, 15.91 * s, 23.49 * s, 12.27 * s)
+      ..cubicTo(
+        22.19 * s,
+        18.99 * s,
+        23.49 * s,
+        15.91 * s,
+        23.49 * s,
+        12.27 * s,
+      )
       ..close();
     canvas.drawPath(bluePath, Paint()..color = const Color(0xFF4285F4));
 
     // 2. Green Section (#34A853)
     final greenPath = Path()
       ..moveTo(12.00 * s, 24.00 * s)
-      ..cubicTo(15.24 * s, 24.00 * s, 17.95 * s, 22.92 * s, 19.93 * s, 21.09 * s)
+      ..cubicTo(
+        15.24 * s,
+        24.00 * s,
+        17.95 * s,
+        22.92 * s,
+        19.93 * s,
+        21.09 * s,
+      )
       ..lineTo(16.04 * s, 18.08 * s)
-      ..cubicTo(14.96 * s, 18.80 * s, 13.59 * s, 19.24 * s, 11.99 * s, 19.24 * s)
+      ..cubicTo(
+        14.96 * s,
+        18.80 * s,
+        13.59 * s,
+        19.24 * s,
+        11.99 * s,
+        19.24 * s,
+      )
       ..cubicTo(8.87 * s, 19.24 * s, 6.23 * s, 17.13 * s, 5.28 * s, 14.28 * s)
       ..lineTo(1.34 * s, 14.28 * s)
       ..lineTo(1.34 * s, 17.37 * s)

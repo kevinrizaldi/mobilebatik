@@ -33,8 +33,8 @@ class AppRouter {
   static const List<String> _authEntryPaths = ['/login', '/register'];
 
   static bool _requiresAuth(String location) => _authRequiredPaths.any(
-        (path) => location == path || location.startsWith('$path/'),
-      );
+    (path) => location == path || location.startsWith('$path/'),
+  );
 
   /// Cast aman untuk `state.extra` (Task 12): bukan Map → null, layar
   /// memakai fallback default-nya masing-masing.
@@ -90,16 +90,14 @@ class AppRouter {
       GoRoute(
         path: '/checkout',
         name: 'checkout',
-        builder: (context, state) => CheckoutScreen(
-          checkoutData: _extraMap(state.extra),
-        ),
+        builder: (context, state) =>
+            CheckoutScreen(checkoutData: _extraMap(state.extra)),
       ),
       GoRoute(
         path: '/pembayaran',
         name: 'pembayaran',
-        builder: (context, state) => PembayaranScreen(
-          paymentData: _extraMap(state.extra),
-        ),
+        builder: (context, state) =>
+            PembayaranScreen(paymentData: _extraMap(state.extra)),
       ),
       GoRoute(
         path: '/pesanan',
@@ -109,23 +107,20 @@ class AppRouter {
       GoRoute(
         path: '/detail-pesanan',
         name: 'detail-pesanan',
-        builder: (context, state) => DetailPesananScreen(
-          order: _extraMap(state.extra) ?? const {},
-        ),
+        builder: (context, state) =>
+            DetailPesananScreen(order: _extraMap(state.extra) ?? const {}),
       ),
       GoRoute(
         path: '/lacak-pesanan',
         name: 'lacak-pesanan',
-        builder: (context, state) => LacakPesananScreen(
-          order: _extraMap(state.extra) ?? const {},
-        ),
+        builder: (context, state) =>
+            LacakPesananScreen(order: _extraMap(state.extra) ?? const {}),
       ),
       GoRoute(
         path: '/beri-ulasan',
         name: 'beri-ulasan',
-        builder: (context, state) => BeriUlasanScreen(
-          order: _extraMap(state.extra) ?? const {},
-        ),
+        builder: (context, state) =>
+            BeriUlasanScreen(order: _extraMap(state.extra) ?? const {}),
       ),
       GoRoute(
         path: '/profil',

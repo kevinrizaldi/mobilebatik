@@ -54,110 +54,115 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: r.pagePaddingH, vertical: isLandscape ? 4 : 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: r.pagePaddingH,
+              vertical: isLandscape ? 4 : 8,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: r.formMaxWidth),
               child: Column(
                 children: [
-                    BatikHeaderLogo(tag: 'OTENTIKASI AMAN', compact: isLandscape),
-              SizedBox(height: isLandscape ? 12 : 28),
+                  BatikHeaderLogo(tag: 'OTENTIKASI AMAN', compact: isLandscape),
+                  SizedBox(height: isLandscape ? 12 : 28),
 
-              // Main Card Container
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.bgCard,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: _isSent ? _buildSuccessState() : _buildFormState(),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Back to Login Link
-              GestureDetector(
-                onTap: () => context.go('/login'),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.arrow_back_rounded,
-                      size: 16,
-                      color: AppTheme.primaryDark,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'KEMBALI KE LOGIN',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: AppTheme.primaryDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Help & Support Links
-              Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                children: [
-                  Text(
-                    'Butuh Bantuan Personal?',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      color: AppTheme.textSubtle,
-                    ),
-                  ),
+                  // Main Card Container
                   Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.terracotta,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Menghubungkan ke Bespoke Concierge WhatsApp...'),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgCard,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                      );
-                    },
-                    child: Text(
-                      'Bespoke Concierge WhatsApp',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.terracotta,
-                      ),
+                      ],
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: _isSent ? _buildSuccessState() : _buildFormState(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Back to Login Link
+                  GestureDetector(
+                    onTap: () => context.go('/login'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.arrow_back_rounded,
+                          size: 16,
+                          color: AppTheme.primaryDark,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'KEMBALI KE LOGIN',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: AppTheme.primaryDark,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
 
-              const SizedBox(height: 16),
-                  ],
-                ),
+                  const SizedBox(height: 24),
+
+                  // Help & Support Links
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    children: [
+                      Text(
+                        'Butuh Bantuan Personal?',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: AppTheme.textSubtle,
+                        ),
+                      ),
+                      Container(
+                        width: 4,
+                        height: 4,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.terracotta,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Menghubungkan ke Bespoke Concierge WhatsApp...',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Bespoke Concierge WhatsApp',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.terracotta,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildFormState() {
@@ -271,7 +276,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const TextSpan(
-                          text: ' jika email verifikasi belum diterima dalam 2 menit.',
+                          text:
+                              ' jika email verifikasi belum diterima dalam 2 menit.',
                         ),
                       ],
                     ),

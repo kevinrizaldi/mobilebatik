@@ -194,35 +194,39 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
               Expanded(
                 child: store.isSyncing && store.items.isEmpty
                     ? const Center(
-                        child: CircularProgressIndicator(color: AppTheme.terracotta),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.terracotta,
+                        ),
                       )
                     : store.items.isEmpty
-                        ? RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: store.syncFromServer,
-                            child: ListView(
-                              children: [
-                                SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-                                _buildEmptyCart(r),
-                              ],
+                    ? RefreshIndicator(
+                        color: AppTheme.terracotta,
+                        onRefresh: store.syncFromServer,
+                        child: ListView(
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.15,
                             ),
-                          )
-                        : RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: store.syncFromServer,
-                            child: ListView.separated(
-                              padding: EdgeInsets.fromLTRB(
-                                r.pagePaddingH,
-                                4,
-                                r.pagePaddingH,
-                                20,
-                              ),
-                              itemCount: store.items.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: 8),
-                              itemBuilder: (context, index) =>
-                                  _buildCartItem(r, store.items[index], store),
-                            ),
+                            _buildEmptyCart(r),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        color: AppTheme.terracotta,
+                        onRefresh: store.syncFromServer,
+                        child: ListView.separated(
+                          padding: EdgeInsets.fromLTRB(
+                            r.pagePaddingH,
+                            4,
+                            r.pagePaddingH,
+                            20,
                           ),
+                          itemCount: store.items.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) =>
+                              _buildCartItem(r, store.items[index], store),
+                        ),
+                      ),
               ),
             ],
           ),
@@ -444,9 +448,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             width: double.infinity,
             height: 46,
             child: ElevatedButton.icon(
-              onPressed: canCheckout
-                  ? () => context.push('/checkout')
-                  : null,
+              onPressed: canCheckout ? () => context.push('/checkout') : null,
               iconAlignment: IconAlignment.end,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: Text(

@@ -116,26 +116,25 @@ void main() {
     String currentPath() =>
         AppRouter.router.routerDelegate.currentConfiguration.uri.path;
 
-    testWidgets(
-      'logged-out user hitting /checkout, /pesanan, /profil '
-      'is redirected to /login',
-      (tester) async {
-        ignoreNetworkImageErrors();
-        await pumpApp(tester);
+    testWidgets('logged-out user hitting /checkout, /pesanan, /profil '
+        'is redirected to /login', (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
 
-        for (final location in ['/checkout', '/pesanan', '/profil']) {
-          await goTo(tester, location);
-          expect(
-            currentPath(),
-            '/login',
-            reason: '$location harus redirect ke /login saat belum login',
-          );
-          expect(find.byType(LoginScreen), findsOneWidget);
-        }
-      },
-    );
+      for (final location in ['/checkout', '/pesanan', '/profil']) {
+        await goTo(tester, location);
+        expect(
+          currentPath(),
+          '/login',
+          reason: '$location harus redirect ke /login saat belum login',
+        );
+        expect(find.byType(LoginScreen), findsOneWidget);
+      }
+    });
 
-    testWidgets('logged-in user is allowed into protected routes', (tester) async {
+    testWidgets('logged-in user is allowed into protected routes', (
+      tester,
+    ) async {
       ignoreNetworkImageErrors();
       await ApiClient.instance.setToken('token-tes');
       await pumpApp(tester);
@@ -153,7 +152,9 @@ void main() {
       expect(find.byType(ProfilScreen), findsOneWidget);
     });
 
-    testWidgets('logged-in user visiting /login is bounced to /home', (tester) async {
+    testWidgets('logged-in user visiting /login is bounced to /home', (
+      tester,
+    ) async {
       ignoreNetworkImageErrors();
       await ApiClient.instance.setToken('token-tes');
       await pumpApp(tester);
@@ -164,8 +165,9 @@ void main() {
       expect(find.byType(HomeScreen), findsOneWidget);
     });
 
-    testWidgets('dengan sesi tersimpan, aplikasi terbuka langsung di /home',
-        (tester) async {
+    testWidgets('dengan sesi tersimpan, aplikasi terbuka langsung di /home', (
+      tester,
+    ) async {
       ignoreNetworkImageErrors();
       await ApiClient.instance.setToken('token-tes');
       await pumpApp(tester);

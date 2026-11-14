@@ -18,7 +18,13 @@ class _KatalogScreenState extends State<KatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Semua';
   String _selectedSort = 'Terpopuler';
-  List<String> _categories = ['Semua', 'Baju Batik', 'Kain Batik', 'Olahan Kain', 'Aksesoris'];
+  List<String> _categories = [
+    'Semua',
+    'Baju Batik',
+    'Kain Batik',
+    'Olahan Kain',
+    'Aksesoris',
+  ];
   List<Map<String, dynamic>> _products = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -69,10 +75,14 @@ class _KatalogScreenState extends State<KatalogScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredProducts {
-    var list = _selectedCategory == 'Semua' ? _products : _products.where((p) => p['category'] == _selectedCategory).toList();
+    var list = _selectedCategory == 'Semua'
+        ? _products
+        : _products.where((p) => p['category'] == _selectedCategory).toList();
     final q = _searchController.text.toLowerCase();
     if (q.isNotEmpty) {
-      list = list.where((p) => (p['name'] as String).toLowerCase().contains(q)).toList();
+      list = list
+          .where((p) => (p['name'] as String).toLowerCase().contains(q))
+          .toList();
     }
     return list;
   }
@@ -87,35 +97,77 @@ class _KatalogScreenState extends State<KatalogScreen> {
     final r = Responsive.of(context);
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(r.cardRadius))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(r.cardRadius)),
+      ),
       backgroundColor: AppTheme.bgWarm,
       isScrollControlled: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(r.spacingLg, r.spacingMd, r.spacingLg, r.spacingLg),
+        padding: EdgeInsets.fromLTRB(
+          r.spacingLg,
+          r.spacingMd,
+          r.spacingLg,
+          r.spacingLg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(2)),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             SizedBox(height: r.spacingMd),
-            Text('Urutkan', style: GoogleFonts.outfit(fontSize: r.fontLg, fontWeight: FontWeight.w700, color: AppTheme.textMain)),
+            Text(
+              'Urutkan',
+              style: GoogleFonts.outfit(
+                fontSize: r.fontLg,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textMain,
+              ),
+            ),
             SizedBox(height: r.spacingSm),
-            ...['Terpopuler', 'Harga Terendah', 'Harga Tertinggi', 'Terbaru'].map((sort) => ListTile(
-              title: Text(sort, style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, fontWeight: _selectedSort == sort ? FontWeight.w600 : FontWeight.w400, color: _selectedSort == sort ? AppTheme.terracotta : AppTheme.textMuted)),
-              trailing: _selectedSort == sort ? Icon(Icons.check_rounded, color: AppTheme.terracotta, size: r.iconSm) : null,
-              onTap: () {
-                setState(() => _selectedSort = sort);
-                Navigator.pop(ctx);
-                _loadCatalog();
-              },
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-            )),
+            ...[
+              'Terpopuler',
+              'Harga Terendah',
+              'Harga Tertinggi',
+              'Terbaru',
+            ].map(
+              (sort) => ListTile(
+                title: Text(
+                  sort,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontMd,
+                    fontWeight: _selectedSort == sort
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: _selectedSort == sort
+                        ? AppTheme.terracotta
+                        : AppTheme.textMuted,
+                  ),
+                ),
+                trailing: _selectedSort == sort
+                    ? Icon(
+                        Icons.check_rounded,
+                        color: AppTheme.terracotta,
+                        size: r.iconSm,
+                      )
+                    : null,
+                onTap: () {
+                  setState(() => _selectedSort = sort);
+                  Navigator.pop(ctx);
+                  _loadCatalog();
+                },
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+            ),
             SizedBox(height: r.spacingMd),
           ],
         ),
@@ -140,29 +192,67 @@ class _KatalogScreenState extends State<KatalogScreen> {
         title: Row(
           children: [
             Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(color: const Color(0xFF1C130D), borderRadius: BorderRadius.circular(8)),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C130D),
+                borderRadius: BorderRadius.circular(8),
+              ),
               alignment: Alignment.center,
-              child: Text('HS', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700, fontSize: r.fontMd)),
+              child: Text(
+                'HS',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: r.fontMd,
+                ),
+              ),
             ),
             SizedBox(width: r.spacingSm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Hamzah Style', style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, fontWeight: FontWeight.w700, color: AppTheme.textMain)),
-                Text('Official Store', style: GoogleFonts.plusJakartaSans(fontSize: r.fontXs, fontWeight: FontWeight.w500, color: AppTheme.textSubtle)),
+                Text(
+                  'Hamzah Style',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontMd,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textMain,
+                  ),
+                ),
+                Text(
+                  'Official Store',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontXs,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSubtle,
+                  ),
+                ),
               ],
             ),
           ],
         ),
         actions: [
-          Center(child: Text('Produk', style: GoogleFonts.plusJakartaSans(fontSize: r.fontSm, fontWeight: FontWeight.w600, color: AppTheme.textMain))),
+          Center(
+            child: Text(
+              'Produk',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: r.fontSm,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textMain,
+              ),
+            ),
+          ),
           SizedBox(width: r.spacingSm),
           CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF1C130D),
-            child: Icon(Icons.person_outline_rounded, color: Colors.white, size: r.iconSm),
+            child: Icon(
+              Icons.person_outline_rounded,
+              color: Colors.white,
+              size: r.iconSm,
+            ),
           ),
           SizedBox(width: pad * 0.8),
         ],
@@ -183,18 +273,39 @@ class _KatalogScreenState extends State<KatalogScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
-                      style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textMain),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: r.fontMd,
+                        color: AppTheme.textMain,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Cari produk batik...',
-                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textSubtle),
-                        prefixIcon: Icon(Icons.search_rounded, size: r.iconSm, color: AppTheme.textSubtle),
+                        hintStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontMd,
+                          color: AppTheme.textSubtle,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          size: r.iconSm,
+                          color: AppTheme.textSubtle,
+                        ),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: Icon(Icons.clear_rounded, size: r.iconSm - 2, color: AppTheme.textSubtle),
-                                onPressed: () { _searchController.clear(); setState(() {}); })
+                                icon: Icon(
+                                  Icons.clear_rounded,
+                                  size: r.iconSm - 2,
+                                  color: AppTheme.textSubtle,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                },
+                              )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: r.spacingMd, vertical: r.spacingSm),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: r.spacingMd,
+                          vertical: r.spacingSm,
+                        ),
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                       ),
@@ -203,15 +314,31 @@ class _KatalogScreenState extends State<KatalogScreen> {
                 ),
                 SizedBox(width: r.spacingSm),
                 Container(
-                  width: 46, height: 46,
-                  decoration: BoxDecoration(color: AppTheme.inputBg, borderRadius: BorderRadius.circular(r.cardRadius * 0.75)),
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppTheme.inputBg,
+                    borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
+                  ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Icon(Icons.notifications_none_rounded, color: AppTheme.textMain, size: r.iconMd),
+                      Icon(
+                        Icons.notifications_none_rounded,
+                        color: AppTheme.textMain,
+                        size: r.iconMd,
+                      ),
                       Positioned(
-                        right: 11, top: 11,
-                        child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF401100), shape: BoxShape.circle)),
+                        right: 11,
+                        top: 11,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF401100),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -237,11 +364,20 @@ class _KatalogScreenState extends State<KatalogScreen> {
                     onTap: () => setState(() => _selectedCategory = cat),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: EdgeInsets.symmetric(horizontal: r.spacingMd, vertical: r.spacingXs),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: r.spacingMd,
+                        vertical: r.spacingXs,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primaryDark : AppTheme.inputBg,
+                        color: isSelected
+                            ? AppTheme.primaryDark
+                            : AppTheme.inputBg,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: isSelected ? AppTheme.primaryDark : AppTheme.borderLight),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppTheme.primaryDark
+                              : AppTheme.borderLight,
+                        ),
                       ),
                       child: Text(
                         cat,
@@ -263,17 +399,32 @@ class _KatalogScreenState extends State<KatalogScreen> {
             padding: EdgeInsets.fromLTRB(pad, r.spacingSm, pad, r.spacingXs),
             child: Row(
               children: [
-                Text('${filtered.length} produk',
-                    style: GoogleFonts.plusJakartaSans(fontSize: r.fontSm, color: AppTheme.textSubtle)),
+                Text(
+                  '${filtered.length} produk',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontSm,
+                    color: AppTheme.textSubtle,
+                  ),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => _showFilterSheet(context),
                   child: Row(
                     children: [
-                      Icon(Icons.sort_rounded, size: r.iconSm - 4, color: AppTheme.terracotta),
+                      Icon(
+                        Icons.sort_rounded,
+                        size: r.iconSm - 4,
+                        color: AppTheme.terracotta,
+                      ),
                       SizedBox(width: r.spacingXs),
-                      Text(_selectedSort,
-                          style: GoogleFonts.plusJakartaSans(fontSize: r.fontSm, fontWeight: FontWeight.w600, color: AppTheme.terracotta)),
+                      Text(
+                        _selectedSort,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontSm,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.terracotta,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -285,81 +436,106 @@ class _KatalogScreenState extends State<KatalogScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.terracotta),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.terracotta,
+                    ),
                   )
                 : _errorMessage != null
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: pad),
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: pad),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cloud_off_rounded,
+                            size: r.isTablet ? 64 : 48,
+                            color: AppTheme.borderLight,
+                          ),
+                          SizedBox(height: r.spacingSm),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: r.fontMd,
+                              color: AppTheme.textSubtle,
+                            ),
+                          ),
+                          SizedBox(height: r.spacingMd),
+                          ElevatedButton(
+                            onPressed: _loadCatalog,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryDark,
+                            ),
+                            child: const Text(
+                              'Coba Lagi',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : filtered.isEmpty
+                ? RefreshIndicator(
+                    color: AppTheme.terracotta,
+                    onRefresh: _loadCatalog,
+                    child: ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
+                        Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.cloud_off_rounded, size: r.isTablet ? 64 : 48, color: AppTheme.borderLight),
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: r.isTablet ? 64 : 48,
+                                color: AppTheme.borderLight,
+                              ),
                               SizedBox(height: r.spacingSm),
                               Text(
-                                _errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textSubtle),
-                              ),
-                              SizedBox(height: r.spacingMd),
-                              ElevatedButton(
-                                onPressed: _loadCatalog,
-                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryDark),
-                                child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+                                'Produk tidak ditemukan',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: r.fontMd,
+                                  color: AppTheme.textSubtle,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      )
-                    : filtered.isEmpty
-                        ? RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: _loadCatalog,
-                            child: ListView(
-                              children: [
-                                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                                Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.search_off_rounded, size: r.isTablet ? 64 : 48, color: AppTheme.borderLight),
-                                      SizedBox(height: r.spacingSm),
-                                      Text('Produk tidak ditemukan',
-                                          style: GoogleFonts.plusJakartaSans(fontSize: r.fontMd, color: AppTheme.textSubtle)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: _loadCatalog,
-                            child: GridView.builder(
-                              padding: EdgeInsets.fromLTRB(pad, 0, pad, 24),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: r.productGridColumns,
-                                childAspectRatio: r.productGridAspectRatio,
-                                crossAxisSpacing: r.spacingMd,
-                                mainAxisSpacing: r.spacingMd,
-                              ),
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                final p = filtered[index];
-                                return _KatalogProductCard(
-                                  r: r,
-                                  name: p['name']?.toString() ?? '',
-                                  category: p['category']?.toString() ?? '',
-                                  price: p['price']?.toString() ?? 'Rp 0',
-                                  originalPrice: p['originalPrice']?.toString(),
-                                  rating: p['rating']?.toString() ?? '5.0',
-                                  sold: p['sold']?.toString() ?? '0',
-                                  imageUrl: p['imageUrl']?.toString() ?? '',
-                                  onTap: () => context.push('/detail-produk', extra: p),
-                                );
-                              },
-                            ),
-                          ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    color: AppTheme.terracotta,
+                    onRefresh: _loadCatalog,
+                    child: GridView.builder(
+                      padding: EdgeInsets.fromLTRB(pad, 0, pad, 24),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: r.productGridColumns,
+                        childAspectRatio: r.productGridAspectRatio,
+                        crossAxisSpacing: r.spacingMd,
+                        mainAxisSpacing: r.spacingMd,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final p = filtered[index];
+                        return _KatalogProductCard(
+                          r: r,
+                          name: p['name']?.toString() ?? '',
+                          category: p['category']?.toString() ?? '',
+                          price: p['price']?.toString() ?? 'Rp 0',
+                          originalPrice: p['originalPrice']?.toString(),
+                          rating: p['rating']?.toString() ?? '5.0',
+                          sold: p['sold']?.toString() ?? '0',
+                          imageUrl: p['imageUrl']?.toString() ?? '',
+                          onTap: () => context.push('/detail-produk', extra: p),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -398,7 +574,13 @@ class _KatalogProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(r.cardRadius),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +588,9 @@ class _KatalogProductCard extends StatelessWidget {
             Expanded(
               flex: 5,
               child: ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(r.cardRadius)),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(r.cardRadius),
+                ),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -441,24 +625,49 @@ class _KatalogProductCard extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      top: 8, right: 8,
+                      top: 8,
+                      right: 8,
                       child: Container(
-                        width: 30, height: 30,
+                        width: 30,
+                        height: 30,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            ),
+                          ],
                         ),
-                        child: Icon(Icons.favorite_border_rounded, size: r.iconSm - 2, color: AppTheme.primaryDark),
+                        child: Icon(
+                          Icons.favorite_border_rounded,
+                          size: r.iconSm - 2,
+                          color: AppTheme.primaryDark,
+                        ),
                       ),
                     ),
                     if (originalPrice != null)
                       Positioned(
-                        top: 8, left: 8,
+                        top: 8,
+                        left: 8,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: r.spacingSm, vertical: 3),
-                          decoration: BoxDecoration(color: AppTheme.errorRed, borderRadius: BorderRadius.circular(5)),
-                          child: Text('PROMO', style: GoogleFonts.plusJakartaSans(fontSize: r.fontXs - 1, fontWeight: FontWeight.w700, color: Colors.white)),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: r.spacingSm,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.errorRed,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            'PROMO',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: r.fontXs - 1,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                   ],
@@ -472,15 +681,44 @@ class _KatalogProductCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(category, style: GoogleFonts.plusJakartaSans(fontSize: r.fontXs, fontWeight: FontWeight.w500, color: AppTheme.textSubtle)),
+                    Text(
+                      category,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: r.fontXs,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textSubtle,
+                      ),
+                    ),
                     SizedBox(height: r.spacingXs),
-                    Text(name,
-                        style: GoogleFonts.plusJakartaSans(fontSize: r.fontSm + 1, fontWeight: FontWeight.w600, color: AppTheme.textMain, height: 1.3),
-                        maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(
+                      name,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: r.fontSm + 1,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textMain,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const Spacer(),
                     if (originalPrice != null)
-                      Text(originalPrice!, style: GoogleFonts.plusJakartaSans(fontSize: r.fontXs + 1, color: AppTheme.textSubtle, decoration: TextDecoration.lineThrough)),
-                    Text(price, style: GoogleFonts.outfit(fontSize: r.fontLg - 1, fontWeight: FontWeight.w700, color: AppTheme.primaryDark)),
+                      Text(
+                        originalPrice!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontXs + 1,
+                          color: AppTheme.textSubtle,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    Text(
+                      price,
+                      style: GoogleFonts.outfit(
+                        fontSize: r.fontLg - 1,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryDark,
+                      ),
+                    ),
                     SizedBox(height: r.spacingXs),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -488,18 +726,46 @@ class _KatalogProductCard extends StatelessWidget {
                         Flexible(
                           child: Row(
                             children: [
-                              Icon(Icons.star_rounded, size: r.iconSm - 4, color: const Color(0xFFF59E0B)),
+                              Icon(
+                                Icons.star_rounded,
+                                size: r.iconSm - 4,
+                                color: const Color(0xFFF59E0B),
+                              ),
                               SizedBox(width: r.spacingXs),
-                              Text(rating, style: GoogleFonts.plusJakartaSans(fontSize: r.fontXs + 1, fontWeight: FontWeight.w600, color: AppTheme.textMuted)),
+                              Text(
+                                rating,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: r.fontXs + 1,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
                               SizedBox(width: r.spacingXs),
-                              Flexible(child: Text('|$sold terjual', style: GoogleFonts.plusJakartaSans(fontSize: r.fontXs, color: AppTheme.textSubtle), overflow: TextOverflow.ellipsis)),
+                              Flexible(
+                                child: Text(
+                                  '|$sold terjual',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: r.fontXs,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         Container(
-                          width: 28, height: 28,
-                          decoration: BoxDecoration(color: AppTheme.primaryDark, borderRadius: BorderRadius.circular(8)),
-                          child: Icon(Icons.add_shopping_cart_rounded, size: r.iconSm - 4, color: Colors.white),
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryDark,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.add_shopping_cart_rounded,
+                            size: r.iconSm - 4,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),

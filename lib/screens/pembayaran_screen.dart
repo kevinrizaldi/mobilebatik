@@ -154,8 +154,8 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       final data = (res['data'] as Map<String, dynamic>?) ?? {};
       if (!mounted) return;
       setState(() {
-        _paymentStatus =
-            (data['payment_status']?.toString() ?? 'pending').toLowerCase();
+        _paymentStatus = (data['payment_status']?.toString() ?? 'pending')
+            .toLowerCase();
         final url = data['snap_redirect_url']?.toString() ?? '';
         _snapRedirectUrl = url.isEmpty ? null : url;
         _loading = false;
@@ -195,10 +195,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       }
     } catch (_) {
       if (!mounted) return;
-      _showSnackBar(
-        'URL pembayaran tidak valid.',
-        color: AppTheme.errorRed,
-      );
+      _showSnackBar('URL pembayaran tidak valid.', color: AppTheme.errorRed);
     } finally {
       if (mounted) setState(() => _isLaunching = false);
     }
@@ -238,19 +235,18 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       (_secondsRemaining ~/ 3600).toString().padLeft(2, '0');
   String get _minutesStr =>
       ((_secondsRemaining % 3600) ~/ 60).toString().padLeft(2, '0');
-  String get _secondsStr =>
-      (_secondsRemaining % 60).toString().padLeft(2, '0');
+  String get _secondsStr => (_secondsRemaining % 60).toString().padLeft(2, '0');
 
   bool get _isPaid =>
       _paymentStatus == 'paid' || _paymentStatus == 'settlement';
 
   String get _statusLabel => switch (_paymentStatus) {
-        'paid' => 'Lunas',
-        'failed' => 'Gagal',
-        'expired' => 'Kedaluwarsa',
-        'cancelled' => 'Dibatalkan',
-        _ => 'Menunggu Pembayaran',
-      };
+    'paid' => 'Lunas',
+    'failed' => 'Gagal',
+    'expired' => 'Kedaluwarsa',
+    'cancelled' => 'Dibatalkan',
+    _ => 'Menunggu Pembayaran',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -290,14 +286,15 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           Expanded(
             child: _loading
                 ? const Center(
-                    child:
-                        CircularProgressIndicator(color: AppTheme.terracotta),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.terracotta,
+                    ),
                   )
                 : _error != null
-                    ? _buildErrorState(r)
-                    : _isPaid
-                        ? _buildSuccessState(r)
-                        : _buildPendingState(r),
+                ? _buildErrorState(r)
+                : _isPaid
+                ? _buildSuccessState(r)
+                : _buildPendingState(r),
           ),
         ],
       ),
@@ -623,9 +620,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -698,10 +693,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.terracottaBorder,
-          width: 1.2,
-        ),
+        border: Border.all(color: AppTheme.terracottaBorder, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -718,11 +710,14 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               ),
               const Spacer(),
               InkWell(
-                onTap: () => _copyToClipboard('$_totalAmount', 'Nominal Tagihan'),
+                onTap: () =>
+                    _copyToClipboard('$_totalAmount', 'Nominal Tagihan'),
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.terracottaLight,
                     borderRadius: BorderRadius.circular(14),
@@ -770,9 +765,10 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   }
 
   Widget _buildSnapPayCard(Responsive r) {
-    final hasSnap = (_snapRedirectUrl ?? _extraString('snapRedirectUrl')) !=
-        null;
-    final failedLike = _paymentStatus == 'failed' ||
+    final hasSnap =
+        (_snapRedirectUrl ?? _extraString('snapRedirectUrl')) != null;
+    final failedLike =
+        _paymentStatus == 'failed' ||
         _paymentStatus == 'expired' ||
         _paymentStatus == 'cancelled';
 
@@ -781,9 +777,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -791,8 +785,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppTheme.terracottaLight,
                   borderRadius: BorderRadius.circular(5),

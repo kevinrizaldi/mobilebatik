@@ -1,10 +1,19 @@
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../data/profile_store.dart';
 import 'api_client.dart';
 
 class AuthService {
   AuthService._();
-
   static final AuthService instance = AuthService._();
+
+  static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  Future<void>? _googleInitFuture;
+
+  Future<void> _ensureGoogleInitialized() {
+    return _googleInitFuture ??= _googleSignIn.initialize();
+  }
 
   Future<Map<String, dynamic>> login({
     required String email,
@@ -13,10 +22,7 @@ class AuthService {
     final res = await ApiClient.instance.post(
       '/login',
       auth: false,
-      body: {
-        'email': email.trim(),
-        'password': password,
-      },
+      body: {'email': email.trim(), 'password': password},
     );
 
     final data = res['data'] is Map<String, dynamic>
@@ -53,6 +59,55 @@ class AuthService {
         'password': password,
         'password_confirmation': passwordConfirmation,
       },
+    );
+
+    final data = res['data'] is Map<String, dynamic>
+        ? res['data'] as Map<String, dynamic>
+        : null;
+
+    final token = (data?['token'] ?? res['token'])?.toString();
+    if (token != null && token.isNotEmpty) {
+      await ApiClient.instance.setToken(token);
+    }
+
+    final user = data?['user'] ?? res['user'];
+    if (user is Map<String, dynamic>) {
+      ProfileStore.instance.setFromUserJson(user);
+    }
+
+    return res;
+  }
+
+  Future<Map<String, dynamic>> loginWithGoogle() async {
+    await _ensureGoogleInitialized();
+
+    final GoogleSignInAccount googleUser;
+    try {
+      googleUser = await _googleSignIn.authenticate(
+        scopeHint: ['email', 'profile'],
+      );
+    } on GoogleSignInException catch (e) {
+      throw ApiException(
+        e.code == GoogleSignInExceptionCode.canceled
+            ? 'Login dengan Google dibatalkan.'
+            : 'Gagal memulai login dengan Google. ${e.description ?? ''}'
+                  .trim(),
+      );
+    } catch (_) {
+      throw ApiException(
+        'Gagal memulai login dengan Google. Silakan coba lagi.',
+      );
+    }
+
+    final String? idToken = googleUser.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw ApiException('Token Google tidak tersedia. Silakan coba lagi.');
+    }
+
+    final res = await ApiClient.instance.post(
+      '/auth/google',
+      auth: false,
+      body: {'id_token': idToken},
     );
 
     final data = res['data'] is Map<String, dynamic>
@@ -116,4 +171,3 @@ class AuthService {
     }
   }
 }
-

@@ -47,10 +47,7 @@ class ProductService {
     final rawList = res['data'];
     if (rawList is! List) return [];
 
-    return rawList
-        .whereType<Map<String, dynamic>>()
-        .map(toUiProduct)
-        .toList();
+    return rawList.whereType<Map<String, dynamic>>().map(toUiProduct).toList();
   }
 
   Future<Map<String, dynamic>> fetchProductDetail(int id) async {
@@ -111,4 +108,3 @@ class ProductService {
     };
   }
 }
-

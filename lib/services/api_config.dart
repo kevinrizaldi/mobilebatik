@@ -43,4 +43,3 @@ class ApiConfig {
     return '$prefix$buffer';
   }
 }
-

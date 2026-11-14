@@ -54,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
@@ -76,15 +77,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () => context.go('/katalog'),
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: r.spacingMd, vertical: r.spacingSm),
+                          horizontal: r.spacingMd,
+                          vertical: r.spacingSm,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.inputBg,
-                          borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
+                          borderRadius: BorderRadius.circular(
+                            r.cardRadius * 0.75,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.search_rounded,
-                                size: r.iconSm, color: AppTheme.textSubtle),
+                            Icon(
+                              Icons.search_rounded,
+                              size: r.iconSm,
+                              color: AppTheme.textSubtle,
+                            ),
                             SizedBox(width: r.spacingSm),
                             Text(
                               'Cari produk batik...',
@@ -106,13 +114,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: AppTheme.inputBg,
-                        borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
+                        borderRadius: BorderRadius.circular(
+                          r.cardRadius * 0.75,
+                        ),
                       ),
                       child: Stack(
                         children: [
                           Center(
-                            child: Icon(Icons.notifications_outlined,
-                                size: r.iconMd, color: AppTheme.textMuted),
+                            child: Icon(
+                              Icons.notifications_outlined,
+                              size: r.iconMd,
+                              color: AppTheme.textMuted,
+                            ),
                           ),
                           Positioned(
                             right: 10,
@@ -208,7 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             scrollDirection: Axis.horizontal,
                             padding: EdgeInsets.symmetric(horizontal: pad),
                             itemCount: _categories.length,
-                            separatorBuilder: (_, _) => SizedBox(width: r.spacingSm),
+                            separatorBuilder: (_, _) =>
+                                SizedBox(width: r.spacingSm),
                             itemBuilder: (context, index) {
                               final cat = _categories[index];
                               return _CategoryCard(
@@ -227,7 +241,12 @@ class _HomeScreenState extends State<HomeScreen> {
           // Featured Products header
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(pad, r.sectionSpacing, pad, r.spacingMd),
+              padding: EdgeInsets.fromLTRB(
+                pad,
+                r.sectionSpacing,
+                pad,
+                r.spacingMd,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -282,8 +301,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: r.spacingSm),
                     ElevatedButton(
                       onPressed: _loadHomeData,
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryDark),
-                      child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryDark,
+                      ),
+                      child: const Text(
+                        'Coba Lagi',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -314,7 +338,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () => context.push('/detail-produk', extra: p),
                     );
                   },
-                  childCount: _featuredProducts.length > 6 ? 6 : _featuredProducts.length,
+                  childCount: _featuredProducts.length > 6
+                      ? 6
+                      : _featuredProducts.length,
                 ),
               ),
             ),
@@ -389,8 +415,11 @@ class _HomeScreenState extends State<HomeScreen> {
         CircleAvatar(
           radius: r.isMedium || r.isTablet ? 18 : 16,
           backgroundColor: const Color(0xFF1C130D),
-          child: Icon(Icons.person_outline_rounded,
-              color: Colors.white, size: r.iconSm),
+          child: Icon(
+            Icons.person_outline_rounded,
+            color: Colors.white,
+            size: r.iconSm,
+          ),
         ),
         SizedBox(width: r.pagePaddingH * 0.8),
       ],
@@ -411,7 +440,8 @@ class _HeroBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(r.cardRadius),
         image: const DecorationImage(
           image: NetworkImage(
-              'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80'),
+            'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80',
+          ),
           fit: BoxFit.cover,
         ),
         boxShadow: [
@@ -432,7 +462,11 @@ class _HeroBanner extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54, Color(0xCC110703)],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black54,
+                    Color(0xCC110703),
+                  ],
                   stops: [0.3, 0.7, 1.0],
                 ),
               ),
@@ -447,7 +481,9 @@ class _HeroBanner extends StatelessWidget {
                 children: [
                   Container(
                     padding: EdgeInsets.symmetric(
-                        horizontal: r.spacingSm, vertical: 4),
+                      horizontal: r.spacingSm,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.terracotta.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(20),
@@ -466,7 +502,9 @@ class _HeroBanner extends StatelessWidget {
                   Text(
                     'Batik Nusantara\nPenuh Makna',
                     style: GoogleFonts.outfit(
-                      fontSize: r.isLandscape && r.isMobile ? r.fontLg : r.fontXl,
+                      fontSize: r.isLandscape && r.isMobile
+                          ? r.fontLg
+                          : r.fontXl,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       height: 1.2,
@@ -477,7 +515,9 @@ class _HeroBanner extends StatelessWidget {
                     onTap: () => context.go('/katalog'),
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: r.spacingMd, vertical: r.spacingSm),
+                        horizontal: r.spacingMd,
+                        vertical: r.spacingSm,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
@@ -639,7 +679,8 @@ class _ProductCard extends StatelessWidget {
               flex: 5,
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(r.cardRadius)),
+                  top: Radius.circular(r.cardRadius),
+                ),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -689,8 +730,11 @@ class _ProductCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: Icon(Icons.favorite_border_rounded,
-                            size: r.iconSm - 2, color: AppTheme.primaryDark),
+                        child: Icon(
+                          Icons.favorite_border_rounded,
+                          size: r.iconSm - 2,
+                          color: AppTheme.primaryDark,
+                        ),
                       ),
                     ),
                     if (originalPrice != null)
@@ -699,7 +743,9 @@ class _ProductCard extends StatelessWidget {
                         left: 8,
                         child: Container(
                           padding: EdgeInsets.symmetric(
-                              horizontal: r.spacingSm, vertical: 3),
+                            horizontal: r.spacingSm,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.errorRed,
                             borderRadius: BorderRadius.circular(5),
@@ -771,8 +817,11 @@ class _ProductCard extends StatelessWidget {
                         Flexible(
                           child: Row(
                             children: [
-                              Icon(Icons.star_rounded,
-                                  size: r.iconSm - 4, color: const Color(0xFFF59E0B)),
+                              Icon(
+                                Icons.star_rounded,
+                                size: r.iconSm - 4,
+                                color: const Color(0xFFF59E0B),
+                              ),
                               SizedBox(width: r.spacingXs),
                               Text(
                                 rating,
@@ -803,8 +852,11 @@ class _ProductCard extends StatelessWidget {
                             color: AppTheme.primaryDark,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(Icons.add_shopping_cart_rounded,
-                              size: r.iconSm - 4, color: Colors.white),
+                          child: Icon(
+                            Icons.add_shopping_cart_rounded,
+                            size: r.iconSm - 4,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),

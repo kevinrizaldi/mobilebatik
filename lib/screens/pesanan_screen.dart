@@ -187,8 +187,9 @@ class _PesananScreenState extends State<PesananScreen> {
     final createdAt = (raw['created_at']?.toString() ?? '').split('T').first;
     final hasReview =
         raw['has_review'] == true ||
-        ProfileStore.instance.reviewedOrderIds
-            .contains(raw['code']?.toString());
+        ProfileStore.instance.reviewedOrderIds.contains(
+          raw['code']?.toString(),
+        );
 
     // Status sesuai kontrak backend (OrderController::formatOrder).
     // - index 1: belum dibayar → bayar / batalkan
@@ -213,9 +214,7 @@ class _PesananScreenState extends State<PesananScreen> {
           };
 
     return _OrderData(
-      id: raw['id'] is int
-          ? raw['id'] as int
-          : int.tryParse('${raw['id']}'),
+      id: raw['id'] is int ? raw['id'] as int : int.tryParse('${raw['id']}'),
       orderNumber: raw['code']?.toString() ?? 'ORD',
       date: createdAt.isNotEmpty ? createdAt : 'Baru saja',
       status: status,
@@ -436,65 +435,69 @@ class _PesananScreenState extends State<PesananScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.terracotta),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.terracotta,
+                    ),
                   )
                 : _errorMessage != null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: r.fontSm,
-                                color: AppTheme.textSubtle,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: _loadOrders,
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryDark),
-                              child: const Text('Coba Lagi',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
-                        ),
-                      )
-                    : orders.isEmpty
-                        ? RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: _loadOrders,
-                            child: ListView(
-                              children: [
-                                SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.2),
-                                _buildEmptyState(r),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: _loadOrders,
-                            child: ListView.separated(
-                              padding: EdgeInsets.fromLTRB(
-                                r.pagePaddingH,
-                                8,
-                                r.pagePaddingH,
-                                16,
-                              ),
-                              itemCount: orders.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) => AnimatedBuilder(
-                                animation: ProfileStore.instance,
-                                builder: (context, _) =>
-                                    _buildOrderCard(context, r, orders[index]),
-                              ),
-                            ),
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontSm,
+                            color: AppTheme.textSubtle,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: _loadOrders,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryDark,
+                          ),
+                          child: const Text(
+                            'Coba Lagi',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : orders.isEmpty
+                ? RefreshIndicator(
+                    color: AppTheme.terracotta,
+                    onRefresh: _loadOrders,
+                    child: ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
+                        _buildEmptyState(r),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    color: AppTheme.terracotta,
+                    onRefresh: _loadOrders,
+                    child: ListView.separated(
+                      padding: EdgeInsets.fromLTRB(
+                        r.pagePaddingH,
+                        8,
+                        r.pagePaddingH,
+                        16,
+                      ),
+                      itemCount: orders.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) => AnimatedBuilder(
+                        animation: ProfileStore.instance,
+                        builder: (context, _) =>
+                            _buildOrderCard(context, r, orders[index]),
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),

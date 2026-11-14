@@ -110,16 +110,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         .toList();
 
     _checkoutItems = storeSelected
-        .map((item) => {
-              'id': item.id,
-              'cartItemId': item.cartItemId,
-              'productId': item.productId,
-              'name': item.name,
-              'variant': item.variant,
-              'imageUrl': item.imageUrl,
-              'unitPrice': item.unitPrice,
-              'quantity': item.quantity,
-            })
+        .map(
+          (item) => {
+            'id': item.id,
+            'cartItemId': item.cartItemId,
+            'productId': item.productId,
+            'name': item.name,
+            'variant': item.variant,
+            'imageUrl': item.imageUrl,
+            'unitPrice': item.unitPrice,
+            'quantity': item.quantity,
+          },
+        )
         .toList();
   }
 
@@ -132,22 +134,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   int get _itemsSubtotal => _checkoutItems.fold(
-        0,
-        (sum, item) =>
-            sum +
-            ((item['unitPrice'] as int) * ((item['quantity'] as int?) ?? 1)),
-      );
+    0,
+    (sum, item) =>
+        sum + ((item['unitPrice'] as int) * ((item['quantity'] as int?) ?? 1)),
+  );
 
   int get _totalItemCount => _checkoutItems.fold(
-        0,
-        (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
-      );
+    0,
+    (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
+  );
 
-  int get _shippingFee =>
-      _courierOptions[_selectedCourierIndex]['fee'] as int;
+  int get _shippingFee => _courierOptions[_selectedCourierIndex]['fee'] as int;
 
-  int get _totalPayment =>
-      (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
+  int get _totalPayment => (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
 
   String _formatPrice(int price) => ApiConfig.formatRupiah(price);
 
@@ -188,18 +187,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         .toList();
     final directItems = _checkoutItems
         .where((e) => e['cartItemId'] == null && e['productId'] != null)
-        .map((e) => {
-              'product_id': e['productId'],
-              if (e['size'] != null) 'size': e['size'],
-              'quantity': e['quantity'] ?? 1,
-            })
+        .map(
+          (e) => {
+            'product_id': e['productId'],
+            if (e['size'] != null) 'size': e['size'],
+            'quantity': e['quantity'] ?? 1,
+          },
+        )
         .toList();
 
     if (token == null || token.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Silakan login terlebih dahulu untuk melanjutkan checkout.'),
+          content: const Text(
+            'Silakan login terlebih dahulu untuk melanjutkan checkout.',
+          ),
           backgroundColor: AppTheme.errorRed,
           action: SnackBarAction(
             label: 'Login',
@@ -232,7 +235,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() => _isSubmitting = false);
 
       final data = (res['data'] as Map<String, dynamic>?) ?? {};
-      final order = (data['order'] as Map<String, dynamic>?) ??
+      final order =
+          (data['order'] as Map<String, dynamic>?) ??
           (data['id'] != null ? data : <String, dynamic>{});
       final totals = (res['totals'] as Map<String, dynamic>?) ?? {};
       final serverTotal = (totals['grand_total'] is num)
@@ -255,8 +259,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'snapRedirectUrl': (snapRedirectUrl == null || snapRedirectUrl.isEmpty)
             ? null
             : snapRedirectUrl,
-        'snapToken':
-            (snapToken == null || snapToken.isEmpty) ? null : snapToken,
+        'snapToken': (snapToken == null || snapToken.isEmpty)
+            ? null
+            : snapToken,
         'items': _checkoutItems,
         'totalItems': _totalItemCount,
         'productSubtotal': _itemsSubtotal,
@@ -281,10 +286,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: AppTheme.errorRed,
-        ),
+        SnackBar(content: Text(e.message), backgroundColor: AppTheme.errorRed),
       );
     }
   }
@@ -397,13 +399,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final bgColor = isCompleted
         ? AppTheme.terracottaLight
         : isActive
-            ? AppTheme.primaryDark
-            : AppTheme.inputBg;
+        ? AppTheme.primaryDark
+        : AppTheme.inputBg;
     final textColor = isCompleted
         ? AppTheme.terracotta
         : isActive
-            ? Colors.white
-            : AppTheme.textSubtle;
+        ? Colors.white
+        : AppTheme.textSubtle;
     final labelColor = isActive ? AppTheme.textMain : AppTheme.textSubtle;
 
     return Row(
@@ -419,8 +421,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               color: isActive
                   ? AppTheme.primaryDark
                   : isCompleted
-                      ? AppTheme.terracotta
-                      : AppTheme.borderLight,
+                  ? AppTheme.terracotta
+                  : AppTheme.borderLight,
               width: 1,
             ),
           ),
@@ -486,9 +488,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,10 +637,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             Navigator.of(context).pop();
                           },
                           child: _RadioDot(
-                            selected: addr.id ==
+                            selected:
+                                addr.id ==
                                 addresses
-                                    .firstWhere((a) => a.isPrimary,
-                                        orElse: () => addresses.first)
+                                    .firstWhere(
+                                      (a) => a.isPrimary,
+                                      orElse: () => addresses.first,
+                                    )
                                     .id,
                             activeColor: AppTheme.primaryDark,
                           ),
@@ -668,8 +671,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       width: double.infinity,
                       height: 40,
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.add_location_alt_outlined,
-                            size: 16),
+                        icon: const Icon(
+                          Icons.add_location_alt_outlined,
+                          size: 16,
+                        ),
                         label: Text(
                           'Kelola Daftar Alamat',
                           style: GoogleFonts.plusJakartaSans(
@@ -700,9 +705,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -743,97 +746,99 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Column(
               children: [
                 for (int i = 0; i < _checkoutItems.length; i++) ...[
-                if (i > 0)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(height: 1, color: AppTheme.borderLight),
-                  ),
-                Builder(builder: (context) {
-                  final item = _checkoutItems[i];
-                  final name = item['name'] as String;
-                  final variant = item['variant'] as String;
-                  final imageUrl = item['imageUrl'] as String;
-                  final unitPrice = item['unitPrice'] as int;
-                  final quantity = (item['quantity'] as int?) ?? 1;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(7),
-                        child: Image.network(
-                          imageUrl,
-                          width: 54,
-                          height: 58,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            width: 54,
-                            height: 58,
-                            color: AppTheme.terracottaLight,
-                            child: const Icon(
-                              Icons.checkroom_rounded,
-                              color: AppTheme.terracotta,
-                              size: 20,
+                  if (i > 0)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(height: 1, color: AppTheme.borderLight),
+                    ),
+                  Builder(
+                    builder: (context) {
+                      final item = _checkoutItems[i];
+                      final name = item['name'] as String;
+                      final variant = item['variant'] as String;
+                      final imageUrl = item['imageUrl'] as String;
+                      final unitPrice = item['unitPrice'] as int;
+                      final quantity = (item['quantity'] as int?) ?? 1;
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: Image.network(
+                              imageUrl,
+                              width: 54,
+                              height: 58,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Container(
+                                width: 54,
+                                height: 58,
+                                color: AppTheme.terracottaLight,
+                                child: const Icon(
+                                  Icons.checkroom_rounded,
+                                  color: AppTheme.terracotta,
+                                  size: 20,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textMain,
-                                height: 1.25,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              variant,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                color: AppTheme.textSubtle,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _formatPrice(unitPrice),
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryDark,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  'x $quantity',
+                                  name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textMuted,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.textMain,
+                                    height: 1.25,
                                   ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  variant,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                      _formatPrice(unitPrice),
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.primaryDark,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      'x $quantity',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -846,9 +851,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -876,72 +879,75 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               for (int index = 0; index < _courierOptions.length; index++) ...[
                 if (index > 0) const SizedBox(height: 8),
-                Builder(builder: (context) {
-                  final courier = _courierOptions[index];
-                  final isSelected = index == _selectedCourierIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCourierIndex = index),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.inputBg
-                            : AppTheme.bgWarm.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+                Builder(
+                  builder: (context) {
+                    final courier = _courierOptions[index];
+                    final isSelected = index == _selectedCourierIndex;
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedCourierIndex = index),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.terracotta
-                              : AppTheme.borderLight,
-                          width: isSelected ? 1.2 : 0.8,
+                              ? AppTheme.inputBg
+                              : AppTheme.bgWarm.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppTheme.terracotta
+                                : AppTheme.borderLight,
+                            width: isSelected ? 1.2 : 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            _RadioDot(
+                              selected: isSelected,
+                              activeColor: AppTheme.terracotta,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    courier['name'] as String,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.textMain,
+                                    ),
+                                  ),
+                                  Text(
+                                    courier['estimate'] as String,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 9,
+                                      color: AppTheme.textSubtle,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              _formatPrice(courier['fee'] as int),
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isSelected
+                                    ? AppTheme.terracotta
+                                    : AppTheme.textMain,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          _RadioDot(
-                            selected: isSelected,
-                            activeColor: AppTheme.terracotta,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  courier['name'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.textMain,
-                                  ),
-                                ),
-                                Text(
-                                  courier['estimate'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    color: AppTheme.textSubtle,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            _formatPrice(courier['fee'] as int),
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected
-                                  ? AppTheme.terracotta
-                                  : AppTheme.textMain,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ],
             ],
           ),
@@ -957,9 +963,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -987,109 +991,119 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               for (int index = 0; index < _paymentMethods.length; index++) ...[
                 if (index > 0) const SizedBox(height: 8),
-                Builder(builder: (context) {
-                  final method = _paymentMethods[index];
-                  final isSelected = index == _selectedPaymentIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedPaymentIndex = index),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.inputBg
-                            : AppTheme.bgWarm.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+                Builder(
+                  builder: (context) {
+                    final method = _paymentMethods[index];
+                    final isSelected = index == _selectedPaymentIndex;
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedPaymentIndex = index),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.terracotta
-                              : AppTheme.borderLight,
-                          width: isSelected ? 1.2 : 0.8,
+                              ? AppTheme.inputBg
+                              : AppTheme.bgWarm.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppTheme.terracotta
+                                : AppTheme.borderLight,
+                            width: isSelected ? 1.2 : 0.8,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _RadioDot(
-                                selected: isSelected,
-                                activeColor: AppTheme.terracotta,
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(
-                                method['icon'] as IconData,
-                                size: 16,
-                                color: isSelected
-                                    ? AppTheme.terracotta
-                                    : AppTheme.primaryDark,
-                              ),
-                              const SizedBox(width: 7),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      method['title'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.textMain,
-                                      ),
-                                    ),
-                                    Text(
-                                      method['subtitle'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 9,
-                                        color: AppTheme.textSubtle,
-                                      ),
-                                    ),
-                                  ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _RadioDot(
+                                  selected: isSelected,
+                                  activeColor: AppTheme.terracotta,
                                 ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
+                                const SizedBox(width: 6),
+                                Icon(
+                                  method['icon'] as IconData,
+                                  size: 16,
                                   color: isSelected
-                                      ? AppTheme.terracottaLight
-                                      : AppTheme.borderLight.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(4),
+                                      ? AppTheme.terracotta
+                                      : AppTheme.primaryDark,
+                                ),
+                                const SizedBox(width: 7),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        method['title'] as String,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.textMain,
+                                        ),
+                                      ),
+                                      Text(
+                                        method['subtitle'] as String,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 9,
+                                          color: AppTheme.textSubtle,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppTheme.terracottaLight
+                                        : AppTheme.borderLight.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    method['badge'] as String,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w700,
+                                      color: isSelected
+                                          ? AppTheme.terracotta
+                                          : AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isSelected &&
+                                (method['description'] as String)
+                                    .isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 36,
+                                  right: 4,
                                 ),
                                 child: Text(
-                                  method['badge'] as String,
+                                  method['description'] as String,
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w700,
-                                    color: isSelected
-                                        ? AppTheme.terracotta
-                                        : AppTheme.textMuted,
+                                    fontSize: 9,
+                                    color: AppTheme.textMuted,
+                                    height: 1.35,
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                          if (isSelected &&
-                              (method['description'] as String).isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 36, right: 4),
-                              child: Text(
-                                method['description'] as String,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 9,
-                                  color: AppTheme.textMuted,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ),
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ],
             ],
           ),
@@ -1105,9 +1119,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1166,9 +1178,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1185,10 +1195,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.inputBg,
                   borderRadius: BorderRadius.circular(4),
@@ -1337,8 +1344,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   !_hasItems
                       ? 'Keranjang Kosong'
                       : _isSubmitting
-                          ? 'Memproses...'
-                          : 'Bayar Sekarang',
+                      ? 'Memproses...'
+                      : 'Bayar Sekarang',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

@@ -146,10 +146,7 @@ class ApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> delete(
-    String path, {
-    bool auth = true,
-  }) async {
+  Future<Map<String, dynamic>> delete(String path, {bool auth = true}) async {
     return _send(
       () async => _dispatch(
         'DELETE',
@@ -215,4 +212,3 @@ class ApiClient {
     return 'Terjadi kesalahan server (HTTP $statusCode).';
   }
 }
-

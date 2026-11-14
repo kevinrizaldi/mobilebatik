@@ -50,10 +50,7 @@ void main() {
     });
 
     test('legacy category string and category_name fallbacks', () {
-      expect(
-        service.toUiProduct({'category': 'Sarung'})['category'],
-        'Sarung',
-      );
+      expect(service.toUiProduct({'category': 'Sarung'})['category'], 'Sarung');
       expect(
         service.toUiProduct({'category_name': 'Legacy Kategori'})['category'],
         'Legacy Kategori',
@@ -76,7 +73,9 @@ void main() {
         'reviews_count': 12,
         'size_stock': {'L': 3, 'M': 5},
         'other_images': ['a.jpg'],
-        'reviews': [{'rating': 5}],
+        'reviews': [
+          {'rating': 5},
+        ],
       });
 
       expect(ui['imageUrl'], 'https://cdn.test/kemeja.jpg');
@@ -111,18 +110,9 @@ void main() {
         service.toUiProduct({'price': '150000', 'rating': '4.5'}),
         containsPair('price', 'Rp 150.000'),
       );
-      expect(
-        service.toUiProduct({'price': 'bukan-angka'})['rawPrice'],
-        0,
-      );
-      expect(
-        service.toUiProduct({'rating': 0})['rating'],
-        '5.0',
-      );
-      expect(
-        service.toUiProduct({'rating': 4.2})['rating'],
-        '4.2',
-      );
+      expect(service.toUiProduct({'price': 'bukan-angka'})['rawPrice'], 0);
+      expect(service.toUiProduct({'rating': 0})['rating'], '5.0');
+      expect(service.toUiProduct({'rating': 4.2})['rating'], '4.2');
     });
   });
 
@@ -176,20 +166,23 @@ void main() {
       expect(await service.fetchProducts(), isEmpty);
     });
 
-    test('fetchProductDetail maps object and defaults on missing data', () async {
-      ApiClient.debugClientOverride = jsonResponse(
-        '{"data":{"id":5,"name":"Detail Produk","price":100000,'
-        '"category":{"name":"Aksesoris"}}}',
-      );
+    test(
+      'fetchProductDetail maps object and defaults on missing data',
+      () async {
+        ApiClient.debugClientOverride = jsonResponse(
+          '{"data":{"id":5,"name":"Detail Produk","price":100000,'
+          '"category":{"name":"Aksesoris"}}}',
+        );
 
-      final detail = await service.fetchProductDetail(5);
-      expect(detail['id'], 5);
-      expect(detail['category'], 'Aksesoris');
-      expect(lastRequest!.url.path, endsWith('/products/5'));
+        final detail = await service.fetchProductDetail(5);
+        expect(detail['id'], 5);
+        expect(detail['category'], 'Aksesoris');
+        expect(lastRequest!.url.path, endsWith('/products/5'));
 
-      ApiClient.debugClientOverride = jsonResponse('{"data":null}');
-      expect(await service.fetchProductDetail(6), isEmpty);
-    });
+        ApiClient.debugClientOverride = jsonResponse('{"data":null}');
+        expect(await service.fetchProductDetail(6), isEmpty);
+      },
+    );
 
     test('fetchCategories returns names with Semua first', () async {
       ApiClient.debugClientOverride = jsonResponse(

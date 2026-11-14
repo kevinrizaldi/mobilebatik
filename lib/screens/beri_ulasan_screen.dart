@@ -45,8 +45,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
 
   String get _productName =>
       widget.order['productName'] as String? ?? 'Produk Batik';
-  String get _orderId =>
-      widget.order['orderNumber'] as String? ?? 'Pesanan';
+  String get _orderId => widget.order['orderNumber'] as String? ?? 'Pesanan';
   String get _variant => widget.order['variant'] as String? ?? 'Ukuran L';
   String get _imageUrl => widget.order['imageUrl'] as String? ?? '';
 

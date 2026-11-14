@@ -86,11 +86,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputBg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: GoogleFonts.plusJakartaSans(
-          color: textSubtle,
-          fontSize: 14,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
+        hintStyle: GoogleFonts.plusJakartaSans(color: textSubtle, fontSize: 14),
         labelStyle: GoogleFonts.plusJakartaSans(
           color: textMuted,
           fontSize: 14,

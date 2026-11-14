@@ -4,22 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobilebatik/screens/detail_produk_screen.dart';
 import 'package:mobilebatik/theme/app_theme.dart';
 
-
-
 void main() {
   setUpAll(() {
     HttpOverrides.global = null;
   });
 
-  testWidgets('DetailProdukScreen renders properly on phone screen', (WidgetTester tester) async {
+  testWidgets('DetailProdukScreen renders properly on phone screen', (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(390 * 2, 844 * 2);
     tester.view.devicePixelRatio = 2.0;
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: const DetailProdukScreen(),
-      ),
+      MaterialApp(theme: AppTheme.lightTheme, home: const DetailProdukScreen()),
     );
     await tester.pump();
 
@@ -37,15 +34,14 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('DetailProdukScreen renders properly on wide/landscape screen', (WidgetTester tester) async {
+  testWidgets('DetailProdukScreen renders properly on wide/landscape screen', (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(1024 * 2, 768 * 2);
     tester.view.devicePixelRatio = 2.0;
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: const DetailProdukScreen(),
-      ),
+      MaterialApp(theme: AppTheme.lightTheme, home: const DetailProdukScreen()),
     );
     await tester.pump();
 

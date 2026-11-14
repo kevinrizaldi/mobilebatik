@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isObscured = true;
   bool _rememberMe = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -66,6 +67,36 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleLogin() async {
+    if (_isGoogleLoading) return;
+    setState(() => _isGoogleLoading = true);
+    try {
+      await AuthService.instance.loginWithGoogle();
+      if (!mounted) return;
+      context.go('/home');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showGoogleError(e.message);
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  void _showGoogleError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(color: Colors.white),
+        ),
+        backgroundColor: AppTheme.errorRed,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -77,7 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
     final mediaQuery = MediaQuery.of(context);
-    final isLandscape = mediaQuery.orientation == Orientation.landscape || mediaQuery.size.height < 600;
+    final isLandscape =
+        mediaQuery.orientation == Orientation.landscape ||
+        mediaQuery.size.height < 600;
 
     final verticalPadding = isLandscape ? 8.0 : 16.0;
     final horizontalPadding = r.pagePaddingH;
@@ -98,229 +131,234 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: BoxConstraints(maxWidth: r.formMaxWidth),
               child: Column(
                 children: [
-                    SizedBox(height: topSpacing),
-                    BatikHeaderLogo(compact: isLandscape),
-                    SizedBox(height: headerSpacing),
+                  SizedBox(height: topSpacing),
+                  BatikHeaderLogo(compact: isLandscape),
+                  SizedBox(height: headerSpacing),
 
-                    // Form Container Card
-                    Container(
-                      padding: EdgeInsets.all(cardPadding),
-                      decoration: BoxDecoration(
-                        color: AppTheme.bgCard,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                        border: Border.all(color: AppTheme.borderLight),
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Selamat Datang Kembali',
-                              style: GoogleFonts.outfit(
-                                fontSize: isLandscape ? 19 : 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryBlack,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Masuk ke akun Anda untuk melanjutkan belanja koleksi batik dan kriya sirkular.',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: isLandscape ? 12 : 13,
-                                color: AppTheme.textMuted,
-                                height: 1.35,
-                              ),
-                            ),
-                            SizedBox(height: formSpacing),
-
-                            // Email Field
-                            CustomTextField(
-                              label: 'Email',
-                              hintText: 'pelanggan@hamzahstyle.id',
-                              controller: _emailController,
-                              prefixIcon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Email tidak boleh kosong';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Format email tidak valid';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 14),
-
-                            // Password Field
-                            CustomTextField(
-                              label: 'Password',
-                              hintText: '••••••••••••',
-                              controller: _passwordController,
-                              prefixIcon: Icons.lock_outline_rounded,
-                              isPassword: true,
-                              isObscured: _isObscured,
-                              onToggleVisibility: () {
-                                setState(() => _isObscured = !_isObscured);
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password tidak boleh kosong';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password minimal 6 karakter';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 10),
-
-                            // Remember Me & Forgot Password Row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Checkbox(
-                                        value: _rememberMe,
-                                        activeColor: AppTheme.primaryDark,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        onChanged: (val) {
-                                          setState(() => _rememberMe = val ?? false);
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Ingat saya',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                GestureDetector(
-                                  onTap: () => context.push('/forgot-password'),
-                                  child: Text(
-                                    'Lupa Password?',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.terracotta,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: isLandscape ? 12.0 : 20.0),
-
-                            // Login Button CTA
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _handleLogin,
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
-                                        Text('Masuk'),
-                                        SizedBox(width: 8),
-                                        Icon(Icons.arrow_forward_rounded, size: 18),
-                                      ],
-                                    ),
-                            ),
-                            SizedBox(height: isLandscape ? 12 : 16),
-
-                            // Divider
-                            Row(
-                              children: [
-                                const Expanded(child: Divider(color: AppTheme.borderLight)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  child: Text(
-                                    'atau',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      color: AppTheme.textSubtle,
-                                    ),
-                                  ),
-                                ),
-                                const Expanded(child: Divider(color: AppTheme.borderLight)),
-                              ],
-                            ),
-                            SizedBox(height: isLandscape ? 12 : 16),
-
-                            // Google Social Login Button
-                            GoogleSocialButton(
-                              label: 'Masuk dengan Google',
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Menghubungkan ke layanan Google Sign-In...'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: isLandscape ? 12.0 : 20.0),
-
-                    // Register Prompt Text
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Belum punya akun? ',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.push('/register'),
-                          child: Text(
-                            'Daftar sekarang',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.terracotta,
-                            ),
-                          ),
+                  // Form Container Card
+                  Container(
+                    padding: EdgeInsets.all(cardPadding),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgCard,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
+                      border: Border.all(color: AppTheme.borderLight),
                     ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Selamat Datang Kembali',
+                            style: GoogleFonts.outfit(
+                              fontSize: isLandscape ? 19 : 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlack,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Masuk ke akun Anda untuk melanjutkan belanja koleksi batik dan kriya sirkular.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: isLandscape ? 12 : 13,
+                              color: AppTheme.textMuted,
+                              height: 1.35,
+                            ),
+                          ),
+                          SizedBox(height: formSpacing),
 
-                    const SizedBox(height: 16),
-                  ],
-                ),
+                          // Email Field
+                          CustomTextField(
+                            label: 'Email',
+                            hintText: 'pelanggan@hamzahstyle.id',
+                            controller: _emailController,
+                            prefixIcon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Email tidak boleh kosong';
+                              }
+                              if (!value.contains('@')) {
+                                return 'Format email tidak valid';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Password Field
+                          CustomTextField(
+                            label: 'Password',
+                            hintText: '••••••••••••',
+                            controller: _passwordController,
+                            prefixIcon: Icons.lock_outline_rounded,
+                            isPassword: true,
+                            isObscured: _isObscured,
+                            onToggleVisibility: () {
+                              setState(() => _isObscured = !_isObscured);
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Password tidak boleh kosong';
+                              }
+                              if (value.length < 6) {
+                                return 'Password minimal 6 karakter';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Remember Me & Forgot Password Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Checkbox(
+                                      value: _rememberMe,
+                                      activeColor: AppTheme.primaryDark,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      onChanged: (val) {
+                                        setState(
+                                          () => _rememberMe = val ?? false,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Ingat saya',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              GestureDetector(
+                                onTap: () => context.push('/forgot-password'),
+                                child: Text(
+                                  'Lupa Password?',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.terracotta,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isLandscape ? 12.0 : 20.0),
+
+                          // Login Button CTA
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _handleLogin,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text('Masuk'),
+                                      SizedBox(width: 8),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                          SizedBox(height: isLandscape ? 12 : 16),
+
+                          // Divider
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Divider(color: AppTheme.borderLight),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  'atau',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                ),
+                              ),
+                              const Expanded(
+                                child: Divider(color: AppTheme.borderLight),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isLandscape ? 12 : 16),
+
+                          // Google Social Login Button
+                          GoogleSocialButton(
+                            label: 'Masuk dengan Google',
+                            onPressed: _handleGoogleLogin,
+                            isLoading: _isGoogleLoading,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: isLandscape ? 12.0 : 20.0),
+
+                  // Register Prompt Text
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Belum punya akun? ',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.push('/register'),
+                        child: Text(
+                          'Daftar sekarang',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.terracotta,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 }

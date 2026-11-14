@@ -24,8 +24,9 @@ void main() {
   testWidgets('form login tidak lagi terisi kredensial demo', (tester) async {
     await pumpLogin(tester);
 
-    final fields =
-        tester.widgetList<TextField>(find.byType(TextField)).toList();
+    final fields = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .toList();
     expect(fields, hasLength(2));
     expect(fields[0].controller!.text, isEmpty);
     expect(fields[1].controller!.text, isEmpty);
@@ -34,25 +35,27 @@ void main() {
     expect(find.text('Password'), findsOneWidget);
   });
 
-  testWidgets('tap Masuk dengan form kosong: validasi jalan, tidak ada request',
-      (tester) async {
-    final requests = <http.Request>[];
-    ApiClient.debugClientOverride = MockClient((request) async {
-      requests.add(request);
-      return http.Response(
-        '{}',
-        200,
-        headers: {'content-type': 'application/json'},
-      );
-    });
+  testWidgets(
+    'tap Masuk dengan form kosong: validasi jalan, tidak ada request',
+    (tester) async {
+      final requests = <http.Request>[];
+      ApiClient.debugClientOverride = MockClient((request) async {
+        requests.add(request);
+        return http.Response(
+          '{}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
 
-    await pumpLogin(tester);
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Masuk'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+      await pumpLogin(tester);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Masuk'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Email tidak boleh kosong'), findsOneWidget);
-    expect(find.text('Password tidak boleh kosong'), findsOneWidget);
-    expect(requests, isEmpty);
-  });
+      expect(find.text('Email tidak boleh kosong'), findsOneWidget);
+      expect(find.text('Password tidak boleh kosong'), findsOneWidget);
+      expect(requests, isEmpty);
+    },
+  );
 }
