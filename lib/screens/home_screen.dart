@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/cart_store.dart';
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _featuredProducts = [];
   bool _isLoading = true;
   String? _errorMessage;
+  DateTime? _lastBackPressed;
 
   @override
   void initState() {
@@ -60,291 +62,311 @@ class _HomeScreenState extends State<HomeScreen> {
     final r = Responsive.of(context);
     final pad = r.pagePaddingH;
 
-    return Scaffold(
-      backgroundColor: AppTheme.bgWarm,
-      appBar: _buildAppBar(context, r),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-      body: CustomScrollView(
-        slivers: [
-          // Search bar
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(pad, 12, pad, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => context.go('/katalog'),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: r.spacingMd,
-                          vertical: r.spacingSm,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final now = DateTime.now();
+        final last = _lastBackPressed;
+        if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+          SystemNavigator.pop();
+          return;
+        }
+        _lastBackPressed = now;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tekan kembali sekali lagi untuk keluar'),
+          ),
+        );
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.bgWarm,
+        appBar: _buildAppBar(context, r),
+        bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+        body: CustomScrollView(
+          slivers: [
+            // Search bar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(pad, 12, pad, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => context.go('/katalog'),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: r.spacingMd,
+                            vertical: r.spacingSm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.inputBg,
+                            borderRadius: BorderRadius.circular(
+                              r.cardRadius * 0.75,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.search_rounded,
+                                size: r.iconSm,
+                                color: AppTheme.textSubtle,
+                              ),
+                              SizedBox(width: r.spacingSm),
+                              Text(
+                                'Cari produk batik...',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: r.fontMd,
+                                  color: AppTheme.textSubtle,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      ),
+                    ),
+                    SizedBox(width: r.spacingSm),
+                    // Notification button
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Container(
                         decoration: BoxDecoration(
                           color: AppTheme.inputBg,
                           borderRadius: BorderRadius.circular(
                             r.cardRadius * 0.75,
                           ),
                         ),
-                        child: Row(
+                        child: Stack(
                           children: [
-                            Icon(
-                              Icons.search_rounded,
-                              size: r.iconSm,
-                              color: AppTheme.textSubtle,
+                            Center(
+                              child: Icon(
+                                Icons.notifications_outlined,
+                                size: r.iconMd,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
-                            SizedBox(width: r.spacingSm),
-                            Text(
-                              'Cari produk batik...',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: r.fontMd,
-                                color: AppTheme.textSubtle,
+                            Positioned(
+                              right: 10,
+                              top: 10,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF401100),
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: r.spacingSm),
-                  // Notification button
-                  SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.inputBg,
-                        borderRadius: BorderRadius.circular(
-                          r.cardRadius * 0.75,
-                        ),
-                      ),
-                      child: Stack(
+                  ],
+                ),
+              ),
+            ),
+
+            // Hero Banner
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
+                child: _HeroBanner(r: r),
+              ),
+            ),
+
+            // Category Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: r.sectionSpacing),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: pad),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Center(
-                            child: Icon(
-                              Icons.notifications_outlined,
-                              size: r.iconMd,
-                              color: AppTheme.textMuted,
+                          Text(
+                            'Jelajahi Koleksi',
+                            style: GoogleFonts.outfit(
+                              fontSize: r.fontLg,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textMain,
                             ),
                           ),
-                          Positioned(
-                            right: 10,
-                            top: 10,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF401100),
-                                shape: BoxShape.circle,
+                          GestureDetector(
+                            onTap: () => context.go('/katalog'),
+                            child: Text(
+                              'Lihat semua',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: r.fontSm,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.terracotta,
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Hero Banner
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
-              child: _HeroBanner(r: r),
-            ),
-          ),
-
-          // Category Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: r.sectionSpacing),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: pad),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Jelajahi Koleksi',
-                          style: GoogleFonts.outfit(
-                            fontSize: r.fontLg,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textMain,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.go('/katalog'),
-                          child: Text(
-                            'Lihat semua',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: r.fontSm,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.terracotta,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: r.spacingMd),
-                  SizedBox(
-                    height: r.categoryCardHeight,
-                    child: _categories.isEmpty
-                        ? ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: pad),
-                            children: [
-                              _CategoryCard(
-                                r: r,
-                                label: 'Baju Batik',
-                                imageUrl: '',
-                              ),
-                              SizedBox(width: r.spacingSm),
-                              _CategoryCard(
-                                r: r,
-                                label: 'Kain Batik',
-                                imageUrl: '',
-                              ),
-                              SizedBox(width: r.spacingSm),
-                              _CategoryCard(
-                                r: r,
-                                label: 'Olahan Kain Sisa',
-                                imageUrl: '',
-                              ),
-                            ],
-                          )
-                        : ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: pad),
-                            itemCount: _categories.length,
-                            separatorBuilder: (_, _) =>
+                    SizedBox(height: r.spacingMd),
+                    SizedBox(
+                      height: r.categoryCardHeight,
+                      child: _categories.isEmpty
+                          ? ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.symmetric(horizontal: pad),
+                              children: [
+                                _CategoryCard(
+                                  r: r,
+                                  label: 'Baju Batik',
+                                  imageUrl: '',
+                                ),
                                 SizedBox(width: r.spacingSm),
-                            itemBuilder: (context, index) {
-                              final cat = _categories[index];
-                              return _CategoryCard(
-                                r: r,
-                                label: cat['name']?.toString() ?? 'Batik',
-                                imageUrl: cat['image_url']?.toString() ?? '',
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Featured Products header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                pad,
-                r.sectionSpacing,
-                pad,
-                r.spacingMd,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Produk Unggulan',
-                    style: GoogleFonts.outfit(
-                      fontSize: r.fontLg,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textMain,
+                                _CategoryCard(
+                                  r: r,
+                                  label: 'Kain Batik',
+                                  imageUrl: '',
+                                ),
+                                SizedBox(width: r.spacingSm),
+                                _CategoryCard(
+                                  r: r,
+                                  label: 'Olahan Kain Sisa',
+                                  imageUrl: '',
+                                ),
+                              ],
+                            )
+                          : ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.symmetric(horizontal: pad),
+                              itemCount: _categories.length,
+                              separatorBuilder: (_, _) =>
+                                  SizedBox(width: r.spacingSm),
+                              itemBuilder: (context, index) {
+                                final cat = _categories[index];
+                                return _CategoryCard(
+                                  r: r,
+                                  label: cat['name']?.toString() ?? 'Batik',
+                                  imageUrl: cat['image_url']?.toString() ?? '',
+                                );
+                              },
+                            ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () => context.go('/katalog'),
-                    child: Text(
-                      'Lihat semua',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontSm,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.terracotta,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Product Grid (responsive columns)
-          if (_isLoading)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(
-                  child: CircularProgressIndicator(color: AppTheme.terracotta),
+                  ],
                 ),
               ),
-            )
-          else if (_errorMessage != null)
+            ),
+
+            // Featured Products header
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: pad, vertical: 32),
-                child: Column(
+                padding: EdgeInsets.fromLTRB(
+                  pad,
+                  r.sectionSpacing,
+                  pad,
+                  r.spacingMd,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontSm,
-                        color: AppTheme.textSubtle,
+                      'Produk Unggulan',
+                      style: GoogleFonts.outfit(
+                        fontSize: r.fontLg,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textMain,
                       ),
                     ),
-                    SizedBox(height: r.spacingSm),
-                    ElevatedButton(
-                      onPressed: _loadHomeData,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryDark,
-                      ),
-                      child: const Text(
-                        'Coba Lagi',
-                        style: TextStyle(color: Colors.white),
+                    GestureDetector(
+                      onTap: () => context.go('/katalog'),
+                      child: Text(
+                        'Lihat semua',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontSm,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.terracotta,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(pad, 0, pad, 32),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: r.productGridColumns,
-                  childAspectRatio: r.productGridAspectRatio,
-                  crossAxisSpacing: r.spacingMd,
-                  mainAxisSpacing: r.spacingMd,
+            ),
+
+            // Product Grid (responsive columns)
+            if (_isLoading)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 48),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.terracotta,
+                    ),
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final p = _featuredProducts[index];
-                    return _ProductCard(
-                      r: r,
-                      name: p['name']?.toString() ?? '',
-                      category: p['category']?.toString() ?? '',
-                      price: p['price']?.toString() ?? 'Rp 0',
-                      originalPrice: p['originalPrice']?.toString(),
-                      rating: p['rating']?.toString() ?? '5.0',
-                      sold: p['sold']?.toString() ?? '0',
-                      imageUrl: p['imageUrl']?.toString() ?? '',
-                      onTap: () => context.push('/detail-produk', extra: p),
-                    );
-                  },
-                  childCount: _featuredProducts.length > 6
-                      ? 6
-                      : _featuredProducts.length,
+              )
+            else if (_errorMessage != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: pad, vertical: 32),
+                  child: Column(
+                    children: [
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontSm,
+                          color: AppTheme.textSubtle,
+                        ),
+                      ),
+                      SizedBox(height: r.spacingSm),
+                      ElevatedButton(
+                        onPressed: _loadHomeData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryDark,
+                        ),
+                        child: const Text(
+                          'Coba Lagi',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(pad, 0, pad, 32),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: r.productGridColumns,
+                    childAspectRatio: r.productGridAspectRatio,
+                    crossAxisSpacing: r.spacingMd,
+                    mainAxisSpacing: r.spacingMd,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final p = _featuredProducts[index];
+                      return _ProductCard(
+                        r: r,
+                        name: p['name']?.toString() ?? '',
+                        category: p['category']?.toString() ?? '',
+                        price: p['price']?.toString() ?? 'Rp 0',
+                        originalPrice: p['originalPrice']?.toString(),
+                        rating: p['rating']?.toString() ?? '5.0',
+                        sold: p['sold']?.toString() ?? '0',
+                        imageUrl: p['imageUrl']?.toString() ?? '',
+                        onTap: () => context.push('/detail-produk', extra: p),
+                      );
+                    },
+                    childCount: _featuredProducts.length > 6
+                        ? 6
+                        : _featuredProducts.length,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

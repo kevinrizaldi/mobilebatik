@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -64,6 +65,17 @@ void main() {
 
   String currentPath() =>
       AppRouter.router.routerDelegate.currentConfiguration.uri.path;
+
+  Future<void> systemBack(WidgetTester tester) async {
+    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'flutter/navigation',
+      const JSONMethodCodec().encodeMethodCall(const MethodCall('popRoute')),
+      (_) {},
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+  }
 
   testWidgets('tanpa sesi, aplikasi terbuka langsung di /home (mode tamu)', (
     tester,
@@ -172,4 +184,59 @@ void main() {
     expect(currentPath(), '/home');
     expect(find.byType(HomeScreen), findsOneWidget);
   });
+
+  testWidgets('back sistem di /login: pindah ke /home, bukan keluar aplikasi', (
+    tester,
+  ) async {
+    ignoreNetworkImageErrors();
+    await pumpApp(tester);
+
+    await goTo(tester, '/login');
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    await systemBack(tester);
+
+    expect(currentPath(), '/home');
+    expect(find.byType(HomeScreen), findsOneWidget);
+  });
+
+  testWidgets(
+    'back sistem pertama di /home tampil hint, kedua baru keluar aplikasi',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
+
+      MethodCall? systemPop;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemNavigator.pop') systemPop = call;
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await systemBack(tester);
+      expect(
+        find.text('Tekan kembali sekali lagi untuk keluar'),
+        findsOneWidget,
+        reason:
+            'tekanan pertama hanya menampilkan hint, aplikasi tetap terbuka',
+      );
+      expect(currentPath(), '/home');
+      expect(systemPop, isNull);
+
+      await systemBack(tester);
+      expect(
+        systemPop,
+        isNotNull,
+        reason: 'tekanan kedua mengeluarkan aplikasi',
+      );
+    },
+  );
 }
