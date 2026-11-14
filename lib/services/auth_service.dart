@@ -2,6 +2,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../data/profile_store.dart';
 import 'api_client.dart';
+import 'api_config.dart';
 
 class AuthService {
   AuthService._();
@@ -12,7 +13,9 @@ class AuthService {
   Future<void>? _googleInitFuture;
 
   Future<void> _ensureGoogleInitialized() {
-    return _googleInitFuture ??= _googleSignIn.initialize();
+    return _googleInitFuture ??= _googleSignIn.initialize(
+      serverClientId: ApiConfig.googleServerClientId,
+    );
   }
 
   Future<Map<String, dynamic>> login({
