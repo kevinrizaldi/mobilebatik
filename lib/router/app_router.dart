@@ -42,7 +42,7 @@ class AppRouter {
       extra is Map<String, dynamic> ? extra : null;
 
   static final GoRouter router = GoRouter(
-    initialLocation: ApiClient.instance.isLoggedIn ? '/home' : '/login',
+    initialLocation: '/home',
     redirect: (context, state) {
       final location = state.uri.path;
       final loggedIn = ApiClient.instance.isLoggedIn;

@@ -6,8 +6,8 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Muat token tersimpan lalu validasi (GET /me) sebelum router membaca
-  // isLoggedIn: sesi mati → /login, sesi hidup → /home, server mati → /home.
+  // Muat token lalu validasi (GET /me). Tanpa sesi: mode tamu → /home;
+  // sesi hidup → /home; guard rute terproteksi tetap aktif.
   await ApiClient.instance.getToken();
   await AuthService.instance.restoreSession();
   runApp(const MobileBatikAuthApp());
