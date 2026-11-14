@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../data/profile_store.dart';
@@ -90,13 +91,18 @@ class AuthService {
         scopeHint: ['email', 'profile'],
       );
     } on GoogleSignInException catch (e) {
+      debugPrint(
+        'GoogleSignInException: code=${e.code.name} '
+        'description=${e.description ?? '-'}',
+      );
       throw ApiException(
         e.code == GoogleSignInExceptionCode.canceled
             ? 'Login dengan Google dibatalkan.'
             : 'Gagal memulai login dengan Google. ${e.description ?? ''}'
                   .trim(),
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('GoogleSignIn unexpected: ${e.runtimeType}: $e');
       throw ApiException(
         'Gagal memulai login dengan Google. Silakan coba lagi.',
       );
