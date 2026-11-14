@@ -16,6 +16,7 @@ import '../screens/profil_subscreens.dart';
 import '../screens/register_screen.dart';
 import '../screens/reset_password_screen.dart';
 import '../services/api_client.dart';
+import '../widgets/app_back_scope.dart';
 
 class AppRouter {
   /// Rute yang butuh login (Task 12): checkout, pesanan (+ detail/lacak),
@@ -55,7 +56,7 @@ class AppRouter {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => AppBackScope(child: const LoginScreen()),
       ),
       GoRoute(
         path: '/register',
@@ -80,12 +81,13 @@ class AppRouter {
       GoRoute(
         path: '/katalog',
         name: 'katalog',
-        builder: (context, state) => const KatalogScreen(),
+        builder: (context, state) => AppBackScope(child: const KatalogScreen()),
       ),
       GoRoute(
         path: '/keranjang',
         name: 'keranjang',
-        builder: (context, state) => const KeranjangScreen(),
+        builder: (context, state) =>
+            AppBackScope(child: const KeranjangScreen()),
       ),
       GoRoute(
         path: '/checkout',
@@ -102,7 +104,7 @@ class AppRouter {
       GoRoute(
         path: '/pesanan',
         name: 'pesanan',
-        builder: (context, state) => const PesananScreen(),
+        builder: (context, state) => AppBackScope(child: const PesananScreen()),
       ),
       GoRoute(
         path: '/detail-pesanan',
@@ -125,7 +127,7 @@ class AppRouter {
       GoRoute(
         path: '/profil',
         name: 'profil',
-        builder: (context, state) => const ProfilScreen(),
+        builder: (context, state) => AppBackScope(child: const ProfilScreen()),
       ),
       GoRoute(
         path: '/profil/edit',

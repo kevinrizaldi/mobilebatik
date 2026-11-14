@@ -6,7 +6,11 @@ import 'package:http/testing.dart';
 import 'package:mobilebatik/data/cart_store.dart';
 import 'package:mobilebatik/router/app_router.dart';
 import 'package:mobilebatik/screens/home_screen.dart';
+import 'package:mobilebatik/screens/katalog_screen.dart';
+import 'package:mobilebatik/screens/keranjang_screen.dart';
 import 'package:mobilebatik/screens/login_screen.dart';
+import 'package:mobilebatik/screens/pesanan_screen.dart';
+import 'package:mobilebatik/screens/profil_screen.dart';
 import 'package:mobilebatik/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -199,6 +203,72 @@ void main() {
     expect(currentPath(), '/home');
     expect(find.byType(HomeScreen), findsOneWidget);
   });
+
+  testWidgets(
+    'back sistem di /katalog: pindah ke /home, bukan keluar aplikasi',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
+
+      await goTo(tester, '/katalog');
+      expect(find.byType(KatalogScreen), findsOneWidget);
+
+      await systemBack(tester);
+
+      expect(currentPath(), '/home');
+      expect(find.byType(HomeScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'back sistem di /keranjang: pindah ke /home, bukan keluar aplikasi',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
+
+      await goTo(tester, '/keranjang');
+      expect(find.byType(KeranjangScreen), findsOneWidget);
+
+      await systemBack(tester);
+
+      expect(currentPath(), '/home');
+      expect(find.byType(HomeScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'back sistem di /pesanan: pindah ke /home, bukan keluar aplikasi',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
+
+      await ApiClient.instance.setToken('token-tes');
+      await goTo(tester, '/pesanan');
+      expect(find.byType(PesananScreen), findsOneWidget);
+
+      await systemBack(tester);
+
+      expect(currentPath(), '/home');
+      expect(find.byType(HomeScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'back sistem di /profil: pindah ke /home, bukan keluar aplikasi',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
+
+      await ApiClient.instance.setToken('token-tes');
+      await goTo(tester, '/profil');
+      expect(find.byType(ProfilScreen), findsOneWidget);
+
+      await systemBack(tester);
+
+      expect(currentPath(), '/home');
+      expect(find.byType(HomeScreen), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'back sistem pertama di /home tampil hint, kedua baru keluar aplikasi',
