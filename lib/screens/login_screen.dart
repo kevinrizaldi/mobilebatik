@@ -131,6 +131,20 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: BoxConstraints(maxWidth: r.formMaxWidth),
               child: Column(
                 children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => context.go('/home'),
+                        icon: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: r.iconSm,
+                        ),
+                        color: AppTheme.primaryBlack,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: topSpacing),
                   BatikHeaderLogo(compact: isLandscape),
                   SizedBox(height: headerSpacing),

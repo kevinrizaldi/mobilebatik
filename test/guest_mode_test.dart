@@ -154,4 +154,22 @@ void main() {
     expect(ApiClient.instance.isLoggedIn, isFalse);
     expect(find.byType(HomeScreen), findsOneWidget);
   });
+
+  testWidgets('dari /login, tombol kembali membawa ke /home (mode tamu)', (
+    tester,
+  ) async {
+    ignoreNetworkImageErrors();
+    await pumpApp(tester);
+
+    await goTo(tester, '/login');
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    expect(currentPath(), '/home');
+    expect(find.byType(HomeScreen), findsOneWidget);
+  });
 }
