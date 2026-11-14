@@ -30,7 +30,7 @@ Catatan: backend produksi wajib HTTPS + CORS sudah diatur; ganti define setiap g
 
 ## Alur demo (untuk video/presentasi)
 
-1. **Login/Register** — layar awal (redirect ke `/login` bila belum ada token): daftar akun baru (`/register` — nama, email, telepon, password) atau login (`/login`). Setelah login, guard router mengarahkan ke `/home`.
+1. **Mode tamu & Login/Register** — aplikasi langsung membuka `/home` tanpa token: tamu bebas menjelajah beranda, katalog, dan detail produk. Menekan **+ Keranjang** sebagai tamu memunculkan ajakan login (SnackBar aksi "Login" → `/login`). Daftar lewat `/register` (nama, email, telepon, password) atau masuk lewat `/login`; setelah berhasil, kembali ke `/home` dan lanjut belanja — checkout, pesanan, profil, dan ulasan tetap memerlukan login.
 2. **Beranda & katalog** — `/home` (banner + produk unggulan) → `/katalog` dengan pencarian, filter kategori, dan sortir harga (`price_asc`/`price_desc`/`latest`).
 3. **Detail produk** — gambar, harga, stok per ukuran, rating + ulasan; pilih ukuran → **Tambah ke Keranjang** (stok tidak cukup → pesan error tampil).
 4. **Keranjang** (`/keranjang`) — ubah qty, centang item, hapus; subtotal terhitung dari item terpilih.

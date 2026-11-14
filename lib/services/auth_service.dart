@@ -149,7 +149,7 @@ class AuthService {
   /// Validasi sesi tersimpan saat startup (design doc 2026-11-13):
   /// token valid → profil terisi user asli, tetap login;
   /// token dicabut server (401) → ApiClient sudah menghapus token, router
-  /// membuka /login; error koneksi → token dipertahankan, router tetap /home.
+  /// membuka /home (mode tamu); error koneksi → token dipertahankan, tetap login.
   Future<void> restoreSession() async {
     final token = await ApiClient.instance.getToken();
     if (token == null || token.isEmpty) return;
