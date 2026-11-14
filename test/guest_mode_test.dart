@@ -129,4 +129,29 @@ void main() {
       CartStore.instance.items.clear();
     },
   );
+
+  testWidgets('logout dari profil: kembali ke /home sebagai tamu', (
+    tester,
+  ) async {
+    ignoreNetworkImageErrors();
+    await pumpApp(tester);
+
+    await ApiClient.instance.setToken('token-tes');
+    await goTo(tester, '/profil');
+    expect(currentPath(), '/profil');
+
+    await tester.ensureVisible(find.text('Keluar dari Akun'));
+    await tester.tap(find.text('Keluar dari Akun'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    expect(
+      currentPath(),
+      '/home',
+      reason: 'setelah keluar, pengguna kembali ke /home dalam mode tamu',
+    );
+    expect(ApiClient.instance.isLoggedIn, isFalse);
+    expect(find.byType(HomeScreen), findsOneWidget);
+  });
 }
