@@ -131,6 +131,23 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   }
 
   Future<void> _addToCart() async {
+    if (!ApiClient.instance.isLoggedIn) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang.',
+          ),
+          backgroundColor: AppTheme.errorRed,
+          action: SnackBarAction(
+            label: 'Login',
+            textColor: Colors.white,
+            onPressed: () => context.go('/login'),
+          ),
+        ),
+      );
+      return;
+    }
     if (_isAddingToCart) return;
     setState(() => _isAddingToCart = true);
 

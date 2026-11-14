@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:mobilebatik/data/cart_store.dart';
 import 'package:mobilebatik/router/app_router.dart';
 import 'package:mobilebatik/screens/home_screen.dart';
+import 'package:mobilebatik/screens/login_screen.dart';
 import 'package:mobilebatik/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,6 +51,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
+  Future<void> goTo(
+    WidgetTester tester,
+    String location, {
+    Object? extra,
+  }) async {
+    AppRouter.router.go(location, extra: extra);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+
   String currentPath() =>
       AppRouter.router.routerDelegate.currentConfiguration.uri.path;
 
@@ -60,4 +73,60 @@ void main() {
     expect(currentPath(), '/home');
     expect(find.byType(HomeScreen), findsOneWidget);
   });
+
+  testWidgets(
+    'tamu tap + Keranjang: diajak login, keranjang tetap kosong, aksi Login membuka /login',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      await pumpApp(tester);
+
+      await goTo(
+        tester,
+        '/detail-produk',
+        extra: <String, dynamic>{
+          'name': 'Kemeja Batik Tes',
+          'category': 'Baju Batik',
+          'price': 'Rp 100.000',
+          'rawPrice': 100000,
+          'rating': '4.8',
+          'sold': '12',
+          'imageUrl': '',
+          // tanpa 'id' → _loadDetailIfNeeded() return awal, tanpa network detail
+        },
+      );
+      // Selesaikan transisi rute (~300ms): selama HomeScreen masih ter-mount,
+      // dua Scaffold terdaftar di ScaffoldMessenger dan snackbar dirender 2×.
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+
+      final addToCart = find
+          .widgetWithText(OutlinedButton, '+ Keranjang')
+          .first;
+      await tester.ensureVisible(addToCart);
+      await tester.tap(addToCart);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang.',
+        ),
+        findsOneWidget,
+        reason:
+            'tamu harus melihat ajakan login, bukan konfirmasi masuk keranjang',
+      );
+      expect(CartStore.instance.items, isEmpty);
+      expect(CartStore.instance.itemCount, 0);
+
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // animasi masuk selesai
+      await tester.tap(find.byType(SnackBarAction));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(currentPath(), '/login');
+      expect(find.byType(LoginScreen), findsOneWidget);
+
+      CartStore.instance.items.clear();
+    },
+  );
 }
