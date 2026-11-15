@@ -206,7 +206,7 @@ class _PesananScreenState extends State<PesananScreen> {
             _ => 'Lihat Detail',
           };
     final secondaryAction = isCancelled
-        ? 'Lihat Detail'
+        ? 'Beli Lagi'
         : switch (statusIndex) {
             1 => 'Batalkan',
             3 => 'Lacak Pengiriman',
@@ -235,6 +235,7 @@ class _PesananScreenState extends State<PesananScreen> {
       primaryAction: primaryAction,
       secondaryAction: secondaryAction,
       statusIndex: statusIndex,
+      isCancelled: isCancelled,
       hasReview: hasReview,
       paymentDeadline: raw['payment_deadline']?.toString(),
       orderedAt: createdAt.isNotEmpty ? createdAt : 'Baru saja',
@@ -245,30 +246,42 @@ class _PesananScreenState extends State<PesananScreen> {
     );
   }
 
+  static const int _cancelledStatus = 5;
+
   static const List<String> _statuses = [
     'Semua',
     'Menunggu Pembayaran',
     'Diproses',
     'Dikirim',
     'Selesai',
+    'Dibatalkan',
   ];
 
   List<_OrderData> get _filteredOrders {
     final query = _searchController.text.trim().toLowerCase();
     return _orders.where((order) {
-      final matchesStatus =
-          _selectedStatus == 0 || order.statusIndex == _selectedStatus;
       final matchesQuery =
           query.isEmpty ||
           order.orderNumber.toLowerCase().contains(query) ||
           order.productName.toLowerCase().contains(query);
-      return matchesStatus && matchesQuery;
+      if (_selectedStatus == 0) return matchesQuery;
+      if (order.isCancelled) {
+        return _selectedStatus == _cancelledStatus && matchesQuery;
+      }
+      return order.statusIndex == _selectedStatus && matchesQuery;
     }).toList();
   }
 
   int _countForStatus(int statusIndex) {
     if (statusIndex == 0) return _orders.length;
-    return _orders.where((order) => order.statusIndex == statusIndex).length;
+    if (statusIndex == _cancelledStatus) {
+      return _orders.where((order) => order.isCancelled).length;
+    }
+    return _orders
+        .where(
+          (order) => !order.isCancelled && order.statusIndex == statusIndex,
+        )
+        .length;
   }
 
   @override
@@ -511,11 +524,13 @@ class _PesananScreenState extends State<PesananScreen> {
     final primaryAction = reviewSubmitted
         ? 'Ulasan Terkirim'
         : order.primaryAction;
-    final statusColor = switch (order.statusIndex) {
-      1 => AppTheme.terracotta,
-      3 => AppTheme.successGreen,
-      _ => AppTheme.textMuted,
-    };
+    final statusColor = order.isCancelled
+        ? AppTheme.errorRed
+        : switch (order.statusIndex) {
+            1 => AppTheme.terracotta,
+            3 => AppTheme.successGreen,
+            _ => AppTheme.textMuted,
+          };
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
@@ -722,6 +737,7 @@ class _PesananScreenState extends State<PesananScreen> {
     final isPayAction = label == 'Bayar Sekarang';
     final isConfirmAction = label == 'Terima Barang';
     final isCancelAction = label == 'Batalkan';
+    final isBuyAgain = label == 'Beli Lagi';
     final isCompletedReview = label == 'Ulasan Terkirim';
     final icon = switch (label) {
       'Bayar Sekarang' => Icons.arrow_forward_rounded,
@@ -781,6 +797,35 @@ class _PesananScreenState extends State<PesananScreen> {
             ? () => _confirmReceived(order)
             : isCancelAction && order != null
             ? () => _cancelOrder(order)
+            : isBuyAgain && order != null
+            ? () {
+                if (order.productId == null) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Produk pada pesanan ini sudah tidak tersedia.',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor: AppTheme.errorRed,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  return;
+                }
+                context.push(
+                  '/detail-produk',
+                  extra: {
+                    'id': order.productId,
+                    'name': order.productName,
+                    'price': order.price,
+                    'imageUrl': order.imageUrl,
+                  },
+                );
+              }
             : () {
                 ScaffoldMessenger.of(context)
                   ..hideCurrentSnackBar()
@@ -874,6 +919,7 @@ class _OrderData {
   final String primaryAction;
   final String secondaryAction;
   final int statusIndex;
+  final bool isCancelled;
   final bool hasReview;
   final String? paymentDeadline;
   final String orderedAt;
@@ -898,6 +944,7 @@ class _OrderData {
     required this.primaryAction,
     required this.secondaryAction,
     required this.statusIndex,
+    required this.isCancelled,
     required this.hasReview,
     required this.paymentDeadline,
     required this.orderedAt,
