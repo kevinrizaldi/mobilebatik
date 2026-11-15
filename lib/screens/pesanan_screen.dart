@@ -79,13 +79,15 @@ class _PesananScreenState extends State<PesananScreen> {
 
   Future<void> _cancelOrder(_OrderData order) async {
     if (order.id == null) return;
+    // Sudah dibayar: mengajukan pembatalan, menunggu persetujuan admin.
+    final isRequest = order.statusIndex > 1 && !order.isCancelled;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text(
-          'Batalkan Pesanan?',
+          isRequest ? 'Ajukan Pembatalan?' : 'Batalkan Pesanan?',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -93,8 +95,12 @@ class _PesananScreenState extends State<PesananScreen> {
           ),
         ),
         content: Text(
-          'Pesanan #${order.orderNumber} akan dibatalkan dan stok produk '
-          'dikembalikan. Tindakan ini tidak dapat dibatalkan.',
+          isRequest
+              ? 'Permintaan pembatalan pesanan #${order.orderNumber} akan '
+                    'dikirim ke admin. Pesanan baru dibatalkan setelah disetujui '
+                    'dan stok dikembalikan.'
+              : 'Pesanan #${order.orderNumber} akan dibatalkan dan stok produk '
+                    'dikembalikan. Tindakan ini tidak dapat dibatalkan.',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             color: AppTheme.textMuted,
@@ -115,7 +121,7 @@ class _PesananScreenState extends State<PesananScreen> {
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(
-              'Ya, Batalkan',
+              isRequest ? 'Ya, Ajukan' : 'Ya, Batalkan',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -197,6 +203,7 @@ class _PesananScreenState extends State<PesananScreen> {
     // - index 4: selesai → ulasan
     // Order yang sudah dibatalkan tidak menawarkan aksi bayar/batal.
     final isCancelled = status.toLowerCase().contains('batal');
+    final cancelRequested = raw['cancel_requested'] == true;
     final primaryAction = isCancelled
         ? 'Lihat Detail'
         : switch (statusIndex) {
@@ -209,6 +216,7 @@ class _PesananScreenState extends State<PesananScreen> {
         ? 'Beli Lagi'
         : switch (statusIndex) {
             1 => 'Batalkan',
+            2 => cancelRequested ? 'Menunggu Persetujuan' : 'Batalkan',
             3 => 'Lacak Pengiriman',
             _ => 'Lihat Detail',
           };
@@ -236,6 +244,7 @@ class _PesananScreenState extends State<PesananScreen> {
       secondaryAction: secondaryAction,
       statusIndex: statusIndex,
       isCancelled: isCancelled,
+      cancelRequested: cancelRequested,
       hasReview: hasReview,
       paymentDeadline: raw['payment_deadline']?.toString(),
       orderedAt: createdAt.isNotEmpty ? createdAt : 'Baru saja',
@@ -739,11 +748,13 @@ class _PesananScreenState extends State<PesananScreen> {
     final isCancelAction = label == 'Batalkan';
     final isBuyAgain = label == 'Beli Lagi';
     final isCompletedReview = label == 'Ulasan Terkirim';
+    final isWaitingApproval = label == 'Menunggu Persetujuan';
     final icon = switch (label) {
       'Bayar Sekarang' => Icons.arrow_forward_rounded,
       'Lacak Pengiriman' => Icons.local_shipping_outlined,
       'Terima Barang' => Icons.check_circle_outline_rounded,
       'Batalkan' => Icons.cancel_outlined,
+      'Menunggu Persetujuan' => Icons.hourglass_top_rounded,
       'Beri Ulasan' => Icons.rate_review_outlined,
       'Ulasan Terkirim' => Icons.check_circle_outline_rounded,
       'Lihat Detail' => Icons.receipt_long_outlined,
@@ -774,7 +785,7 @@ class _PesananScreenState extends State<PesananScreen> {
     return SizedBox(
       height: 34,
       child: OutlinedButton.icon(
-        onPressed: isCompletedReview
+        onPressed: isCompletedReview || isWaitingApproval
             ? null
             : isPayAction && order != null
             ? () => context.push(
@@ -920,6 +931,7 @@ class _OrderData {
   final String secondaryAction;
   final int statusIndex;
   final bool isCancelled;
+  final bool cancelRequested;
   final bool hasReview;
   final String? paymentDeadline;
   final String orderedAt;
@@ -945,6 +957,7 @@ class _OrderData {
     required this.secondaryAction,
     required this.statusIndex,
     required this.isCancelled,
+    this.cancelRequested = false,
     required this.hasReview,
     required this.paymentDeadline,
     required this.orderedAt,
