@@ -6,6 +6,7 @@ import '../data/profile_store.dart';
 import '../services/api_client.dart';
 import '../services/api_config.dart';
 import '../services/order_service.dart';
+import '../services/shipping_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -91,11 +92,58 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late List<Map<String, dynamic>> _checkoutItems;
   bool _isSubmitting = false;
 
+  List<Map<String, dynamic>> _liveServices = [];
+  bool _loadingServices = false;
+
   @override
   void initState() {
     super.initState();
     _initItems();
+    ProfileStore.instance.addListener(_onProfileChanged);
     ProfileStore.instance.syncAddressesFromServer();
+    _fetchShippingCosts();
+  }
+
+  void _onProfileChanged() {
+    if (!mounted) return;
+    setState(() {});
+    _fetchShippingCosts();
+  }
+
+  Future<void> _fetchShippingCosts() async {
+    final numericId = int.tryParse(_currentAddress.id);
+    if (numericId == null || !mounted) return;
+
+    setState(() => _loadingServices = true);
+    try {
+      final totalQty = _checkoutItems.fold<int>(
+        0,
+        (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
+      );
+      final weight = totalQty * 300 < 1000 ? 1000 : totalQty * 300;
+      final services = await ShippingService.instance.fetchCosts(
+        addressId: numericId,
+        weightGrams: weight,
+      );
+      if (!mounted) return;
+      setState(() {
+        _liveServices = services;
+        if (_selectedCourierIndex >= services.length) {
+          _selectedCourierIndex = 0;
+        }
+      });
+    } catch (_) {
+      // Fallback: opsi kurir statis dipakai bila API biaya gagal.
+    } finally {
+      if (mounted) setState(() => _loadingServices = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    ProfileStore.instance.removeListener(_onProfileChanged);
+    _notesController.dispose();
+    super.dispose();
   }
 
   void _initItems() {
@@ -127,11 +175,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   bool get _hasItems => _checkoutItems.isNotEmpty;
 
-  @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
-  }
+  ProfileAddress
+  get _currentAddress => ProfileStore.instance.addresses.firstWhere(
+    (a) => a.isPrimary,
+    orElse: () => ProfileStore.instance.addresses.isNotEmpty
+        ? ProfileStore.instance.addresses.first
+        : ProfileAddress(
+            id: 'default',
+            label: 'Utama',
+            recipient: ProfileStore.instance.name,
+            phone: ProfileStore.instance.phone,
+            address:
+                'Jl. Malioboro No. 56, Sosromenduran, Gedong Tengen, Kota Yogyakarta, D.I. Yogyakarta 55271',
+            isPrimary: true,
+          ),
+  );
 
   int get _itemsSubtotal => _checkoutItems.fold(
     0,
@@ -144,7 +202,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
   );
 
-  int get _shippingFee => _courierOptions[_selectedCourierIndex]['fee'] as int;
+  List<Map<String, dynamic>> get _displayCouriers =>
+      _liveServices.isNotEmpty ? _liveServices : _courierOptions;
+
+  Map<String, dynamic> get _selectedCourier {
+    if (_displayCouriers.isEmpty) return const {};
+    final index = _selectedCourierIndex.clamp(0, _displayCouriers.length - 1);
+    return _displayCouriers[index];
+  }
+
+  int get _shippingFee => (_selectedCourier['fee'] as int?) ?? 0;
 
   int get _totalPayment => (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
 
@@ -165,20 +232,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    final selectedCourier = _courierOptions[_selectedCourierIndex];
+    final selectedCourier = _selectedCourier;
     final selectedPayment = _paymentMethods[_selectedPaymentIndex];
-    final primaryAddress = ProfileStore.instance.addresses.firstWhere(
-      (a) => a.isPrimary,
-      orElse: () => ProfileStore.instance.addresses.isNotEmpty
-          ? ProfileStore.instance.addresses.first
-          : ProfileAddress(
-              id: 'temp',
-              label: 'Utama',
-              recipient: ProfileStore.instance.name,
-              phone: ProfileStore.instance.phone,
-              address: 'Jl. Malioboro No. 56, Sosromenduran, Kota Yogyakarta',
-            ),
-    );
+    final primaryAddress = _currentAddress;
 
     final token = await ApiClient.instance.getToken();
     final cartItemIds = _checkoutItems
@@ -468,20 +524,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // --- 1. ALAMAT PENGIRIMAN ---
   Widget _buildAddressSection(Responsive r) {
-    final address = ProfileStore.instance.addresses.firstWhere(
-      (a) => a.isPrimary,
-      orElse: () => ProfileStore.instance.addresses.isNotEmpty
-          ? ProfileStore.instance.addresses.first
-          : ProfileAddress(
-              id: 'default',
-              label: 'Utama',
-              recipient: ProfileStore.instance.name,
-              phone: ProfileStore.instance.phone,
-              address:
-                  'Jl. Malioboro No. 56, Sosromenduran, Gedong Tengen, Kota Yogyakarta, D.I. Yogyakarta 55271',
-              isPrimary: true,
-            ),
-    );
+    final address = _currentAddress;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -872,16 +915,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   color: AppTheme.textMain,
                 ),
               ),
+              if (_loadingServices) ...[
+                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.6),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
           Column(
             children: [
-              for (int index = 0; index < _courierOptions.length; index++) ...[
+              for (int index = 0; index < _displayCouriers.length; index++) ...[
                 if (index > 0) const SizedBox(height: 8),
                 Builder(
                   builder: (context) {
-                    final courier = _courierOptions[index];
+                    final courier = _displayCouriers[index];
                     final isSelected = index == _selectedCourierIndex;
                     return GestureDetector(
                       onTap: () =>
@@ -1218,7 +1269,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 6),
           _summaryRow(
-            'Biaya Pengiriman (${_courierOptions[_selectedCourierIndex]['name']})',
+            'Biaya Pengiriman (${_selectedCourier['name']})',
             _formatPrice(_shippingFee),
           ),
           const Padding(
