@@ -98,6 +98,12 @@ void main() {
                 statusIndex: 2,
                 cancelRequested: cancelRequested,
               ),
+              rawOrder(
+                id: 2,
+                code: 'ORD-2',
+                status: 'Menunggu Pembayaran',
+                statusIndex: 1,
+              ),
             ],
           }),
           200,
@@ -147,6 +153,11 @@ void main() {
       await tester.pump();
 
       expect(find.text('Ajukan Pembatalan?'), findsOneWidget);
+      expect(
+        find.textContaining('stok'),
+        findsNothing,
+        reason: 'customer tidak perlu tahu soal pengembalian stok',
+      );
 
       await tester.tap(find.text('Ya, Ajukan'));
       for (var i = 0; i < 10; i++) {
@@ -183,4 +194,28 @@ void main() {
       ApiClient.debugClientOverride = null;
     },
   );
+
+  testWidgets('dialog batal pesanan belum bayar juga tidak menyebut stok', (
+    tester,
+  ) async {
+    ignoreNetworkImageErrors();
+    setupMocks();
+    await ApiClient.instance.setToken('token-tes');
+
+    await pumpPesanan(tester);
+    await tester.tap(find.text('Menunggu Pembayaran (1)'));
+    await tester.pump();
+
+    await tester.tap(find.text('Batalkan'));
+    await tester.pump();
+
+    expect(find.text('Batalkan Pesanan?'), findsOneWidget);
+    expect(
+      find.textContaining('stok'),
+      findsNothing,
+      reason: 'customer tidak perlu tahu soal pengembalian stok',
+    );
+
+    ApiClient.debugClientOverride = null;
+  });
 }

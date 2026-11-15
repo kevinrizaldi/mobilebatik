@@ -97,10 +97,10 @@ class _PesananScreenState extends State<PesananScreen> {
         content: Text(
           isRequest
               ? 'Permintaan pembatalan pesanan #${order.orderNumber} akan '
-                    'dikirim ke admin. Pesanan baru dibatalkan setelah disetujui '
-                    'dan stok dikembalikan.'
-              : 'Pesanan #${order.orderNumber} akan dibatalkan dan stok produk '
-                    'dikembalikan. Tindakan ini tidak dapat dibatalkan.',
+                    'dikirim ke admin. Pesanan baru dibatalkan setelah admin '
+                    'menyetujui.'
+              : 'Pesanan #${order.orderNumber} akan dibatalkan. '
+                    'Tindakan ini tidak dapat dibatalkan.',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             color: AppTheme.textMuted,
