@@ -25,27 +25,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _selectedCourierIndex = 0;
   int _selectedPaymentIndex = 0;
 
-  final List<Map<String, dynamic>> _courierOptions = [
-    {
-      'name': 'JNE Reguler',
-      'estimate': 'Estimasi tiba 2-3 hari kerja',
-      'fee': 20000,
-      'code': 'JNE-REG',
-    },
-    {
-      'name': 'SiCepat BEST',
-      'estimate': 'Estimasi tiba besok (1 hari)',
-      'fee': 35000,
-      'code': 'SICEPAT-BEST',
-    },
-    {
-      'name': 'GoSend / GrabExpress',
-      'estimate': 'Tiba di hari yang sama (Instant)',
-      'fee': 50000,
-      'code': 'INSTANT',
-    },
-  ];
-
   final List<Map<String, dynamic>> _paymentMethods = [
     {
       'id': 'manual_bca',
@@ -94,6 +73,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   List<Map<String, dynamic>> _liveServices = [];
   bool _loadingServices = false;
+  String? _servicesError;
 
   @override
   void initState() {
@@ -128,12 +108,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
       setState(() {
         _liveServices = services;
+        _servicesError = services.isEmpty
+            ? 'Biaya ongkir tidak tersedia'
+            : null;
         if (_selectedCourierIndex >= services.length) {
           _selectedCourierIndex = 0;
         }
       });
     } catch (_) {
-      // Fallback: opsi kurir statis dipakai bila API biaya gagal.
+      if (!mounted) return;
+      setState(() {
+        _liveServices = [];
+        _servicesError = 'Biaya ongkir tidak tersedia';
+      });
     } finally {
       if (mounted) setState(() => _loadingServices = false);
     }
@@ -202,8 +189,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
   );
 
-  List<Map<String, dynamic>> get _displayCouriers =>
-      _liveServices.isNotEmpty ? _liveServices : _courierOptions;
+  List<Map<String, dynamic>> get _displayCouriers => _liveServices;
 
   Map<String, dynamic> get _selectedCourier {
     if (_displayCouriers.isEmpty) return const {};
@@ -265,6 +251,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             textColor: Colors.white,
             onPressed: () => context.go('/login'),
           ),
+        ),
+      );
+      return;
+    }
+
+    if (_displayCouriers.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Biaya ongkir belum tersedia. Periksa koneksi internet lalu coba lagi.',
+          ),
+          backgroundColor: AppTheme.errorRed,
         ),
       );
       return;
@@ -926,85 +925,156 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Column(
-            children: [
-              for (int index = 0; index < _displayCouriers.length; index++) ...[
-                if (index > 0) const SizedBox(height: 8),
-                Builder(
-                  builder: (context) {
-                    final courier = _displayCouriers[index];
-                    final isSelected = index == _selectedCourierIndex;
-                    return GestureDetector(
-                      onTap: () =>
-                          setState(() => _selectedCourierIndex = index),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 9,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppTheme.inputBg
-                              : AppTheme.bgWarm.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
+          if (_displayCouriers.isEmpty)
+            _buildShippingEmptyState()
+          else
+            Column(
+              children: [
+                for (
+                  int index = 0;
+                  index < _displayCouriers.length;
+                  index++
+                ) ...[
+                  if (index > 0) const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) {
+                      final courier = _displayCouriers[index];
+                      final isSelected = index == _selectedCourierIndex;
+                      return GestureDetector(
+                        onTap: () =>
+                            setState(() => _selectedCourierIndex = index),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? AppTheme.terracotta
-                                : AppTheme.borderLight,
-                            width: isSelected ? 1.2 : 0.8,
+                                ? AppTheme.inputBg
+                                : AppTheme.bgWarm.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppTheme.terracotta
+                                  : AppTheme.borderLight,
+                              width: isSelected ? 1.2 : 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              _RadioDot(
+                                selected: isSelected,
+                                activeColor: AppTheme.terracotta,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      courier['name'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.textMain,
+                                      ),
+                                    ),
+                                    Text(
+                                      courier['estimate'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: AppTheme.textSubtle,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                _formatPrice(courier['fee'] as int),
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected
+                                      ? AppTheme.terracotta
+                                      : AppTheme.textMain,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            _RadioDot(
-                              selected: isSelected,
-                              activeColor: AppTheme.terracotta,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    courier['name'] as String,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.textMain,
-                                    ),
-                                  ),
-                                  Text(
-                                    courier['estimate'] as String,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 9,
-                                      color: AppTheme.textSubtle,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              _formatPrice(courier['fee'] as int),
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? AppTheme.terracotta
-                                    : AppTheme.textMain,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
         ],
       ),
     );
+  }
+
+  Widget _buildShippingEmptyState() {
+    if (_loadingServices) {
+      return Row(
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 1.6),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Memuat biaya pengiriman…',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppTheme.textSubtle,
+            ),
+          ),
+        ],
+      );
+    }
+    if (_servicesError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 16,
+                color: AppTheme.terracotta,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Biaya ongkir tidak tersedia',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textMain,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Periksa koneksi internet, lalu coba lagi.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              color: AppTheme.textSubtle,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _loadingServices ? null : _fetchShippingCosts,
+            icon: const Icon(Icons.refresh, size: 14),
+            label: const Text('Coba Lagi'),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   // --- 4. METODE PEMBAYARAN ---
@@ -1269,7 +1339,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 6),
           _summaryRow(
-            'Biaya Pengiriman (${_selectedCourier['name']})',
+            'Biaya Pengiriman (${_selectedCourier['name'] ?? '—'})',
             _formatPrice(_shippingFee),
           ),
           const Padding(

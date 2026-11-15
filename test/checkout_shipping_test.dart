@@ -129,46 +129,86 @@ void main() {
     ApiClient.debugClientOverride = null;
   });
 
-  testWidgets('bila API biaya gagal, opsi kurir statis tetap dipakai', (
-    tester,
-  ) async {
-    ignoreNetworkImageErrors();
-    SharedPreferences.setMockInitialValues({});
-    await ApiClient.instance.setToken('token-tes');
+  testWidgets(
+    'bila API biaya gagal, tampilkan status gagal + Coba Lagi tanpa kurir dummy',
+    (tester) async {
+      ignoreNetworkImageErrors();
+      SharedPreferences.setMockInitialValues({});
+      await ApiClient.instance.setToken('token-tes');
 
-    ApiClient.debugClientOverride = MockClient((request) async {
-      final url = request.url.toString();
-      if (url.endsWith('/addresses')) {
+      var failShipping = true;
+      ApiClient.debugClientOverride = MockClient((request) async {
+        final url = request.url.toString();
+        if (url.endsWith('/addresses')) {
+          return http.Response(
+            jsonEncode({
+              'data': [
+                {
+                  'id': 7,
+                  'label': 'Rumah',
+                  'recipient_name': 'Budi Santoso',
+                  'phone': '081234567890',
+                  'full_address': 'Jl. Merdeka 1, Jakarta Barat',
+                  'is_primary': true,
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        if (url.contains('/shipping/costs')) {
+          if (failShipping) {
+            return http.Response(
+              '{"message":"server error"}',
+              500,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'is_live': true,
+              'services': [
+                {
+                  'code': 'JNE',
+                  'name': 'Jalur Nugraha Ekakurir (JNE)',
+                  'service': 'REG',
+                  'description': 'Layanan Reguler',
+                  'cost': 15000,
+                  'etd': '1-2 hari',
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
         return http.Response(
-          jsonEncode({
-            'data': [
-              {
-                'id': 7,
-                'label': 'Rumah',
-                'recipient_name': 'Budi Santoso',
-                'phone': '081234567890',
-                'full_address': 'Jl. Merdeka 1, Jakarta Barat',
-                'is_primary': true,
-              },
-            ],
-          }),
+          '{"data": []}',
           200,
           headers: {'content-type': 'application/json'},
         );
-      }
-      return http.Response(
-        '{"message":"server error"}',
-        500,
-        headers: {'content-type': 'application/json'},
-      );
-    });
+      });
 
-    await pumpCheckout(tester);
+      await pumpCheckout(tester);
 
-    expect(find.byType(CheckoutScreen), findsOneWidget);
-    expect(find.textContaining('GoSend / GrabExpress'), findsOneWidget);
-    expect(find.textContaining('JNE REG'), findsNothing);
+      expect(find.byType(CheckoutScreen), findsOneWidget);
+      expect(find.textContaining('GoSend / GrabExpress'), findsNothing);
+      expect(find.textContaining('JNE Reguler'), findsNothing);
+      expect(find.text('Biaya ongkir tidak tersedia'), findsOneWidget);
+      expect(find.text('Coba Lagi'), findsOneWidget);
 
-    ApiClient.debugClientOverride = null;
-  });
+      failShipping = false;
+      await tester.tap(find.text('Coba Lagi'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.textContaining('JNE REG'), findsOneWidget);
+      expect(find.textContaining('GoSend / GrabExpress'), findsNothing);
+      expect(find.text('Biaya ongkir tidak tersedia'), findsNothing);
+
+      ApiClient.debugClientOverride = null;
+    },
+  );
 }
