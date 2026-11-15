@@ -132,6 +132,15 @@ void main() {
       expect(find.text('Lihat Detail'), findsOneWidget);
       expect(find.text('Batalkan'), findsOneWidget);
 
+      final batalkan = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Batalkan'),
+      );
+      expect(
+        batalkan.style?.backgroundColor?.resolve(const <WidgetState>{}),
+        AppTheme.errorRed,
+        reason: 'tombol Batalkan wajib berwarna merah',
+      );
+
       ApiClient.debugClientOverride = null;
     },
   );

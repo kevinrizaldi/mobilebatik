@@ -862,18 +862,24 @@ class _PesananScreenState extends State<PesananScreen> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: isCompletedReview
+          foregroundColor: isCancelAction
+              ? Colors.white
+              : isCompletedReview
               ? AppTheme.successGreen
               : outlined
               ? AppTheme.textMain
               : Colors.white,
-          backgroundColor: isCompletedReview
+          backgroundColor: isCancelAction
+              ? AppTheme.errorRed
+              : isCompletedReview
               ? AppTheme.terracottaLight
               : outlined
               ? AppTheme.terracottaLight
               : AppTheme.primaryBlack,
           side: BorderSide(
-            color: isCompletedReview
+            color: isCancelAction
+                ? AppTheme.errorRed
+                : isCompletedReview
                 ? AppTheme.terracottaLight
                 : outlined
                 ? AppTheme.terracottaLight
