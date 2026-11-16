@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,7 +12,10 @@ import '../utils/responsive.dart';
 class BeriUlasanScreen extends StatefulWidget {
   final Map<String, dynamic> order;
 
-  const BeriUlasanScreen({super.key, required this.order});
+  /// Override ImagePicker untuk testing; null = ImagePicker sungguhan.
+  final ImagePicker? imagePicker;
+
+  const BeriUlasanScreen({super.key, required this.order, this.imagePicker});
 
   @override
   State<BeriUlasanScreen> createState() => _BeriUlasanScreenState();
@@ -48,6 +50,8 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
   String get _orderId => widget.order['orderNumber'] as String? ?? 'Pesanan';
   String get _variant => widget.order['variant'] as String? ?? 'Ukuran L';
   String get _imageUrl => widget.order['imageUrl'] as String? ?? '';
+
+  ImagePicker get _picker => widget.imagePicker ?? ImagePicker();
 
   @override
   void dispose() {
@@ -542,7 +546,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
 
   Widget _addPhotoTile() {
     return InkWell(
-      onTap: _pickPhotos,
+      onTap: _showPhotoSourceSheet,
       borderRadius: BorderRadius.circular(6),
       child: Container(
         width: 62,
@@ -574,10 +578,111 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
     );
   }
 
-  Future<void> _pickPhotos() async {
+  void _showPhotoSourceSheet() {
+    final r = Responsive.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(r.cardRadius)),
+      ),
+      backgroundColor: AppTheme.bgWarm,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          r.spacingLg,
+          r.spacingMd,
+          r.spacingLg,
+          r.spacingLg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            SizedBox(height: r.spacingMd),
+            Text(
+              'Tambah Foto',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: r.fontLg,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textMain,
+              ),
+            ),
+            SizedBox(height: r.spacingSm),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: AppTheme.textMain,
+              ),
+              title: Text(
+                'Ambil Foto',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textMain,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFromCamera();
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppTheme.textMain,
+              ),
+              title: Text(
+                'Pilih dari Galeri',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textMain,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFromGallery();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickFromCamera() async {
     final remaining = 3 - _photos.length;
     if (remaining <= 0) return;
-    final picked = await ImagePicker().pickMultiImage(
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1400,
+      );
+      if (picked == null || !mounted) return;
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+      setState(() => _photos.add(bytes));
+    } on PlatformException {
+      // Izin kamera ditolak atau kamera tidak tersedia — biarkan tanpa perubahan.
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final remaining = 3 - _photos.length;
+    if (remaining <= 0) return;
+    final picked = await _picker.pickMultiImage(
       limit: remaining,
       imageQuality: 85,
       maxWidth: 1400,
