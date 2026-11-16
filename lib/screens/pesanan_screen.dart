@@ -118,7 +118,6 @@ class _PesananScreenState extends State<PesananScreen> {
       courier: courier,
       trackingNumber: tracking,
       shippingFee: shippingCost,
-      voucherDiscount: 0,
     );
   }
 
@@ -624,7 +623,6 @@ class _PesananScreenState extends State<PesananScreen> {
                   'trackingNumber': order.trackingNumber,
                   'isPaid': order.statusIndex > 1,
                   'shippingFee': order.shippingFee,
-                  'voucherDiscount': order.voucherDiscount,
                 },
               )
             : isDetailAction && order != null
@@ -643,7 +641,6 @@ class _PesananScreenState extends State<PesananScreen> {
                   'trackingNumber': order.trackingNumber,
                   'isPaid': order.statusIndex > 1,
                   'shippingFee': order.shippingFee,
-                  'voucherDiscount': order.voucherDiscount,
                 },
               )
             : isTrackingAction && order != null
@@ -662,7 +659,6 @@ class _PesananScreenState extends State<PesananScreen> {
                   'trackingNumber': order.trackingNumber,
                   'isPaid': order.statusIndex > 1,
                   'shippingFee': order.shippingFee,
-                  'voucherDiscount': order.voucherDiscount,
                 },
               )
             : () {
@@ -760,7 +756,6 @@ class _OrderData {
   final String courier;
   final String? trackingNumber;
   final int shippingFee;
-  final int voucherDiscount;
 
   const _OrderData({
     required this.orderNumber,
@@ -780,6 +775,5 @@ class _OrderData {
     required this.courier,
     required this.trackingNumber,
     required this.shippingFee,
-    required this.voucherDiscount,
   });
 }

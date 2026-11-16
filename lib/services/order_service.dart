@@ -21,7 +21,6 @@ class OrderService {
     required String shippingOption,
     required double shippingCost,
     required String paymentMethod,
-    String? voucher,
     String? notes,
     List<int>? cartItemIds,
     List<Map<String, dynamic>>? directItems,
@@ -35,8 +34,6 @@ class OrderService {
         'shipping_option': shippingOption,
         'shipping_cost': shippingCost,
         'payment_method': paymentMethod,
-        if (voucher != null && voucher.trim().isNotEmpty)
-          'voucher': voucher.trim(),
         if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
         if (cartItemIds != null && cartItemIds.isNotEmpty)
           'cart_item_ids': cartItemIds,
