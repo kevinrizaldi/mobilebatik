@@ -3,19 +3,21 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class GoogleSocialButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String label;
+  final bool isLoading;
 
   const GoogleSocialButton({
     super.key,
     required this.onPressed,
     this.label = 'Masuk dengan Google',
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(50),
         backgroundColor: Colors.white,
@@ -26,21 +28,30 @@ class GoogleSocialButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const GoogleLogo(size: 20),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textMain,
+      child: isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryDark),
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const GoogleLogo(size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textMain,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

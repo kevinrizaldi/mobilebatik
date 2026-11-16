@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../services/google_auth_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
@@ -23,6 +24,62 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isObscured = true;
   bool _rememberMe = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  void _handleGoogleLogin() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final res = await GoogleAuthService.instance.signIn();
+      if (res == null) {
+        if (mounted) setState(() => _isGoogleLoading = false);
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _isGoogleLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Selamat datang! Berhasil masuk dengan Google.',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.primaryDark,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+
+      context.go('/home');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isGoogleLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isGoogleLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal masuk dengan Google: $e',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    }
+  }
 
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -273,14 +330,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             // Google Social Login Button
                             GoogleSocialButton(
                               label: 'Masuk dengan Google',
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Menghubungkan ke layanan Google Sign-In...'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              },
+                              isLoading: _isGoogleLoading,
+                              onPressed: _isLoading || _isGoogleLoading
+                                  ? null
+                                  : _handleGoogleLogin,
                             ),
                           ],
                         ),

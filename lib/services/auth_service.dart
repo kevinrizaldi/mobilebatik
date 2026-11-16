@@ -32,6 +32,38 @@ class AuthService {
     return res;
   }
 
+  Future<Map<String, dynamic>> loginWithGoogle({
+    String? idToken,
+    required String email,
+    String? name,
+    String? googleId,
+    String? avatar,
+  }) async {
+    final res = await ApiClient.instance.post(
+      '/auth/google',
+      auth: false,
+      body: {
+        'email': email.trim(),
+        if (idToken != null && idToken.isNotEmpty) 'id_token': idToken,
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (googleId != null && googleId.isNotEmpty) 'google_id': googleId,
+        if (avatar != null && avatar.isNotEmpty) 'avatar': avatar,
+      },
+    );
+
+    final token = res['token'] as String?;
+    if (token != null && token.isNotEmpty) {
+      await ApiClient.instance.setToken(token);
+    }
+
+    final user = res['user'];
+    if (user is Map<String, dynamic>) {
+      ProfileStore.instance.setFromUserJson(user);
+    }
+
+    return res;
+  }
+
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
