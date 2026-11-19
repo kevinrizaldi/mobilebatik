@@ -20,7 +20,10 @@ class ProfileService {
       },
     );
 
-    final user = res['user'];
+    final data = res['data'] is Map<String, dynamic>
+        ? res['data'] as Map<String, dynamic>
+        : null;
+    final user = data?['user'] ?? res['user'];
     if (user is Map<String, dynamic>) {
       ProfileStore.instance.setFromUserJson(user);
     }
@@ -82,4 +85,3 @@ class ProfileService {
     await ApiClient.instance.delete('/addresses/$id');
   }
 }
-

@@ -14,7 +14,8 @@ class BatikHeaderLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape ||
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape ||
         MediaQuery.of(context).size.height < 600;
     final isCompact = compact || isLandscape;
 
@@ -39,9 +40,7 @@ class BatikHeaderLogo extends StatelessWidget {
               ),
             ],
           ),
-          child: CustomPaint(
-            painter: _BatikMotifPainter(isCompact: isCompact),
-          ),
+          child: CustomPaint(painter: _BatikMotifPainter(isCompact: isCompact)),
         ),
         SizedBox(height: isCompact ? 6 : 12),
         // Brand Title & Atelier Subtitle
@@ -119,10 +118,26 @@ class _BatikMotifPainter extends CustomPainter {
     final dotOffset = isCompact ? 5.5 : 8.0;
 
     canvas.drawCircle(center, dotRadius, fillPaint);
-    canvas.drawCircle(Offset(center.dx - dotOffset, center.dy - dotOffset), outerDotRadius, fillPaint);
-    canvas.drawCircle(Offset(center.dx + dotOffset, center.dy - dotOffset), outerDotRadius, fillPaint);
-    canvas.drawCircle(Offset(center.dx - dotOffset, center.dy + dotOffset), outerDotRadius, fillPaint);
-    canvas.drawCircle(Offset(center.dx + dotOffset, center.dy + dotOffset), outerDotRadius, fillPaint);
+    canvas.drawCircle(
+      Offset(center.dx - dotOffset, center.dy - dotOffset),
+      outerDotRadius,
+      fillPaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx + dotOffset, center.dy - dotOffset),
+      outerDotRadius,
+      fillPaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx - dotOffset, center.dy + dotOffset),
+      outerDotRadius,
+      fillPaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx + dotOffset, center.dy + dotOffset),
+      outerDotRadius,
+      fillPaint,
+    );
   }
 
   @override

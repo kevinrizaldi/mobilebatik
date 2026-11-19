@@ -88,7 +88,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
               child: TextButton.icon(
                 onPressed: () async {
                   await AuthService.instance.logout();
-                  if (context.mounted) context.go('/login');
+                  if (context.mounted) context.go('/home');
                 },
                 icon: const Icon(Icons.logout_rounded, size: 16),
                 label: Text(

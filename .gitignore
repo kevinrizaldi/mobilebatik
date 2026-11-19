@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Owner personal files
+opencode.json
+laporan_*.md
+laporan_*.txt
+# Widget Preview related
+.widget_preview/

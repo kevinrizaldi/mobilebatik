@@ -15,15 +15,48 @@ import '../screens/profil_screen.dart';
 import '../screens/profil_subscreens.dart';
 import '../screens/register_screen.dart';
 import '../screens/reset_password_screen.dart';
+import '../services/api_client.dart';
+import '../widgets/app_back_scope.dart';
 
 class AppRouter {
+  /// Rute yang butuh login (Task 12): checkout, pesanan (+ detail/lacak),
+  /// profil (+ sub-rute termasuk alamat), pembayaran, beri-ulasan.
+  static const List<String> _authRequiredPaths = [
+    '/checkout',
+    '/pembayaran',
+    '/pesanan',
+    '/detail-pesanan',
+    '/lacak-pesanan',
+    '/beri-ulasan',
+    '/profil',
+  ];
+
+  static const List<String> _authEntryPaths = ['/login', '/register'];
+
+  static bool _requiresAuth(String location) => _authRequiredPaths.any(
+    (path) => location == path || location.startsWith('$path/'),
+  );
+
+  /// Cast aman untuk `state.extra` (Task 12): bukan Map → null, layar
+  /// memakai fallback default-nya masing-masing.
+  static Map<String, dynamic>? _extraMap(Object? extra) =>
+      extra is Map<String, dynamic> ? extra : null;
+
   static final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/home',
+    redirect: (context, state) {
+      final location = state.uri.path;
+      final loggedIn = ApiClient.instance.isLoggedIn;
+
+      if (_requiresAuth(location) && !loggedIn) return '/login';
+      if (loggedIn && _authEntryPaths.contains(location)) return '/home';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => AppBackScope(child: const LoginScreen()),
       ),
       GoRoute(
         path: '/register',
@@ -48,57 +81,53 @@ class AppRouter {
       GoRoute(
         path: '/katalog',
         name: 'katalog',
-        builder: (context, state) => const KatalogScreen(),
+        builder: (context, state) => AppBackScope(child: const KatalogScreen()),
       ),
       GoRoute(
         path: '/keranjang',
         name: 'keranjang',
-        builder: (context, state) => const KeranjangScreen(),
+        builder: (context, state) =>
+            AppBackScope(child: const KeranjangScreen()),
       ),
       GoRoute(
         path: '/checkout',
         name: 'checkout',
-        builder: (context, state) => CheckoutScreen(
-          checkoutData: state.extra as Map<String, dynamic>?,
-        ),
+        builder: (context, state) =>
+            CheckoutScreen(checkoutData: _extraMap(state.extra)),
       ),
       GoRoute(
         path: '/pembayaran',
         name: 'pembayaran',
-        builder: (context, state) => PembayaranScreen(
-          paymentData: state.extra as Map<String, dynamic>?,
-        ),
+        builder: (context, state) =>
+            PembayaranScreen(paymentData: _extraMap(state.extra)),
       ),
       GoRoute(
         path: '/pesanan',
         name: 'pesanan',
-        builder: (context, state) => const PesananScreen(),
+        builder: (context, state) => AppBackScope(child: const PesananScreen()),
       ),
       GoRoute(
         path: '/detail-pesanan',
         name: 'detail-pesanan',
-        builder: (context, state) => DetailPesananScreen(
-          order: state.extra as Map<String, dynamic>? ?? const {},
-        ),
+        builder: (context, state) =>
+            DetailPesananScreen(order: _extraMap(state.extra) ?? const {}),
       ),
       GoRoute(
         path: '/lacak-pesanan',
         name: 'lacak-pesanan',
-        builder: (context, state) => LacakPesananScreen(
-          order: state.extra as Map<String, dynamic>? ?? const {},
-        ),
+        builder: (context, state) =>
+            LacakPesananScreen(order: _extraMap(state.extra) ?? const {}),
       ),
       GoRoute(
         path: '/beri-ulasan',
         name: 'beri-ulasan',
-        builder: (context, state) => BeriUlasanScreen(
-          order: state.extra as Map<String, dynamic>? ?? const {},
-        ),
+        builder: (context, state) =>
+            BeriUlasanScreen(order: _extraMap(state.extra) ?? const {}),
       ),
       GoRoute(
         path: '/profil',
         name: 'profil',
-        builder: (context, state) => const ProfilScreen(),
+        builder: (context, state) => AppBackScope(child: const ProfilScreen()),
       ),
       GoRoute(
         path: '/profil/edit',
@@ -124,7 +153,7 @@ class AppRouter {
         path: '/detail-produk',
         name: 'detail-produk',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
+          final extra = _extraMap(state.extra);
           return DetailProdukScreen(product: extra);
         },
       ),

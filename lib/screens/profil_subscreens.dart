@@ -181,10 +181,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: AppTheme.errorRed,
-        ),
+        SnackBar(content: Text(e.message), backgroundColor: AppTheme.errorRed),
       );
     }
   }

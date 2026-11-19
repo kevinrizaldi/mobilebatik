@@ -38,10 +38,7 @@ class CartService {
   }) async {
     return ApiClient.instance.patch(
       '/cart/$cartItemId',
-      body: {
-        'quantity': ?quantity,
-        'selected': ?selected,
-      },
+      body: {'quantity': ?quantity, 'selected': ?selected},
     );
   }
 

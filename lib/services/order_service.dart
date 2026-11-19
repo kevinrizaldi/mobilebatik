@@ -21,6 +21,7 @@ class OrderService {
     required String shippingOption,
     required double shippingCost,
     required String paymentMethod,
+    String? voucher,
     String? notes,
     List<int>? cartItemIds,
     List<Map<String, dynamic>>? directItems,
@@ -34,22 +35,23 @@ class OrderService {
         'shipping_option': shippingOption,
         'shipping_cost': shippingCost,
         'payment_method': paymentMethod,
+        if (voucher != null && voucher.trim().isNotEmpty)
+          'voucher': voucher.trim(),
         if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
         if (cartItemIds != null && cartItemIds.isNotEmpty)
           'cart_item_ids': cartItemIds,
-        if (directItems != null && directItems.isNotEmpty)
-          'items': directItems,
+        if (directItems != null && directItems.isNotEmpty) 'items': directItems,
       },
     );
   }
 
-  Future<void> submitReview({
+  Future<Map<String, dynamic>> submitReview({
     required int orderId,
     int? productId,
     required int rating,
     required String comment,
   }) async {
-    await ApiClient.instance.post(
+    return ApiClient.instance.post(
       '/orders/$orderId/reviews',
       body: {
         'product_id': ?productId,
@@ -58,5 +60,12 @@ class OrderService {
       },
     );
   }
-}
 
+  Future<Map<String, dynamic>> confirmReceived(int orderId) {
+    return ApiClient.instance.post('/orders/$orderId/confirm');
+  }
+
+  Future<Map<String, dynamic>> cancelOrder(int orderId) {
+    return ApiClient.instance.post('/orders/$orderId/cancel');
+  }
+}

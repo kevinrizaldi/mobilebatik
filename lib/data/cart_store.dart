@@ -34,6 +34,21 @@ class CartStore extends ChangeNotifier {
   final List<CartItem> items = [];
   bool isSyncing = false;
 
+  /// Callback untuk menampilkan error aksi keranjang ke user (SnackBar).
+  /// Layar yang memuat keranjang (mis. `keranjang_screen`) menyetel ini;
+  /// jika tidak diset, error tetap tidak crash tapi tidak ditampilkan.
+  void Function(String message)? onError;
+
+  void _reportError(Object error) {
+    final handler = onError;
+    if (handler == null) return;
+    handler(
+      error is ApiException
+          ? error.message
+          : 'Gagal memperbarui keranjang. Periksa koneksi Anda.',
+    );
+  }
+
   int get itemCount => items.fold(0, (total, item) => total + item.quantity);
 
   int get selectedItemCount => items
@@ -58,34 +73,38 @@ class CartStore extends ChangeNotifier {
       final serverItems = await CartService.instance.fetchCart();
       items
         ..clear()
-        ..addAll(serverItems.map((raw) {
-          final size = raw['size']?.toString() ?? '';
-          final variant = raw['variant']?.toString() ?? '';
-          final labelParts = [
-            if (size.isNotEmpty) 'Ukuran $size',
-            if (variant.isNotEmpty) variant,
-          ];
-          final rawPrice = raw['unit_price'];
-          final price = rawPrice is num
-              ? rawPrice.round()
-              : int.tryParse(rawPrice?.toString() ?? '0') ?? 0;
+        ..addAll(
+          serverItems.map((raw) {
+            final size = raw['size']?.toString() ?? '';
+            final variant = raw['variant']?.toString() ?? '';
+            final labelParts = [
+              if (size.isNotEmpty) 'Ukuran $size',
+              if (variant.isNotEmpty) variant,
+            ];
+            final rawPrice = raw['unit_price'];
+            final price = rawPrice is num
+                ? rawPrice.round()
+                : int.tryParse(rawPrice?.toString() ?? '0') ?? 0;
 
-          return CartItem(
-            id: raw['id'].toString(),
-            cartItemId: raw['id'] is int ? raw['id'] as int : int.tryParse('${raw['id']}'),
-            productId: raw['product_id'] is int
-                ? raw['product_id'] as int
-                : int.tryParse('${raw['product_id']}'),
-            name: raw['name']?.toString() ?? 'Produk Batik',
-            variant: labelParts.isEmpty ? 'Standar' : labelParts.join(' · '),
-            imageUrl: raw['image_url']?.toString() ?? '',
-            unitPrice: price,
-            quantity: raw['quantity'] is int
-                ? raw['quantity'] as int
-                : int.tryParse('${raw['quantity']}') ?? 1,
-            isSelected: raw['selected'] == true,
-          );
-        }));
+            return CartItem(
+              id: raw['id'].toString(),
+              cartItemId: raw['id'] is int
+                  ? raw['id'] as int
+                  : int.tryParse('${raw['id']}'),
+              productId: raw['product_id'] is int
+                  ? raw['product_id'] as int
+                  : int.tryParse('${raw['product_id']}'),
+              name: raw['name']?.toString() ?? 'Produk Batik',
+              variant: labelParts.isEmpty ? 'Standar' : labelParts.join(' · '),
+              imageUrl: raw['image_url']?.toString() ?? '',
+              unitPrice: price,
+              quantity: raw['quantity'] is int
+                  ? raw['quantity'] as int
+                  : int.tryParse('${raw['quantity']}') ?? 1,
+              isSelected: raw['selected'] == true,
+            );
+          }),
+        );
     } catch (_) {
       // Pertahankan state terakhir bila gagal sync.
     } finally {
@@ -116,8 +135,8 @@ class CartStore extends ChangeNotifier {
     final localId = '${productId ?? name}_$size';
     final existingIndex = items.indexWhere((item) => item.id == localId);
     if (existingIndex >= 0) {
-      items[existingIndex].quantity =
-          (items[existingIndex].quantity + quantity).clamp(1, 99);
+      items[existingIndex].quantity = (items[existingIndex].quantity + quantity)
+          .clamp(1, 99);
     } else {
       items.insert(
         0,
@@ -140,7 +159,12 @@ class CartStore extends ChangeNotifier {
     for (final item in items) {
       item.isSelected = selected;
       if (item.cartItemId != null) {
-        CartService.instance.updateItem(item.cartItemId!, selected: selected).catchError((_) => <String, dynamic>{});
+        CartService.instance
+            .updateItem(item.cartItemId!, selected: selected)
+            .catchError((Object e) {
+              _reportError(e);
+              return <String, dynamic>{};
+            });
       }
     }
     notifyListeners();
@@ -153,7 +177,10 @@ class CartStore extends ChangeNotifier {
     if (item.cartItemId != null) {
       CartService.instance
           .updateItem(item.cartItemId!, selected: item.isSelected)
-          .catchError((_) => <String, dynamic>{});
+          .catchError((Object e) {
+            _reportError(e);
+            return <String, dynamic>{};
+          });
     }
   }
 
@@ -164,7 +191,10 @@ class CartStore extends ChangeNotifier {
     if (item.cartItemId != null) {
       CartService.instance
           .updateItem(item.cartItemId!, quantity: item.quantity)
-          .catchError((_) => <String, dynamic>{});
+          .catchError((Object e) {
+            _reportError(e);
+            return <String, dynamic>{};
+          });
     }
   }
 
@@ -174,9 +204,11 @@ class CartStore extends ChangeNotifier {
     final removed = items.removeAt(idx);
     notifyListeners();
     if (removed.cartItemId != null) {
-      CartService.instance
-          .removeItem(removed.cartItemId!)
-          .catchError((_) {});
+      CartService.instance.removeItem(removed.cartItemId!).catchError((
+        Object e,
+      ) {
+        _reportError(e);
+      });
     }
   }
 
@@ -186,7 +218,11 @@ class CartStore extends ChangeNotifier {
     notifyListeners();
     for (final item in toRemove) {
       if (item.cartItemId != null) {
-        CartService.instance.removeItem(item.cartItemId!).catchError((_) {});
+        CartService.instance.removeItem(item.cartItemId!).catchError((
+          Object e,
+        ) {
+          _reportError(e);
+        });
       }
     }
   }

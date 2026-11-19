@@ -16,6 +16,7 @@ class DetailPesananScreen extends StatelessWidget {
   int get _quantity => (order['quantity'] as num?)?.toInt() ?? 1;
   int get _unitPrice => (order['price'] as num?)?.toInt() ?? 0;
   int get _shippingFee => (order['shippingFee'] as num?)?.toInt() ?? 0;
+  int get _voucherDiscount => (order['voucherDiscount'] as num?)?.toInt() ?? 0;
   String get _orderNumber => order['orderNumber'] as String? ?? '-';
   String get _orderedAt => order['orderedAt'] as String? ?? '-';
   String get _status => order['status'] as String? ?? 'Diproses';
@@ -24,7 +25,7 @@ class DetailPesananScreen extends StatelessWidget {
   String? get _trackingNumber => order['trackingNumber'] as String?;
   bool get _isPaid => order['isPaid'] as bool? ?? false;
   int get _productSubtotal => _unitPrice * _quantity;
-  int get _total => _productSubtotal + _shippingFee;
+  int get _total => _productSubtotal + _shippingFee - _voucherDiscount;
 
   @override
   Widget build(BuildContext context) {
@@ -474,6 +475,13 @@ class DetailPesananScreen extends StatelessWidget {
           _costRow('Subtotal Produk', _formatPrice(_productSubtotal)),
           const SizedBox(height: 7),
           _costRow('Biaya Pengiriman', _formatPrice(_shippingFee)),
+          const SizedBox(height: 7),
+          _costRow(
+            'Voucher Diskon',
+            _voucherDiscount == 0
+                ? _formatPrice(0)
+                : '-${_formatPrice(_voucherDiscount)}',
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: AppTheme.borderLight),

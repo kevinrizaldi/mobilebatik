@@ -68,184 +68,194 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: r.pagePaddingH, vertical: isLandscape ? 4 : 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: r.pagePaddingH,
+              vertical: isLandscape ? 4 : 8,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: r.formMaxWidth),
               child: Column(
                 children: [
-                    BatikHeaderLogo(tag: 'BESPOKE CLIENT SECURITY', compact: isLandscape),
-              SizedBox(height: isLandscape ? 12 : 28),
-
-              // Form Container Card
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.bgCard,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Buat Password Baru',
-                        style: GoogleFonts.outfit(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryBlack,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Silakan buat kombinasi kata sandi baru yang kuat untuk melindungi akun dan riwayat pesanan Anda.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          color: AppTheme.textMuted,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // New Password Field
-                      CustomTextField(
-                        label: 'Password Baru',
-                        hintText: 'Minimal 8 karakter',
-                        controller: _newPasswordController,
-                        prefixIcon: Icons.lock_outline_rounded,
-                        isPassword: true,
-                        isObscured: _isObscuredNew,
-                        onToggleVisibility: () {
-                          setState(() => _isObscuredNew = !_isObscuredNew);
-                        },
-                        validator: (val) {
-                          if (val == null || val.isEmpty) {
-                            return 'Password baru tidak boleh kosong';
-                          }
-                          if (val.length < 8) {
-                            return 'Password minimal 8 karakter';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Confirm New Password Field
-                      CustomTextField(
-                        label: 'Konfirmasi Password Baru',
-                        hintText: 'Ulangi password baru',
-                        controller: _confirmPasswordController,
-                        prefixIcon: Icons.lock_reset_rounded,
-                        isPassword: true,
-                        isObscured: _isObscuredConfirm,
-                        onToggleVisibility: () {
-                          setState(() => _isObscuredConfirm = !_isObscuredConfirm);
-                        },
-                        validator: (val) {
-                          if (val != _newPasswordController.text) {
-                            return 'Konfirmasi password tidak cocok';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Password Strength Guidance Box
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.inputBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppTheme.borderLight),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kriteria Keamanan Password:',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryDark,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            _buildCheckItem('Minimal 8 karakter'),
-                            _buildCheckItem('Mengandung kombinasi huruf & angka'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Submit CTA Button
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _handleResetPassword,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text('Simpan Password Baru'),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.shield_outlined, size: 18),
-                                ],
-                              ),
-                      ),
-                    ],
+                  BatikHeaderLogo(
+                    tag: 'BESPOKE CLIENT SECURITY',
+                    compact: isLandscape,
                   ),
-                ),
-              ),
+                  SizedBox(height: isLandscape ? 12 : 28),
 
-              const SizedBox(height: 20),
-
-              // Back to Login Link
-              GestureDetector(
-                onTap: () => context.go('/login'),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.arrow_back_rounded,
-                      size: 16,
-                      color: AppTheme.primaryDark,
+                  // Form Container Card
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgCard,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                      border: Border.all(color: AppTheme.borderLight),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'BATAL & KEMBALI KE LOGIN',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: AppTheme.primaryDark,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Buat Password Baru',
+                            style: GoogleFonts.outfit(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlack,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Silakan buat kombinasi kata sandi baru yang kuat untuk melindungi akun dan riwayat pesanan Anda.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // New Password Field
+                          CustomTextField(
+                            label: 'Password Baru',
+                            hintText: 'Minimal 8 karakter',
+                            controller: _newPasswordController,
+                            prefixIcon: Icons.lock_outline_rounded,
+                            isPassword: true,
+                            isObscured: _isObscuredNew,
+                            onToggleVisibility: () {
+                              setState(() => _isObscuredNew = !_isObscuredNew);
+                            },
+                            validator: (val) {
+                              if (val == null || val.isEmpty) {
+                                return 'Password baru tidak boleh kosong';
+                              }
+                              if (val.length < 8) {
+                                return 'Password minimal 8 karakter';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Confirm New Password Field
+                          CustomTextField(
+                            label: 'Konfirmasi Password Baru',
+                            hintText: 'Ulangi password baru',
+                            controller: _confirmPasswordController,
+                            prefixIcon: Icons.lock_reset_rounded,
+                            isPassword: true,
+                            isObscured: _isObscuredConfirm,
+                            onToggleVisibility: () {
+                              setState(
+                                () => _isObscuredConfirm = !_isObscuredConfirm,
+                              );
+                            },
+                            validator: (val) {
+                              if (val != _newPasswordController.text) {
+                                return 'Konfirmasi password tidak cocok';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Password Strength Guidance Box
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.inputBg,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppTheme.borderLight),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Kriteria Keamanan Password:',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                _buildCheckItem('Minimal 8 karakter'),
+                                _buildCheckItem(
+                                  'Mengandung kombinasi huruf & angka',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Submit CTA Button
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _handleResetPassword,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text('Simpan Password Baru'),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.shield_outlined, size: 18),
+                                    ],
+                                  ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 16),
-                  ],
-                ),
+                  const SizedBox(height: 20),
+
+                  // Back to Login Link
+                  GestureDetector(
+                    onTap: () => context.go('/login'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.arrow_back_rounded,
+                          size: 16,
+                          color: AppTheme.primaryDark,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'BATAL & KEMBALI KE LOGIN',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: AppTheme.primaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildCheckItem(String text) {

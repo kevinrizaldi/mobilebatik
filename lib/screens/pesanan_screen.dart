@@ -61,6 +61,109 @@ class _PesananScreenState extends State<PesananScreen> {
     }
   }
 
+  Future<void> _confirmReceived(_OrderData order) async {
+    if (order.id == null) return;
+    try {
+      final res = await OrderService.instance.confirmReceived(order.id!);
+      if (!mounted) return;
+      _showActionSnackBar(
+        res['message']?.toString() ?? 'Pesanan telah dikonfirmasi diterima.',
+        color: AppTheme.successGreen,
+      );
+      await _loadOrders();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showActionSnackBar(e.message, color: AppTheme.errorRed);
+    }
+  }
+
+  Future<void> _cancelOrder(_OrderData order) async {
+    if (order.id == null) return;
+    // Sudah dibayar: mengajukan pembatalan, menunggu persetujuan admin.
+    final isRequest = order.statusIndex > 1 && !order.isCancelled;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Text(
+          isRequest ? 'Ajukan Pembatalan?' : 'Batalkan Pesanan?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textMain,
+          ),
+        ),
+        content: Text(
+          isRequest
+              ? 'Permintaan pembatalan pesanan #${order.orderNumber} akan '
+                    'dikirim ke admin. Pesanan baru dibatalkan setelah admin '
+                    'menyetujui.'
+              : 'Pesanan #${order.orderNumber} akan dibatalkan. '
+                    'Tindakan ini tidak dapat dibatalkan.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            color: AppTheme.textMuted,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              'Kembali',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: AppTheme.textSubtle,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              isRequest ? 'Ya, Ajukan' : 'Ya, Batalkan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.errorRed,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final res = await OrderService.instance.cancelOrder(order.id!);
+      if (!mounted) return;
+      _showActionSnackBar(
+        res['message']?.toString() ?? 'Pesanan berhasil dibatalkan.',
+        color: AppTheme.successGreen,
+      );
+      await _loadOrders();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showActionSnackBar(e.message, color: AppTheme.errorRed);
+    }
+  }
+
+  void _showActionSnackBar(String message, {Color? color}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: color ?? AppTheme.primaryDark,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   _OrderData _mapOrder(Map<String, dynamic> raw) {
     final items = raw['items'] is List
         ? (raw['items'] as List).whereType<Map<String, dynamic>>().toList()
@@ -88,15 +191,38 @@ class _PesananScreenState extends State<PesananScreen> {
     final courier = raw['courier']?.toString() ?? 'JNE Reguler';
     final tracking = raw['tracking_number']?.toString();
     final createdAt = (raw['created_at']?.toString() ?? '').split('T').first;
+    final hasReview =
+        raw['has_review'] == true ||
+        ProfileStore.instance.reviewedOrderIds.contains(
+          raw['code']?.toString(),
+        );
 
-    final primaryAction = switch (statusIndex) {
-      1 => 'Bayar Sekarang',
-      3 => 'Lacak Pengiriman',
-      4 => 'Beri Ulasan',
-      _ => 'Lihat Detail',
-    };
+    // Status sesuai kontrak backend (OrderController::formatOrder).
+    // - index 1: belum dibayar → bayar / batalkan
+    // - index 3: dikirim → terima barang / lacak
+    // - index 4: selesai → ulasan
+    // Order yang sudah dibatalkan tidak menawarkan aksi bayar/batal.
+    final isCancelled = status.toLowerCase().contains('batal');
+    final cancelRequested = raw['cancel_requested'] == true;
+    final primaryAction = isCancelled
+        ? 'Lihat Detail'
+        : switch (statusIndex) {
+            1 => 'Bayar Sekarang',
+            3 => 'Terima Barang',
+            4 => hasReview ? 'Ulasan Terkirim' : 'Beri Ulasan',
+            _ => 'Lihat Detail',
+          };
+    final secondaryAction = isCancelled
+        ? 'Beli Lagi'
+        : switch (statusIndex) {
+            1 => 'Batalkan',
+            2 => cancelRequested ? 'Menunggu Persetujuan' : 'Batalkan',
+            3 => 'Lacak Pengiriman',
+            _ => 'Lihat Detail',
+          };
 
     return _OrderData(
+      id: raw['id'] is int ? raw['id'] as int : int.tryParse('${raw['id']}'),
       orderNumber: raw['code']?.toString() ?? 'ORD',
       date: createdAt.isNotEmpty ? createdAt : 'Baru saja',
       status: status,
@@ -107,19 +233,29 @@ class _PesananScreenState extends State<PesananScreen> {
       price: totalPrice,
       quantity: totalQty > 0 ? totalQty : 1,
       imageUrl: firstItem['image_url']?.toString() ?? '',
+      productId: firstItem['product_id'] is int
+          ? firstItem['product_id'] as int
+          : int.tryParse('${firstItem['product_id']}'),
       notice: tracking != null && tracking.isNotEmpty
           ? 'Resi: $tracking'
           : 'Metode: ${raw['payment_method'] ?? '-'}',
       noticeDetail: 'Kurir: $courier',
       primaryAction: primaryAction,
-      secondaryAction: 'Lihat Detail',
+      secondaryAction: secondaryAction,
       statusIndex: statusIndex,
+      isCancelled: isCancelled,
+      cancelRequested: cancelRequested,
+      hasReview: hasReview,
+      paymentDeadline: raw['payment_deadline']?.toString(),
       orderedAt: createdAt.isNotEmpty ? createdAt : 'Baru saja',
       courier: courier,
       trackingNumber: tracking,
       shippingFee: shippingCost,
+      voucherDiscount: 0,
     );
   }
+
+  static const int _cancelledStatus = 5;
 
   static const List<String> _statuses = [
     'Semua',
@@ -127,24 +263,34 @@ class _PesananScreenState extends State<PesananScreen> {
     'Diproses',
     'Dikirim',
     'Selesai',
+    'Dibatalkan',
   ];
 
   List<_OrderData> get _filteredOrders {
     final query = _searchController.text.trim().toLowerCase();
     return _orders.where((order) {
-      final matchesStatus =
-          _selectedStatus == 0 || order.statusIndex == _selectedStatus;
       final matchesQuery =
           query.isEmpty ||
           order.orderNumber.toLowerCase().contains(query) ||
           order.productName.toLowerCase().contains(query);
-      return matchesStatus && matchesQuery;
+      if (_selectedStatus == 0) return matchesQuery;
+      if (order.isCancelled) {
+        return _selectedStatus == _cancelledStatus && matchesQuery;
+      }
+      return order.statusIndex == _selectedStatus && matchesQuery;
     }).toList();
   }
 
   int _countForStatus(int statusIndex) {
     if (statusIndex == 0) return _orders.length;
-    return _orders.where((order) => order.statusIndex == statusIndex).length;
+    if (statusIndex == _cancelledStatus) {
+      return _orders.where((order) => order.isCancelled).length;
+    }
+    return _orders
+        .where(
+          (order) => !order.isCancelled && order.statusIndex == statusIndex,
+        )
+        .length;
   }
 
   @override
@@ -311,65 +457,69 @@ class _PesananScreenState extends State<PesananScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.terracotta),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.terracotta,
+                    ),
                   )
                 : _errorMessage != null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: r.fontSm,
-                                color: AppTheme.textSubtle,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: _loadOrders,
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryDark),
-                              child: const Text('Coba Lagi',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
-                        ),
-                      )
-                    : orders.isEmpty
-                        ? RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: _loadOrders,
-                            child: ListView(
-                              children: [
-                                SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.2),
-                                _buildEmptyState(r),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            color: AppTheme.terracotta,
-                            onRefresh: _loadOrders,
-                            child: ListView.separated(
-                              padding: EdgeInsets.fromLTRB(
-                                r.pagePaddingH,
-                                8,
-                                r.pagePaddingH,
-                                16,
-                              ),
-                              itemCount: orders.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) => AnimatedBuilder(
-                                animation: ProfileStore.instance,
-                                builder: (context, _) =>
-                                    _buildOrderCard(context, r, orders[index]),
-                              ),
-                            ),
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontSm,
+                            color: AppTheme.textSubtle,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: _loadOrders,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryDark,
+                          ),
+                          child: const Text(
+                            'Coba Lagi',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : orders.isEmpty
+                ? RefreshIndicator(
+                    color: AppTheme.terracotta,
+                    onRefresh: _loadOrders,
+                    child: ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
+                        _buildEmptyState(r),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    color: AppTheme.terracotta,
+                    onRefresh: _loadOrders,
+                    child: ListView.separated(
+                      padding: EdgeInsets.fromLTRB(
+                        r.pagePaddingH,
+                        8,
+                        r.pagePaddingH,
+                        16,
+                      ),
+                      itemCount: orders.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) => AnimatedBuilder(
+                        animation: ProfileStore.instance,
+                        builder: (context, _) =>
+                            _buildOrderCard(context, r, orders[index]),
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -377,17 +527,19 @@ class _PesananScreenState extends State<PesananScreen> {
   }
 
   Widget _buildOrderCard(BuildContext context, Responsive r, _OrderData order) {
-    final reviewSubmitted = ProfileStore.instance.reviewedOrderIds.contains(
-      order.orderNumber,
-    );
+    final reviewSubmitted =
+        order.hasReview ||
+        ProfileStore.instance.reviewedOrderIds.contains(order.orderNumber);
     final primaryAction = reviewSubmitted
         ? 'Ulasan Terkirim'
         : order.primaryAction;
-    final statusColor = switch (order.statusIndex) {
-      1 => AppTheme.terracotta,
-      3 => AppTheme.successGreen,
-      _ => AppTheme.textMuted,
-    };
+    final statusColor = order.isCancelled
+        ? AppTheme.errorRed
+        : switch (order.statusIndex) {
+            1 => AppTheme.terracotta,
+            3 => AppTheme.successGreen,
+            _ => AppTheme.textMuted,
+          };
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
@@ -591,10 +743,18 @@ class _PesananScreenState extends State<PesananScreen> {
     final isReviewAction = label == 'Beri Ulasan';
     final isDetailAction = label == 'Lihat Detail';
     final isTrackingAction = label == 'Lacak Pengiriman';
+    final isPayAction = label == 'Bayar Sekarang';
+    final isConfirmAction = label == 'Terima Barang';
+    final isCancelAction = label == 'Batalkan';
+    final isBuyAgain = label == 'Beli Lagi';
     final isCompletedReview = label == 'Ulasan Terkirim';
+    final isWaitingApproval = label == 'Menunggu Persetujuan';
     final icon = switch (label) {
       'Bayar Sekarang' => Icons.arrow_forward_rounded,
       'Lacak Pengiriman' => Icons.local_shipping_outlined,
+      'Terima Barang' => Icons.check_circle_outline_rounded,
+      'Batalkan' => Icons.cancel_outlined,
+      'Menunggu Persetujuan' => Icons.hourglass_top_rounded,
       'Beri Ulasan' => Icons.rate_review_outlined,
       'Ulasan Terkirim' => Icons.check_circle_outline_rounded,
       'Lihat Detail' => Icons.receipt_long_outlined,
@@ -602,65 +762,81 @@ class _PesananScreenState extends State<PesananScreen> {
       _ => Icons.receipt_long_outlined,
     };
 
+    final orderExtra = order == null
+        ? null
+        : <String, dynamic>{
+            'orderId': order.id,
+            'orderNumber': order.orderNumber,
+            'productName': order.productName,
+            'productId': order.productId,
+            'variant': order.variant,
+            'price': order.price,
+            'quantity': order.quantity,
+            'imageUrl': order.imageUrl,
+            'status': order.status,
+            'orderedAt': order.orderedAt,
+            'courier': order.courier,
+            'trackingNumber': order.trackingNumber,
+            'isPaid': order.statusIndex > 1,
+            'shippingFee': order.shippingFee,
+            'voucherDiscount': order.voucherDiscount,
+          };
+
     return SizedBox(
       height: 34,
       child: OutlinedButton.icon(
-        onPressed: isCompletedReview
+        onPressed: isCompletedReview || isWaitingApproval
             ? null
+            : isPayAction && order != null
+            ? () => context.push(
+                '/pembayaran',
+                extra: {
+                  'orderId': order.id,
+                  'orderNumber': order.orderNumber,
+                  'totalPayment': order.price,
+                  'paymentDeadline': order.paymentDeadline,
+                  'productName': order.productName,
+                },
+              )
             : isReviewAction && order != null
-            ? () => context.push(
-                '/beri-ulasan',
-                extra: {
-                  'orderNumber': order.orderNumber,
-                  'productName': order.productName,
-                  'variant': order.variant,
-                  'price': order.price,
-                  'quantity': order.quantity,
-                  'imageUrl': order.imageUrl,
-                  'status': order.status,
-                  'orderedAt': order.orderedAt,
-                  'courier': order.courier,
-                  'trackingNumber': order.trackingNumber,
-                  'isPaid': order.statusIndex > 1,
-                  'shippingFee': order.shippingFee,
-                },
-              )
+            ? () => context.push('/beri-ulasan', extra: orderExtra)
             : isDetailAction && order != null
-            ? () => context.push(
-                '/detail-pesanan',
-                extra: {
-                  'orderNumber': order.orderNumber,
-                  'productName': order.productName,
-                  'variant': order.variant,
-                  'price': order.price,
-                  'quantity': order.quantity,
-                  'imageUrl': order.imageUrl,
-                  'status': order.status,
-                  'orderedAt': order.orderedAt,
-                  'courier': order.courier,
-                  'trackingNumber': order.trackingNumber,
-                  'isPaid': order.statusIndex > 1,
-                  'shippingFee': order.shippingFee,
-                },
-              )
+            ? () => context.push('/detail-pesanan', extra: orderExtra)
             : isTrackingAction && order != null
-            ? () => context.push(
-                '/lacak-pesanan',
-                extra: {
-                  'orderNumber': order.orderNumber,
-                  'productName': order.productName,
-                  'variant': order.variant,
-                  'price': order.price,
-                  'quantity': order.quantity,
-                  'imageUrl': order.imageUrl,
-                  'status': order.status,
-                  'orderedAt': order.orderedAt,
-                  'courier': order.courier,
-                  'trackingNumber': order.trackingNumber,
-                  'isPaid': order.statusIndex > 1,
-                  'shippingFee': order.shippingFee,
-                },
-              )
+            ? () => context.push('/lacak-pesanan', extra: orderExtra)
+            : isConfirmAction && order != null
+            ? () => _confirmReceived(order)
+            : isCancelAction && order != null
+            ? () => _cancelOrder(order)
+            : isBuyAgain && order != null
+            ? () {
+                if (order.productId == null) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Produk pada pesanan ini sudah tidak tersedia.',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor: AppTheme.errorRed,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  return;
+                }
+                context.push(
+                  '/detail-produk',
+                  extra: {
+                    'id': order.productId,
+                    'name': order.productName,
+                    'price': order.price,
+                    'imageUrl': order.imageUrl,
+                  },
+                );
+              }
             : () {
                 ScaffoldMessenger.of(context)
                   ..hideCurrentSnackBar()
@@ -686,18 +862,24 @@ class _PesananScreenState extends State<PesananScreen> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: isCompletedReview
+          foregroundColor: isCancelAction
+              ? Colors.white
+              : isCompletedReview
               ? AppTheme.successGreen
               : outlined
               ? AppTheme.textMain
               : Colors.white,
-          backgroundColor: isCompletedReview
+          backgroundColor: isCancelAction
+              ? AppTheme.errorRed
+              : isCompletedReview
               ? AppTheme.terracottaLight
               : outlined
               ? AppTheme.terracottaLight
               : AppTheme.primaryBlack,
           side: BorderSide(
-            color: isCompletedReview
+            color: isCancelAction
+                ? AppTheme.errorRed
+                : isCompletedReview
                 ? AppTheme.terracottaLight
                 : outlined
                 ? AppTheme.terracottaLight
@@ -739,6 +921,7 @@ class _PesananScreenState extends State<PesananScreen> {
 }
 
 class _OrderData {
+  final int? id;
   final String orderNumber;
   final String date;
   final String status;
@@ -747,17 +930,24 @@ class _OrderData {
   final int price;
   final int quantity;
   final String imageUrl;
+  final int? productId;
   final String notice;
   final String noticeDetail;
   final String primaryAction;
   final String secondaryAction;
   final int statusIndex;
+  final bool isCancelled;
+  final bool cancelRequested;
+  final bool hasReview;
+  final String? paymentDeadline;
   final String orderedAt;
   final String courier;
   final String? trackingNumber;
   final int shippingFee;
+  final int voucherDiscount;
 
   const _OrderData({
+    required this.id,
     required this.orderNumber,
     required this.date,
     required this.status,
@@ -766,14 +956,20 @@ class _OrderData {
     required this.price,
     required this.quantity,
     required this.imageUrl,
+    required this.productId,
     required this.notice,
     required this.noticeDetail,
     required this.primaryAction,
     required this.secondaryAction,
     required this.statusIndex,
+    required this.isCancelled,
+    this.cancelRequested = false,
+    required this.hasReview,
+    required this.paymentDeadline,
     required this.orderedAt,
     required this.courier,
     required this.trackingNumber,
     required this.shippingFee,
+    required this.voucherDiscount,
   });
 }

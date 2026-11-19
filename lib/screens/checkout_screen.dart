@@ -6,6 +6,8 @@ import '../data/profile_store.dart';
 import '../services/api_client.dart';
 import '../services/api_config.dart';
 import '../services/order_service.dart';
+import '../services/profile_service.dart';
+import '../services/shipping_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 
@@ -23,27 +25,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   int _selectedCourierIndex = 0;
   int _selectedPaymentIndex = 0;
-
-  final List<Map<String, dynamic>> _courierOptions = [
-    {
-      'name': 'JNE Reguler',
-      'estimate': 'Estimasi tiba 2-3 hari kerja',
-      'fee': 20000,
-      'code': 'JNE-REG',
-    },
-    {
-      'name': 'SiCepat BEST',
-      'estimate': 'Estimasi tiba besok (1 hari)',
-      'fee': 35000,
-      'code': 'SICEPAT-BEST',
-    },
-    {
-      'name': 'GoSend / GrabExpress',
-      'estimate': 'Tiba di hari yang sama (Instant)',
-      'fee': 50000,
-      'code': 'INSTANT',
-    },
-  ];
 
   final List<Map<String, dynamic>> _paymentMethods = [
     {
@@ -91,11 +72,99 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late List<Map<String, dynamic>> _checkoutItems;
   bool _isSubmitting = false;
 
+  List<Map<String, dynamic>> _liveServices = [];
+  bool _loadingServices = false;
+  String? _servicesError;
+
   @override
   void initState() {
     super.initState();
     _initItems();
+    ProfileStore.instance.addListener(_onProfileChanged);
     ProfileStore.instance.syncAddressesFromServer();
+    _fetchShippingCosts();
+  }
+
+  void _onProfileChanged() {
+    if (!mounted) return;
+    setState(() {});
+    _fetchShippingCosts();
+  }
+
+  Future<void> _fetchShippingCosts() async {
+    int? numericId = int.tryParse(_currentAddress.id);
+    if (numericId == null) {
+      await ProfileStore.instance.syncAddressesFromServer();
+      numericId = int.tryParse(_currentAddress.id);
+    }
+
+    if (numericId == null && mounted) {
+      // Jika alamat belum tersimpan di server, coba buatkan dari alamat aktif
+      try {
+        final res = await ProfileService.instance.createAddress(
+          label: _currentAddress.label,
+          recipientName: _currentAddress.recipient,
+          phone: _currentAddress.phone,
+          fullAddress: _currentAddress.address,
+          isPrimary: true,
+        );
+        final createdId = res['data']?['id'] ?? res['address']?['id'];
+        if (createdId != null) {
+          numericId = int.tryParse(createdId.toString());
+          await ProfileStore.instance.syncAddressesFromServer();
+        }
+      } catch (_) {}
+    }
+
+    if (numericId == null || !mounted) {
+      if (mounted) {
+        setState(() {
+          _servicesError = 'Alamat belum memiliki ID yang valid di server.';
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _loadingServices = true;
+      _servicesError = null;
+    });
+    try {
+      final totalQty = _checkoutItems.fold<int>(
+        0,
+        (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
+      );
+      final weight = totalQty * 300 < 1000 ? 1000 : totalQty * 300;
+      final services = await ShippingService.instance.fetchCosts(
+        addressId: numericId,
+        weightGrams: weight,
+      );
+      if (!mounted) return;
+      setState(() {
+        _liveServices = services;
+        _servicesError = services.isEmpty
+            ? 'Biaya ongkir tidak tersedia'
+            : null;
+        if (_selectedCourierIndex >= services.length) {
+          _selectedCourierIndex = 0;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _liveServices = [];
+        _servicesError = 'Gagal memuat ongkir: $e';
+      });
+    } finally {
+      if (mounted) setState(() => _loadingServices = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    ProfileStore.instance.removeListener(_onProfileChanged);
+    _notesController.dispose();
+    super.dispose();
   }
 
   void _initItems() {
@@ -109,87 +178,83 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         .where((item) => item.isSelected)
         .toList();
 
-    if (storeSelected.isNotEmpty) {
-      _checkoutItems = storeSelected
-          .map((item) => {
-                'id': item.id,
-                'cartItemId': item.cartItemId,
-                'productId': item.productId,
-                'name': item.name,
-                'variant': item.variant,
-                'imageUrl': item.imageUrl,
-                'unitPrice': item.unitPrice,
-                'quantity': item.quantity,
-              })
-          .toList();
-    } else {
-      // Default sample items matching Figma mock
-      _checkoutItems = [
-        {
-          'id': 'parang-barong',
-          'name': 'Kemeja Lengan Panjang Parang Barong',
-          'variant': 'Ukuran: L · Jumlah: 1',
-          'imageUrl':
-              'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=300&q=80',
-          'unitPrice': 550000,
-          'quantity': 1,
-        },
-        {
-          'id': 'pouch-kawung',
-          'name': 'Pouch Dompet Batik & Perca Kawung',
-          'variant': 'Ukuran: Standar · Jumlah: 1',
-          'imageUrl':
-              'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=300&q=80',
-          'unitPrice': 120000,
-          'quantity': 1,
-        },
-      ];
-    }
+    _checkoutItems = storeSelected
+        .map(
+          (item) => {
+            'id': item.id,
+            'cartItemId': item.cartItemId,
+            'productId': item.productId,
+            'name': item.name,
+            'variant': item.variant,
+            'imageUrl': item.imageUrl,
+            'unitPrice': item.unitPrice,
+            'quantity': item.quantity,
+          },
+        )
+        .toList();
   }
 
-  @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
-  }
+  bool get _hasItems => _checkoutItems.isNotEmpty;
+
+  ProfileAddress
+  get _currentAddress => ProfileStore.instance.addresses.firstWhere(
+    (a) => a.isPrimary,
+    orElse: () => ProfileStore.instance.addresses.isNotEmpty
+        ? ProfileStore.instance.addresses.first
+        : ProfileAddress(
+            id: 'default',
+            label: 'Utama',
+            recipient: ProfileStore.instance.name,
+            phone: ProfileStore.instance.phone,
+            address:
+                'Jl. Malioboro No. 56, Sosromenduran, Gedong Tengen, Kota Yogyakarta, D.I. Yogyakarta 55271',
+            isPrimary: true,
+          ),
+  );
 
   int get _itemsSubtotal => _checkoutItems.fold(
-        0,
-        (sum, item) =>
-            sum +
-            ((item['unitPrice'] as int) * ((item['quantity'] as int?) ?? 1)),
-      );
+    0,
+    (sum, item) =>
+        sum + ((item['unitPrice'] as int) * ((item['quantity'] as int?) ?? 1)),
+  );
 
   int get _totalItemCount => _checkoutItems.fold(
-        0,
-        (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
-      );
+    0,
+    (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
+  );
 
-  int get _shippingFee =>
-      _courierOptions[_selectedCourierIndex]['fee'] as int;
+  List<Map<String, dynamic>> get _displayCouriers => _liveServices;
 
-  int get _totalPayment =>
-      (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
+  Map<String, dynamic> get _selectedCourier {
+    if (_displayCouriers.isEmpty) return const {};
+    final index = _selectedCourierIndex.clamp(0, _displayCouriers.length - 1);
+    return _displayCouriers[index];
+  }
+
+  int get _shippingFee => (_selectedCourier['fee'] as int?) ?? 0;
+
+  int get _totalPayment => (_itemsSubtotal + _shippingFee).clamp(0, 999999999);
 
   String _formatPrice(int price) => ApiConfig.formatRupiah(price);
 
   Future<void> _proceedToPayment() async {
     if (_isSubmitting) return;
 
-    final selectedCourier = _courierOptions[_selectedCourierIndex];
+    if (!_hasItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Keranjang kosong. Tambahkan produk terlebih dahulu.',
+          ),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      return;
+    }
+
+    final selectedCourier = _selectedCourier;
     final selectedPayment = _paymentMethods[_selectedPaymentIndex];
-    final primaryAddress = ProfileStore.instance.addresses.firstWhere(
-      (a) => a.isPrimary,
-      orElse: () => ProfileStore.instance.addresses.isNotEmpty
-          ? ProfileStore.instance.addresses.first
-          : ProfileAddress(
-              id: 'temp',
-              label: 'Utama',
-              recipient: ProfileStore.instance.name,
-              phone: ProfileStore.instance.phone,
-              address: 'Jl. Malioboro No. 56, Sosromenduran, Kota Yogyakarta',
-            ),
-    );
+    final primaryAddress = _currentAddress;
 
     final token = await ApiClient.instance.getToken();
     final cartItemIds = _checkoutItems
@@ -198,18 +263,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         .toList();
     final directItems = _checkoutItems
         .where((e) => e['cartItemId'] == null && e['productId'] != null)
-        .map((e) => {
-              'product_id': e['productId'],
-              if (e['size'] != null) 'size': e['size'],
-              'quantity': e['quantity'] ?? 1,
-            })
+        .map(
+          (e) => {
+            'product_id': e['productId'],
+            if (e['size'] != null) 'size': e['size'],
+            'quantity': e['quantity'] ?? 1,
+          },
+        )
         .toList();
 
     if (token == null || token.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Silakan login terlebih dahulu untuk melanjutkan checkout.'),
+          content: const Text(
+            'Silakan login terlebih dahulu untuk melanjutkan checkout.',
+          ),
           backgroundColor: AppTheme.errorRed,
           action: SnackBarAction(
             label: 'Login',
@@ -221,102 +290,94 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    if (cartItemIds.isNotEmpty || directItems.isNotEmpty) {
-      setState(() => _isSubmitting = true);
-      try {
-        final res = await OrderService.instance.checkout(
-          customerName: primaryAddress.recipient,
-          phone: primaryAddress.phone,
-          address: primaryAddress.address,
-          shippingOption: selectedCourier['name'].toString(),
-          shippingCost: (_shippingFee).toDouble(),
-          paymentMethod: selectedPayment['title'].toString(),
-          notes: _notesController.text.trim(),
-          cartItemIds: cartItemIds.isNotEmpty ? cartItemIds : null,
-          directItems: directItems.isNotEmpty ? directItems : null,
-        );
-
-        if (cartItemIds.isNotEmpty) {
-          await CartStore.instance.syncFromServer();
-        }
-        if (!mounted) return;
-        setState(() => _isSubmitting = false);
-
-        final order = (res['data'] as Map<String, dynamic>?) ?? {};
-        final totals = (res['totals'] as Map<String, dynamic>?) ?? {};
-        final serverTotal = (totals['grand_total'] is num)
-            ? (totals['grand_total'] as num).round()
-            : _totalPayment;
-        final serverShipping = (totals['shipping'] is num)
-            ? (totals['shipping'] as num).round()
-            : _shippingFee;
-        final serverDiscount = (totals['discount'] is num)
-            ? (totals['discount'] as num).round()
-            : 0;
-
-        final orderSummary = {
-          'orderId': order['id'],
-          'orderNumber': order['code']?.toString() ?? 'ORD-BARU',
-          'items': _checkoutItems,
-          'totalItems': _totalItemCount,
-          'productSubtotal': _itemsSubtotal,
-          'shippingFee': serverShipping,
-          'discount': serverDiscount,
-          'uniqueCode': 0,
-          'totalPayment': serverTotal,
-          'courier': selectedCourier,
-          'paymentMethod': selectedPayment,
-          'address': {
-            'recipient': primaryAddress.recipient,
-            'phone': primaryAddress.phone,
-            'address': primaryAddress.address,
-            'label': primaryAddress.label,
-          },
-          'notes': _notesController.text.trim(),
-          'orderedAt': order['created_at']?.toString() ?? 'Baru saja',
-        };
-
-        context.push('/pembayaran', extra: orderSummary);
-        return;
-      } on ApiException catch (e) {
-        if (!mounted) return;
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppTheme.errorRed,
+    if (_displayCouriers.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Kurir pengiriman belum dipilih atau belum tersedia. Silakan pilih kurir terlebih dahulu.',
           ),
-        );
-        return;
-      }
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      return;
     }
 
-    final uniqueCode = _selectedPaymentIndex == 0 ? 238 : 0;
-    final totalWithCode = _totalPayment + uniqueCode;
+    setState(() => _isSubmitting = true);
+    try {
+      final res = await OrderService.instance.checkout(
+        customerName: primaryAddress.recipient,
+        phone: primaryAddress.phone,
+        address: primaryAddress.address,
+        shippingOption: selectedCourier['name'].toString(),
+        shippingCost: (_shippingFee).toDouble(),
+        paymentMethod: selectedPayment['title'].toString(),
+        notes: _notesController.text.trim(),
+        cartItemIds: cartItemIds.isNotEmpty ? cartItemIds : null,
+        directItems: directItems.isNotEmpty ? directItems : null,
+      );
 
-    final orderSummary = {
-      'orderNumber': 'HSO-20250218-0190',
-      'items': _checkoutItems,
-      'totalItems': _totalItemCount,
-      'productSubtotal': _itemsSubtotal,
-      'shippingFee': _shippingFee,
-      'discount': 0,
-      'uniqueCode': uniqueCode,
-      'totalPayment': totalWithCode,
-      'courier': selectedCourier,
-      'paymentMethod': selectedPayment,
-      'address': {
-        'recipient': primaryAddress.recipient,
-        'phone': primaryAddress.phone,
-        'address': primaryAddress.address,
-        'label': primaryAddress.label,
-      },
-      'notes': _notesController.text.trim(),
-      'orderedAt': 'Baru saja',
-    };
+      if (cartItemIds.isNotEmpty) {
+        await CartStore.instance.syncFromServer();
+      }
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
 
-    if (!mounted) return;
-    context.push('/pembayaran', extra: orderSummary);
+      final data = (res['data'] as Map<String, dynamic>?) ?? {};
+      final order =
+          (data['order'] as Map<String, dynamic>?) ??
+          (data['id'] != null ? data : <String, dynamic>{});
+      final totals = (res['totals'] as Map<String, dynamic>?) ?? {};
+      final serverTotal = (totals['grand_total'] is num)
+          ? (totals['grand_total'] as num).round()
+          : _totalPayment;
+      final serverShipping = (totals['shipping'] is num)
+          ? (totals['shipping'] as num).round()
+          : _shippingFee;
+      final serverDiscount = (totals['discount'] is num)
+          ? (totals['discount'] as num).round()
+          : 0;
+      final snapRedirectUrl = data['snap_redirect_url']?.toString();
+      final snapToken = data['snap_token']?.toString();
+
+      final orderSummary = {
+        'orderId': order['id'],
+        'orderNumber': order['code']?.toString() ?? 'ORD-BARU',
+        'totalPayment': serverTotal,
+        'paymentDeadline': order['payment_deadline']?.toString(),
+        'snapRedirectUrl': (snapRedirectUrl == null || snapRedirectUrl.isEmpty)
+            ? null
+            : snapRedirectUrl,
+        'snapToken': (snapToken == null || snapToken.isEmpty)
+            ? null
+            : snapToken,
+        'items': _checkoutItems,
+        'totalItems': _totalItemCount,
+        'productSubtotal': _itemsSubtotal,
+        'shippingFee': serverShipping,
+        'discount': serverDiscount,
+        'uniqueCode': 0,
+        'courier': selectedCourier,
+        'paymentMethod': selectedPayment,
+        'address': {
+          'recipient': primaryAddress.recipient,
+          'phone': primaryAddress.phone,
+          'address': primaryAddress.address,
+          'label': primaryAddress.label,
+        },
+        'notes': _notesController.text.trim(),
+        'orderedAt': order['created_at']?.toString() ?? 'Baru saja',
+      };
+
+      if (!mounted) return;
+      context.push('/pembayaran', extra: orderSummary);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppTheme.errorRed),
+      );
+    }
   }
 
   @override
@@ -427,13 +488,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final bgColor = isCompleted
         ? AppTheme.terracottaLight
         : isActive
-            ? AppTheme.primaryDark
-            : AppTheme.inputBg;
+        ? AppTheme.primaryDark
+        : AppTheme.inputBg;
     final textColor = isCompleted
         ? AppTheme.terracotta
         : isActive
-            ? Colors.white
-            : AppTheme.textSubtle;
+        ? Colors.white
+        : AppTheme.textSubtle;
     final labelColor = isActive ? AppTheme.textMain : AppTheme.textSubtle;
 
     return Row(
@@ -449,8 +510,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               color: isActive
                   ? AppTheme.primaryDark
                   : isCompleted
-                      ? AppTheme.terracotta
-                      : AppTheme.borderLight,
+                  ? AppTheme.terracotta
+                  : AppTheme.borderLight,
               width: 1,
             ),
           ),
@@ -496,29 +557,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // --- 1. ALAMAT PENGIRIMAN ---
   Widget _buildAddressSection(Responsive r) {
-    final address = ProfileStore.instance.addresses.firstWhere(
-      (a) => a.isPrimary,
-      orElse: () => ProfileStore.instance.addresses.isNotEmpty
-          ? ProfileStore.instance.addresses.first
-          : ProfileAddress(
-              id: 'default',
-              label: 'Utama',
-              recipient: ProfileStore.instance.name,
-              phone: ProfileStore.instance.phone,
-              address:
-                  'Jl. Malioboro No. 56, Sosromenduran, Gedong Tengen, Kota Yogyakarta, D.I. Yogyakarta 55271',
-              isPrimary: true,
-            ),
-    );
+    final address = _currentAddress;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,10 +713,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             Navigator.of(context).pop();
                           },
                           child: _RadioDot(
-                            selected: addr.id ==
+                            selected:
+                                addr.id ==
                                 addresses
-                                    .firstWhere((a) => a.isPrimary,
-                                        orElse: () => addresses.first)
+                                    .firstWhere(
+                                      (a) => a.isPrimary,
+                                      orElse: () => addresses.first,
+                                    )
                                     .id,
                             activeColor: AppTheme.primaryDark,
                           ),
@@ -698,8 +747,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       width: double.infinity,
                       height: 40,
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.add_location_alt_outlined,
-                            size: 16),
+                        icon: const Icon(
+                          Icons.add_location_alt_outlined,
+                          size: 16,
+                        ),
                         label: Text(
                           'Kelola Daftar Alamat',
                           style: GoogleFonts.plusJakartaSans(
@@ -730,9 +781,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,100 +805,116 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Column(
-            children: [
-              for (int i = 0; i < _checkoutItems.length; i++) ...[
-                if (i > 0)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(height: 1, color: AppTheme.borderLight),
-                  ),
-                Builder(builder: (context) {
-                  final item = _checkoutItems[i];
-                  final name = item['name'] as String;
-                  final variant = item['variant'] as String;
-                  final imageUrl = item['imageUrl'] as String;
-                  final unitPrice = item['unitPrice'] as int;
-                  final quantity = (item['quantity'] as int?) ?? 1;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(7),
-                        child: Image.network(
-                          imageUrl,
-                          width: 54,
-                          height: 58,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            width: 54,
-                            height: 58,
-                            color: AppTheme.terracottaLight,
-                            child: const Icon(
-                              Icons.checkroom_rounded,
-                              color: AppTheme.terracotta,
-                              size: 20,
+          if (!_hasItems)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Tidak ada produk untuk dibayar. Tambahkan produk ke '
+                'keranjang terlebih dahulu.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
+                  height: 1.4,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: [
+                for (int i = 0; i < _checkoutItems.length; i++) ...[
+                  if (i > 0)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(height: 1, color: AppTheme.borderLight),
+                    ),
+                  Builder(
+                    builder: (context) {
+                      final item = _checkoutItems[i];
+                      final name = item['name'] as String;
+                      final variant = item['variant'] as String;
+                      final imageUrl = item['imageUrl'] as String;
+                      final unitPrice = item['unitPrice'] as int;
+                      final quantity = (item['quantity'] as int?) ?? 1;
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: Image.network(
+                              imageUrl,
+                              width: 54,
+                              height: 58,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Container(
+                                width: 54,
+                                height: 58,
+                                color: AppTheme.terracottaLight,
+                                child: const Icon(
+                                  Icons.checkroom_rounded,
+                                  color: AppTheme.terracotta,
+                                  size: 20,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textMain,
-                                height: 1.25,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              variant,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                color: AppTheme.textSubtle,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _formatPrice(unitPrice),
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryDark,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  'x $quantity',
+                                  name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textMuted,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.textMain,
+                                    height: 1.25,
                                   ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  variant,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                      _formatPrice(unitPrice),
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.primaryDark,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      'x $quantity',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -862,9 +927,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -885,84 +948,185 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   color: AppTheme.textMain,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Column(
-            children: [
-              for (int index = 0; index < _courierOptions.length; index++) ...[
-                if (index > 0) const SizedBox(height: 8),
-                Builder(builder: (context) {
-                  final courier = _courierOptions[index];
-                  final isSelected = index == _selectedCourierIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCourierIndex = index),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.inputBg
-                            : AppTheme.bgWarm.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppTheme.terracotta
-                              : AppTheme.borderLight,
-                          width: isSelected ? 1.2 : 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          _RadioDot(
-                            selected: isSelected,
-                            activeColor: AppTheme.terracotta,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  courier['name'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.textMain,
-                                  ),
-                                ),
-                                Text(
-                                  courier['estimate'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    color: AppTheme.textSubtle,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            _formatPrice(courier['fee'] as int),
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected
-                                  ? AppTheme.terracotta
-                                  : AppTheme.textMain,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+              if (_loadingServices) ...[
+                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.6),
+                ),
               ],
             ],
           ),
+          const SizedBox(height: 10),
+          if (_displayCouriers.isEmpty)
+            _buildShippingEmptyState()
+          else
+            Column(
+              children: [
+                for (
+                  int index = 0;
+                  index < _displayCouriers.length;
+                  index++
+                ) ...[
+                  if (index > 0) const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) {
+                      final courier = _displayCouriers[index];
+                      final isSelected = index == _selectedCourierIndex;
+                      return GestureDetector(
+                        onTap: () =>
+                            setState(() => _selectedCourierIndex = index),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppTheme.inputBg
+                                : AppTheme.bgWarm.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppTheme.terracotta
+                                  : AppTheme.borderLight,
+                              width: isSelected ? 1.2 : 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              _RadioDot(
+                                selected: isSelected,
+                                activeColor: AppTheme.terracotta,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      courier['name'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.textMain,
+                                      ),
+                                    ),
+                                    Text(
+                                      courier['estimate'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: AppTheme.textSubtle,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                _formatPrice(courier['fee'] as int),
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected
+                                      ? AppTheme.terracotta
+                                      : AppTheme.textMain,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildShippingEmptyState() {
+    if (_loadingServices) {
+      return Row(
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 1.6),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Memuat biaya pengiriman…',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppTheme.textSubtle,
+            ),
+          ),
+        ],
+      );
+    }
+    if (_servicesError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 16,
+                color: AppTheme.terracotta,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Biaya ongkir tidak tersedia',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textMain,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Periksa koneksi internet, lalu coba lagi.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              color: AppTheme.textSubtle,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _loadingServices ? null : _fetchShippingCosts,
+            icon: const Icon(Icons.refresh, size: 14),
+            label: const Text('Coba Lagi'),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        const Icon(Icons.local_shipping_outlined, size: 16, color: AppTheme.textSubtle),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Kurir pengiriman belum dimuat.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppTheme.textSubtle,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _loadingServices ? null : _fetchShippingCosts,
+          icon: const Icon(Icons.refresh, size: 14),
+          label: const Text('Hitung Ongkir'),
+        ),
+      ],
     );
   }
 
@@ -973,9 +1137,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1003,109 +1165,119 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               for (int index = 0; index < _paymentMethods.length; index++) ...[
                 if (index > 0) const SizedBox(height: 8),
-                Builder(builder: (context) {
-                  final method = _paymentMethods[index];
-                  final isSelected = index == _selectedPaymentIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedPaymentIndex = index),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.inputBg
-                            : AppTheme.bgWarm.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+                Builder(
+                  builder: (context) {
+                    final method = _paymentMethods[index];
+                    final isSelected = index == _selectedPaymentIndex;
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedPaymentIndex = index),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.terracotta
-                              : AppTheme.borderLight,
-                          width: isSelected ? 1.2 : 0.8,
+                              ? AppTheme.inputBg
+                              : AppTheme.bgWarm.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppTheme.terracotta
+                                : AppTheme.borderLight,
+                            width: isSelected ? 1.2 : 0.8,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _RadioDot(
-                                selected: isSelected,
-                                activeColor: AppTheme.terracotta,
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(
-                                method['icon'] as IconData,
-                                size: 16,
-                                color: isSelected
-                                    ? AppTheme.terracotta
-                                    : AppTheme.primaryDark,
-                              ),
-                              const SizedBox(width: 7),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      method['title'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.textMain,
-                                      ),
-                                    ),
-                                    Text(
-                                      method['subtitle'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 9,
-                                        color: AppTheme.textSubtle,
-                                      ),
-                                    ),
-                                  ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _RadioDot(
+                                  selected: isSelected,
+                                  activeColor: AppTheme.terracotta,
                                 ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
+                                const SizedBox(width: 6),
+                                Icon(
+                                  method['icon'] as IconData,
+                                  size: 16,
                                   color: isSelected
-                                      ? AppTheme.terracottaLight
-                                      : AppTheme.borderLight.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(4),
+                                      ? AppTheme.terracotta
+                                      : AppTheme.primaryDark,
+                                ),
+                                const SizedBox(width: 7),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        method['title'] as String,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.textMain,
+                                        ),
+                                      ),
+                                      Text(
+                                        method['subtitle'] as String,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 9,
+                                          color: AppTheme.textSubtle,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppTheme.terracottaLight
+                                        : AppTheme.borderLight.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    method['badge'] as String,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w700,
+                                      color: isSelected
+                                          ? AppTheme.terracotta
+                                          : AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isSelected &&
+                                (method['description'] as String)
+                                    .isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 36,
+                                  right: 4,
                                 ),
                                 child: Text(
-                                  method['badge'] as String,
+                                  method['description'] as String,
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w700,
-                                    color: isSelected
-                                        ? AppTheme.terracotta
-                                        : AppTheme.textMuted,
+                                    fontSize: 9,
+                                    color: AppTheme.textMuted,
+                                    height: 1.35,
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                          if (isSelected &&
-                              (method['description'] as String).isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 36, right: 4),
-                              child: Text(
-                                method['description'] as String,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 9,
-                                  color: AppTheme.textMuted,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ),
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ],
             ],
           ),
@@ -1121,9 +1293,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1182,9 +1352,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.borderLight.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1201,10 +1369,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.inputBg,
                   borderRadius: BorderRadius.circular(4),
@@ -1227,7 +1392,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 6),
           _summaryRow(
-            'Biaya Pengiriman (${_courierOptions[_selectedCourierIndex]['name']})',
+            'Biaya Pengiriman (${_selectedCourier['name'] ?? '—'})',
             _formatPrice(_shippingFee),
           ),
           const Padding(
@@ -1335,7 +1500,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: SizedBox(
               height: 44,
               child: ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _proceedToPayment,
+                onPressed: (_isSubmitting || !_hasItems)
+                    ? null
+                    : _proceedToPayment,
                 iconAlignment: IconAlignment.end,
                 icon: _isSubmitting
                     ? const SizedBox(
@@ -1348,7 +1515,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       )
                     : const Icon(Icons.arrow_forward_rounded, size: 16),
                 label: Text(
-                  _isSubmitting ? 'Memproses...' : 'Bayar Sekarang',
+                  !_hasItems
+                      ? 'Keranjang Kosong'
+                      : _isSubmitting
+                      ? 'Memproses...'
+                      : 'Bayar Sekarang',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
