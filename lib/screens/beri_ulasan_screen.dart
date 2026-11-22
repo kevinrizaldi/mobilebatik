@@ -687,6 +687,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
         productId: int.tryParse('${widget.order['productId'] ?? ''}'),
         rating: _rating,
         comment: _reviewController.text.trim(),
+        photos: List.unmodifiable(_photos),
       );
       if (!mounted) return;
       ProfileStore.instance.addReview(
