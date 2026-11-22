@@ -682,13 +682,17 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await OrderService.instance.submitReview(
+      final res = await OrderService.instance.submitReview(
         orderId: orderId,
         productId: int.tryParse('${widget.order['productId'] ?? ''}'),
         rating: _rating,
         comment: _reviewController.text.trim(),
         photos: List.unmodifiable(_photos),
       );
+      final photoUrls = (res['data']?['photos'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const <String>[];
       if (!mounted) return;
       ProfileStore.instance.addReview(
         ProfileReview(
@@ -699,7 +703,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
           imageUrl: _imageUrl,
           orderId: _orderId,
           tags: _selectedTags.toList(),
-          photos: List.unmodifiable(_photos),
+          photos: List<String>.from(photoUrls),
         ),
       );
       if (!mounted) return;

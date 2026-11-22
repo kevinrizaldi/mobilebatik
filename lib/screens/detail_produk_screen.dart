@@ -1540,6 +1540,10 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                     ? rev['rating'] as int
                     : int.tryParse('${rev['rating']}') ?? 5,
                 comment: rev['comment']?.toString() ?? '',
+                photos: (rev['photos'] as List?)
+                        ?.map((e) => e.toString())
+                        .toList() ??
+                    const [],
                 variant: 'Pembeli Terverifikasi',
                 r: r,
               ),
@@ -1554,6 +1558,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     required String date,
     required int rating,
     required String comment,
+    required List<String> photos,
     required String variant,
     required Responsive r,
   }) {
@@ -1634,6 +1639,31 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               height: 1.4,
             ),
           ),
+          if (photos.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 54,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: photos.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
+                itemBuilder: (context, index) => ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.network(
+                    photos[index],
+                    width: 54,
+                    height: 54,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.broken_image_outlined,
+                      size: 24,
+                      color: AppTheme.textSubtle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

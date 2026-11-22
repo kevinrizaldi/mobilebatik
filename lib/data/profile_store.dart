@@ -215,7 +215,7 @@ class ProfileReview {
   final String imageUrl;
   final String orderId;
   final List<String> tags;
-  final List<Uint8List> photos;
+  final List<String> photos;
 
   const ProfileReview({
     required this.product,

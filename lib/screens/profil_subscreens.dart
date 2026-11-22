@@ -615,11 +615,16 @@ class UlasanSayaScreen extends StatelessWidget {
                                 const SizedBox(width: 6),
                             itemBuilder: (context, photoIndex) => ClipRRect(
                               borderRadius: BorderRadius.circular(6),
-                              child: Image.memory(
+                              child: Image.network(
                                 review.photos[photoIndex],
                                 width: 54,
                                 height: 54,
                                 fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 24,
+                                  color: AppTheme.textSubtle,
+                                ),
                               ),
                             ),
                           ),
