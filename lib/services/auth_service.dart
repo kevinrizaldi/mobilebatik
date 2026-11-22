@@ -15,6 +15,7 @@ class AuthService {
 
   Future<void> _ensureGoogleInitialized() {
     return _googleInitFuture ??= _googleSignIn.initialize(
+      clientId: kIsWeb ? ApiConfig.googleServerClientId : null,
       serverClientId: ApiConfig.googleServerClientId,
     );
   }
