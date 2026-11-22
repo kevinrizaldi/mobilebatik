@@ -1,5 +1,6 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -546,7 +547,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
 
   Widget _addPhotoTile() {
     return InkWell(
-      onTap: _showPhotoSourceSheet,
+      onTap: _pickFromGallery,
       borderRadius: BorderRadius.circular(6),
       child: Container(
         width: 62,
@@ -576,107 +577,6 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
         ),
       ),
     );
-  }
-
-  void _showPhotoSourceSheet() {
-    final r = Responsive.of(context);
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(r.cardRadius)),
-      ),
-      backgroundColor: AppTheme.bgWarm,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          r.spacingLg,
-          r.spacingMd,
-          r.spacingLg,
-          r.spacingLg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.borderLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            SizedBox(height: r.spacingMd),
-            Text(
-              'Tambah Foto',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontLg,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textMain,
-              ),
-            ),
-            SizedBox(height: r.spacingSm),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.photo_camera_outlined,
-                color: AppTheme.textMain,
-              ),
-              title: Text(
-                'Ambil Foto',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textMain,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickFromCamera();
-              },
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.photo_library_outlined,
-                color: AppTheme.textMain,
-              ),
-              title: Text(
-                'Pilih dari Galeri',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textMain,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickFromGallery();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickFromCamera() async {
-    final remaining = 3 - _photos.length;
-    if (remaining <= 0) return;
-    try {
-      final picked = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-        maxWidth: 1400,
-      );
-      if (picked == null || !mounted) return;
-      final bytes = await picked.readAsBytes();
-      if (!mounted) return;
-      setState(() => _photos.add(bytes));
-    } on PlatformException {
-      // Izin kamera ditolak atau kamera tidak tersedia — biarkan tanpa perubahan.
-    }
   }
 
   Future<void> _pickFromGallery() async {
