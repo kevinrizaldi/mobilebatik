@@ -180,4 +180,30 @@ class AuthService {
       await ApiClient.instance.setToken(null);
     }
   }
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    return await ApiClient.instance.post(
+      '/forgot-password',
+      auth: false,
+      body: {'email': email.trim()},
+    );
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    required String token,
+  }) async {
+    return await ApiClient.instance.post(
+      '/reset-password',
+      auth: false,
+      body: {
+        'email': email.trim(),
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+        'token': token,
+      },
+    );
+  }
 }

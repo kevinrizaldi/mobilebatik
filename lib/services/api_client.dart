@@ -20,7 +20,7 @@ class ApiClient {
 
   static final ApiClient instance = ApiClient._();
   static const String _tokenKey = 'sanctum_api_token';
-  static const Duration _timeout = Duration(seconds: 12);
+  static const Duration _timeout = Duration(seconds: 30);
 
   /// Seam pengujian: mengganti transport HTTP (mis. `MockClient` dari
   /// `package:http/testing.dart`) supaya test tidak membuka jaringan nyata.
