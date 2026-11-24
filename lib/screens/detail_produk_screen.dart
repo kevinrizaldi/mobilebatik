@@ -1271,13 +1271,20 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                   color: AppTheme.textMain,
                 ),
               ),
-              Text(
-                'Maksimal 10 item per transaksi',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: r.fontXs,
-                  color: AppTheme.textSubtle,
-                ),
-              ),
+              Builder(builder: (context) {
+                final sizeStock = productData['sizeStock'];
+                final maxStock = sizeStock is Map && _selectedSize != null
+                    ? (sizeStock[_selectedSize] ?? productData['stock'] ?? 0)
+                    : (productData['stock'] ?? 0);
+                final maxInt = maxStock is int ? maxStock : int.tryParse('$maxStock') ?? 0;
+                return Text(
+                  maxInt > 0 ? 'Stok tersedia: $maxInt pcs' : 'Stok habis',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontXs,
+                    color: maxInt > 0 ? AppTheme.textSubtle : AppTheme.errorRed,
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -1309,13 +1316,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                   ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 16),
-                color: _quantity < 10 ? AppTheme.textMain : AppTheme.textSubtle,
-                onPressed: _quantity < 10
-                    ? () => setState(() => _quantity++)
-                    : null,
-              ),
+              Builder(builder: (context) {
+                final sizeStock = productData['sizeStock'];
+                final maxStock = sizeStock is Map && _selectedSize != null
+                    ? (sizeStock[_selectedSize] ?? productData['stock'] ?? 0)
+                    : (productData['stock'] ?? 0);
+                final maxInt = maxStock is int ? maxStock : int.tryParse('$maxStock') ?? 0;
+                final canAdd = maxInt <= 0 ? false : _quantity < maxInt;
+                return IconButton(
+                  icon: const Icon(Icons.add, size: 16),
+                  color: canAdd ? AppTheme.textMain : AppTheme.textSubtle,
+                  onPressed: canAdd ? () => setState(() => _quantity++) : null,
+                );
+              }),
             ],
           ),
         ),
