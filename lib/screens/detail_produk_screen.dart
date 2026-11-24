@@ -1454,8 +1454,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 productData['category']?.toString() ?? 'Batik',
                 r,
               ),
-              if (productData['sku'] != null)
-                _specItem('SKU', productData['sku'].toString(), r),
+
               if (productData['description']?.toString().isNotEmpty == true)
                 _specItem(
                   'Deskripsi',
@@ -1564,7 +1563,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                         ?.map((e) => e.toString())
                         .toList() ??
                     const [],
-                variant: 'Pembeli Terverifikasi',
+                variant: '',
                 r: r,
               ),
             ),
@@ -1616,13 +1615,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                         fontSize: r.fontSm,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textMain,
-                      ),
-                    ),
-                    Text(
-                      variant,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontXs,
-                        color: AppTheme.textSubtle,
                       ),
                     ),
                   ],
