@@ -132,7 +132,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Buat Password Baru',
+                            'Buat Sandi Baru',
                             style: GoogleFonts.outfit(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -141,7 +141,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'OTP terverifikasi ✓ Silakan buat kombinasi kata sandi baru yang kuat untuk melindungi akun Anda.',
+                            'Kode OTP berhasil diverifikasi ✓ Silakan buat kata sandi baru yang kuat untuk mengamankan akun Anda.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: AppTheme.textMuted,
@@ -272,7 +272,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.center,
                                     children: const [
-                                      Text('Simpan Password Baru'),
+                                      Text('Simpan Kata Sandi Baru'),
                                       SizedBox(width: 8),
                                       Icon(Icons.shield_outlined, size: 18),
                                     ],

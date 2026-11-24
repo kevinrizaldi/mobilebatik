@@ -117,7 +117,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'KEMBALI KE LOGIN',
+                          'KEMBALI KE HALAMAN MASUK',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -200,7 +200,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Masukkan email terdaftar Anda. Kami akan mengirimkan kode OTP 6 digit untuk mereset kata sandi.',
+            'Masukkan alamat email akun Anda. Kami akan mengirimkan kode OTP 6 digit untuk mengatur ulang kata sandi.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               color: AppTheme.textMuted,

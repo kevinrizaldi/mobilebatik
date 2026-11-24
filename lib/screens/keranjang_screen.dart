@@ -110,7 +110,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  'Keranjang',
+                  'Keranjang Belanja',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: r.fontMd,
                     fontWeight: FontWeight.w600,
@@ -452,7 +452,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
               iconAlignment: IconAlignment.end,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: Text(
-                'Lanjut ke Checkout (${store.selectedItemCount})',
+                'Checkout (${store.selectedItemCount} Item)',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: r.fontSm,
                   fontWeight: FontWeight.w700,

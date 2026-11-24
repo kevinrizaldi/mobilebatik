@@ -147,21 +147,6 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.inputBg,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Text(
-                  'Terverifikasi Beli',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -622,11 +607,11 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
             height: 40,
             child: ElevatedButton.icon(
               onPressed: canSubmit && !_isSubmitting ? _submitReview : null,
-              icon: const Icon(Icons.verified_outlined, size: 15),
+              icon: const Icon(Icons.send_rounded, size: 15),
               label: Text(
                 _isSubmitting
                     ? 'Mengirim Ulasan...'
-                    : 'Kirim Ulasan Terverifikasi',
+                    : 'Kirim Ulasan',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
