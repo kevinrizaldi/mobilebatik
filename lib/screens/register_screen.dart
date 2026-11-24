@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
+import '../widgets/google_social_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,6 +29,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isObscuredConfirm = true;
   bool _agreeToTerms = false;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleGoogleRegister() async {
+    if (_isGoogleLoading) return;
+    if (!_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Anda harus menyetujui Syarat & Ketentuan terlebih dahulu.',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    setState(() => _isGoogleLoading = true);
+    try {
+      await AuthService.instance.loginWithGoogle();
+      if (!mounted) return;
+      context.go('/home');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showGoogleError(e.message);
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  void _showGoogleError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(color: Colors.white),
+        ),
+        backgroundColor: AppTheme.errorRed,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
 
   void _handleRegister() async {
     if (!_agreeToTerms) {
@@ -354,6 +399,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       ),
                                     ],
                                   ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Divider
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Divider(color: AppTheme.borderLight),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  'atau',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                ),
+                              ),
+                              const Expanded(
+                                child: Divider(color: AppTheme.borderLight),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Google Social Register Button
+                          GoogleSocialButton(
+                            label: 'Daftar dengan Google',
+                            onPressed: _handleGoogleRegister,
+                            isLoading: _isGoogleLoading,
                           ),
                         ],
                       ),
