@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_client.dart';
@@ -206,9 +207,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _phoneController,
                             prefixIcon: Icons.phone_android_outlined,
                             keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(15),
+                            ],
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
+                              final trimmed = val?.trim() ?? '';
+                              if (trimmed.isEmpty) {
                                 return 'Nomor WhatsApp tidak boleh kosong';
+                              }
+                              if (!RegExp(r'^[0-9]+$').hasMatch(trimmed)) {
+                                return 'Nomor WhatsApp hanya boleh berupa angka';
+                              }
+                              if (trimmed.length < 10 || trimmed.length > 15) {
+                                return 'Nomor WhatsApp harus antara 10 - 15 digit';
                               }
                               return null;
                             },

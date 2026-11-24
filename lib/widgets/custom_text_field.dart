@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
@@ -12,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final VoidCallback? onToggleVisibility;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -24,6 +26,7 @@ class CustomTextField extends StatelessWidget {
     this.onToggleVisibility,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.inputFormatters,
   });
 
   @override
@@ -44,6 +47,7 @@ class CustomTextField extends StatelessWidget {
           controller: controller,
           obscureText: isPassword && isObscured,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           validator: validator,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
