@@ -1216,14 +1216,34 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                             ]
                           : null,
                     ),
-                    child: Text(
-                      size,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontSm,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? Colors.white : AppTheme.textMain,
-                      ),
-                    ),
+                    child: Builder(builder: (context) {
+                      final sizeStock = productData['sizeStock'];
+                      final stockCount = sizeStock is Map ? (sizeStock[size] ?? 0) : 0;
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            size,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: r.fontSm,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.white : AppTheme.textMain,
+                            ),
+                          ),
+                          if (stockCount is int || stockCount is double)
+                            Text(
+                              '${stockCount} pcs',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: r.fontXs,
+                                fontWeight: FontWeight.w400,
+                                color: isSelected
+                                    ? Colors.white.withValues(alpha: 0.85)
+                                    : AppTheme.textSub,
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
                   ),
                 ),
               ),
