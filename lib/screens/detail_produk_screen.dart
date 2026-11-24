@@ -1430,13 +1430,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Product Specifications
+  // Product Specifications / Description
   Widget _buildProductSpecifications(Responsive r) {
+    final material = (productData['material']?.toString().isNotEmpty == true)
+        ? productData['material'].toString()
+        : null;
+    final category = productData['category']?.toString() ?? '';
+    final description = productData['description']?.toString() ?? '';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Spesifikasi Produk',
+          'Deskripsi Produk',
           style: GoogleFonts.outfit(
             fontSize: r.fontMd,
             fontWeight: FontWeight.w700,
@@ -1455,25 +1461,73 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _specItem(
-                'Bahan Kain',
-                (productData['material']?.toString().isNotEmpty == true)
-                    ? productData['material'].toString()
-                    : 'Katun Primisima',
-                r,
-              ),
-              _specItem(
-                'Kategori',
-                productData['category']?.toString() ?? 'Batik',
-                r,
-              ),
-
-              if (productData['description']?.toString().isNotEmpty == true)
-                _specItem(
-                  'Deskripsi',
-                  productData['description'].toString(),
-                  r,
+              // Material + category summary line (like web)
+              if (material != null) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.layers_outlined,
+                      size: 14,
+                      color: AppTheme.textSubtle,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontXs,
+                            color: AppTheme.textSubtle,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: material,
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            if (description.isNotEmpty)
+                              TextSpan(text: '. $description'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                if (description.isNotEmpty) SizedBox(height: r.spacingSm),
+              ],
+              // Full description text
+              if (description.isNotEmpty && material == null)
+                Text(
+                  description,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontSm,
+                    color: AppTheme.textMuted,
+                    height: 1.5,
+                  ),
+                ),
+              // Category chip at bottom
+              if (category.isNotEmpty) ...[
+                SizedBox(height: r.spacingSm),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppTheme.terracottaLight,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        category,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontXs,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.terracotta,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
