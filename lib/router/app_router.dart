@@ -77,13 +77,6 @@ class AppRouter {
               state.uri.queryParameters['email'];
           final token = extra?['token']?.toString() ??
               state.uri.queryParameters['token'];
-
-          // Guard: token harus ada dan tidak kosong.
-          // Tanpa token yang valid dari email, arahkan ke lupa sandi.
-          if (token == null || token.trim().isEmpty) {
-            return const ForgotPasswordScreen();
-          }
-
           return ResetPasswordScreen(
             initialEmail: email,
             initialToken: token,
