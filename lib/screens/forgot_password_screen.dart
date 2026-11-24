@@ -382,7 +382,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               _buildStep('1', 'Buka aplikasi email Anda'),
               _buildStep('2', 'Cari email dari Hamzah Style dengan subjek "Permintaan Reset Kata Sandi"'),
               _buildStep('3', 'Salin kode token panjang yang ada di badan email'),
-              _buildStep('4', 'Buka halaman Reset Kata Sandi di bawah, lalu tempelkan kode token tersebut'),
+              _buildStep('4', 'Klik tautan di email untuk membuat password baru melalui browser'),
               _buildStep('5', 'Kode token berlaku selama 60 menit dan hanya 1x pakai'),
             ],
           ),
@@ -413,18 +413,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
 
         const SizedBox(height: 20),
-
-        // Go to reset password form (after user has copied token from email)
-        ElevatedButton.icon(
-          onPressed: () => context.push(
-            '/reset-password',
-            extra: {'email': _emailController.text.trim()},
-          ),
-          icon: const Icon(Icons.vpn_key_rounded, size: 16),
-          label: const Text('Sudah Dapat Token? Reset Sekarang'),
-        ),
-
-        const SizedBox(height: 10),
 
         // Resend button
         OutlinedButton.icon(
