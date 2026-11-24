@@ -309,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ),
                                       ),
                                       const TextSpan(
-                                        text: ' Hamzah Style Official.',
+                                        text: ' Hamzah Style.',
                                       ),
                                     ],
                                   ),
