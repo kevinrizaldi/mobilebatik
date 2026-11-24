@@ -1238,7 +1238,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                                 fontWeight: FontWeight.w400,
                                 color: isSelected
                                     ? Colors.white.withValues(alpha: 0.85)
-                                    : AppTheme.textSub,
+                                    : AppTheme.textSubtle,
                               ),
                             ),
                         ],
