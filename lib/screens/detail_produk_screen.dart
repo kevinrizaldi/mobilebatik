@@ -1639,22 +1639,17 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  /// Mengubah ISO date string menjadi format relative seperti "3 hari lalu"
+  /// Format tanggal ke "1 Okt 2026"
   String _relativeDate(String? isoString) {
     if (isoString == null || isoString.isEmpty) return '';
     try {
       final dt = DateTime.parse(isoString).toLocal();
-      final now = DateTime.now();
-      final diff = now.difference(dt);
-      if (diff.inSeconds < 60) return 'Baru saja';
-      if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-      if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-      if (diff.inDays < 7) return '${diff.inDays} hari lalu';
-      if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} minggu lalu';
-      if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} bulan lalu';
-      return '${(diff.inDays / 365).floor()} tahun lalu';
+      const months = [
+        '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      ];
+      return '${dt.day} ${months[dt.month]} ${dt.year}';
     } catch (_) {
-      // Fallback ke format tanggal biasa kalau parse gagal
       return isoString.split('T').first;
     }
   }
