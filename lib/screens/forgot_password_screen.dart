@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_client.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
@@ -17,17 +18,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;
-  bool _isSent = false;
 
   void _handleSendReset() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(milliseconds: 1000));
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ApiClient.instance.post(
+        '/forgot-password',
+        body: {'email': _emailController.text.trim()},
+        auth: false,
+      );
+
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _isSent = true;
+
+      // Langsung navigate ke halaman input OTP, bawa email
+      context.push('/otp-verification', extra: {
+        'email': _emailController.text.trim(),
       });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -80,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ],
                       border: Border.all(color: AppTheme.borderLight),
                     ),
-                    child: _isSent ? _buildSuccessState() : _buildFormState(),
+                    child: _buildFormState(),
                   ),
 
                   const SizedBox(height: 20),
@@ -181,7 +200,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Masukkan email terdaftar Anda. Kami akan mengirimkan instruksi dan tautan untuk mereset kata sandi.',
+            'Masukkan email terdaftar Anda. Kami akan mengirimkan kode OTP 6 digit untuk mereset kata sandi.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               color: AppTheme.textMuted,
@@ -224,7 +243,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Text('Kirim Tautan Reset'),
+                      Text('Kirim Kode OTP'),
                       SizedBox(width: 8),
                       Icon(Icons.send_rounded, size: 18),
                     ],
@@ -277,7 +296,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const TextSpan(
                           text:
-                              ' jika email verifikasi belum diterima dalam 2 menit.',
+                              ' jika kode OTP belum diterima dalam 2 menit.',
                         ),
                       ],
                     ),
@@ -288,57 +307,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSuccessState() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: AppTheme.terracottaLight,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.mark_email_read_rounded,
-            size: 40,
-            color: AppTheme.terracotta,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Email Verifikasi Terkirim!',
-          style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.primaryBlack,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Tautan pemulihan password telah dikirim ke:\n${_emailController.text}',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            color: AppTheme.textMuted,
-            height: 1.5,
-          ),
-        ),
-        const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: () => context.push('/reset-password'),
-          child: const Text('Buka Halaman Reset Password'),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: () {
-            setState(() => _isSent = false);
-          },
-          child: const Text('Kirim Ulang Email'),
-        ),
-      ],
     );
   }
 }
