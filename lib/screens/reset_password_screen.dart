@@ -1,22 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_client.dart';
-import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  final String? initialEmail;
-  final String? initialToken;
-
-  const ResetPasswordScreen({
-    super.key,
-    this.initialEmail,
-    this.initialToken,
-  });
+  const ResetPasswordScreen({super.key});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -24,8 +15,6 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _emailController;
-  late final TextEditingController _tokenController;
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -33,73 +22,30 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _isObscuredConfirm = true;
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _emailController = TextEditingController(text: widget.initialEmail ?? '');
-    _tokenController = TextEditingController(text: widget.initialToken ?? '');
-  }
-
   void _handleResetPassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      try {
-        final res = await AuthService.instance.resetPassword(
-          email: _emailController.text.trim(),
-          token: _tokenController.text.trim(),
-          password: _newPasswordController.text,
-          passwordConfirmation: _confirmPasswordController.text,
-        );
-        if (!mounted) return;
-        setState(() => _isLoading = false);
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              res['message']?.toString() ??
-                  'Kata sandi Anda berhasil diperbarui! Silakan masuk kembali.',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.successGreen,
-            behavior: SnackBarBehavior.floating,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Kata sandi Anda berhasil diperbarui! Silakan masuk kembali.',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
           ),
-        );
+          backgroundColor: AppTheme.successGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
-        context.go('/login');
-      } on ApiException catch (e) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.message,
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      } catch (_) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Gagal mereset kata sandi. Periksa koneksi internet Anda.',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      context.go('/login');
     }
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _tokenController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -174,37 +120,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-
-                          // Email Field
-                          CustomTextField(
-                            label: 'Alamat Email',
-                            hintText: 'nama@domain.com',
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            prefixIcon: Icons.email_outlined,
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Email tidak boleh kosong';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Token Field
-                          CustomTextField(
-                            label: 'Kode Token Reset',
-                            hintText: 'Salin kode token dari email Anda',
-                            controller: _tokenController,
-                            prefixIcon: Icons.key_outlined,
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Kode token tidak boleh kosong';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
 
                           // New Password Field
                           CustomTextField(

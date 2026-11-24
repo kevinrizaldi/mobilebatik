@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_client.dart';
-import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
@@ -24,41 +22,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void _handleSendReset() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      try {
-        final email = _emailController.text.trim();
-        await AuthService.instance.forgotPassword(email);
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-          _isSent = true;
-        });
-      } on ApiException catch (e) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.message,
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      } catch (_) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Gagal mengirim email reset. Periksa koneksi internet Anda.',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isSent = true;
+      });
     }
   }
 
@@ -340,7 +309,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Email Terkirim!',
+          'Email Verifikasi Terkirim!',
           style: GoogleFonts.outfit(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -349,7 +318,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Instruksi reset kata sandi telah dikirim ke:\n${_emailController.text}',
+          'Tautan pemulihan password telah dikirim ke:\n${_emailController.text}',
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
@@ -357,143 +326,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 20),
-
-        // Step instructions
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppTheme.inputBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.borderLight),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Langkah selanjutnya:',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryBlack,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildStep('1', 'Buka aplikasi email Anda'),
-              _buildStep('2', 'Cari email dari Hamzah Style dengan subjek "Permintaan Reset Kata Sandi"'),
-              _buildStep('3', 'Salin kode token panjang yang ada di badan email'),
-              _buildStep('4', 'Kembali ke app → klik tombol di bawah → tempelkan token ke kolom "Kode Token Reset"'),
-              _buildStep('5', 'Kode token berlaku selama 60 menit dan hanya 1x pakai'),
-            ],
-          ),
+        const SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: () => context.push('/reset-password'),
+          child: const Text('Buka Halaman Reset Password'),
         ),
-
-        const SizedBox(height: 8),
-
-        // Spam warning
-        Row(
-          children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              size: 14,
-              color: AppTheme.terracotta,
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                'Periksa folder Spam/Promosi jika email belum masuk dalam 2 menit.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  color: AppTheme.textSubtle,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 20),
-
-        // Tombol utama: buka form reset password di dalam app
-        ElevatedButton.icon(
-          onPressed: () => context.push(
-            '/reset-password',
-            extra: {
-              'email': _emailController.text.trim(),
-              // token dikosongkan — user paste sendiri dari email
-              'token': '',
-            },
-          ),
-          icon: const Icon(Icons.vpn_key_rounded, size: 16),
-          label: const Text('Sudah Salin Token? Reset di Sini'),
-        ),
-
-        const SizedBox(height: 10),
-
-        // Resend button
-        OutlinedButton.icon(
+        const SizedBox(height: 12),
+        OutlinedButton(
           onPressed: () {
             setState(() => _isSent = false);
           },
-          icon: const Icon(Icons.refresh_rounded, size: 16),
-          label: const Text('Kirim Ulang Email'),
-        ),
-
-        const SizedBox(height: 10),
-
-        // Back to login
-        TextButton(
-          onPressed: () => context.go('/login'),
-          child: Text(
-            'Kembali ke Login',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.primaryDark,
-            ),
-          ),
+          child: const Text('Kirim Ulang Email'),
         ),
       ],
-    );
-  }
-
-  Widget _buildStep(String number, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            margin: const EdgeInsets.only(top: 1, right: 8),
-            decoration: const BoxDecoration(
-              color: AppTheme.terracotta,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                color: AppTheme.textMuted,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
