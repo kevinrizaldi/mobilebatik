@@ -1583,7 +1583,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           children: [
             Flexible(
               child: Text(
-                'Ulasan Pembeli (${reviews.isNotEmpty ? reviews.length : (productData['sold'] ?? 0)})',
+                'Ulasan Pelanggan (${reviews.isNotEmpty ? reviews.length : (productData['sold'] ?? 0)})',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.outfit(
@@ -1621,7 +1621,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 name: (rev['user_name']?.toString().isNotEmpty == true)
                     ? rev['user_name'].toString()
                     : 'Pelanggan',
-                date: (rev['created_at']?.toString().split('T').first) ?? '',
+                date: _relativeDate(rev['created_at']?.toString()),
                 rating: rev['rating'] is int
                     ? rev['rating'] as int
                     : int.tryParse('${rev['rating']}') ?? 5,
@@ -1637,6 +1637,26 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           ),
       ],
     );
+  }
+
+  /// Mengubah ISO date string menjadi format relative seperti "3 hari lalu"
+  String _relativeDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(isoString).toLocal();
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+      if (diff.inSeconds < 60) return 'Baru saja';
+      if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+      if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+      if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+      if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} minggu lalu';
+      if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} bulan lalu';
+      return '${(diff.inDays / 365).floor()} tahun lalu';
+    } catch (_) {
+      // Fallback ke format tanggal biasa kalau parse gagal
+      return isoString.split('T').first;
+    }
   }
 
   Widget _reviewCard({
