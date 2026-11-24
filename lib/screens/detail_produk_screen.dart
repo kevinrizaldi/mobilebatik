@@ -20,7 +20,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   int _selectedImageIndex = 0;
   String _selectedSize = 'L';
   int _quantity = 1;
-  bool _isFavorite = false;
   bool _isAddingToCart = false;
   Map<String, dynamic>? _fetchedProduct;
 
@@ -109,25 +108,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     } else {
       context.go('/katalog');
     }
-  }
-
-  void _toggleFavorite() {
-    setState(() => _isFavorite = !_isFavorite);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isFavorite
-              ? 'Produk berhasil ditambahkan ke Favorit'
-              : 'Produk dihapus dari Favorit',
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryDark,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   Future<void> _addToCart() async {
@@ -797,38 +777,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 ),
               ),
             ),
-            // Favorite Button
-            Positioned(
-              top: 12,
-              right: 12,
-              child: InkWell(
-                onTap: _toggleFavorite,
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: _isFavorite
-                        ? AppTheme.errorRed
-                        : AppTheme.primaryDark,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
+
             // Dots Indicator
             Positioned(
               bottom: 14,

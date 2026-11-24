@@ -624,29 +624,7 @@ class _KatalogProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.favorite_border_rounded,
-                          size: r.iconSm - 2,
-                          color: AppTheme.primaryDark,
-                        ),
-                      ),
-                    ),
+
                     if (originalPrice != null)
                       Positioned(
                         top: 8,
