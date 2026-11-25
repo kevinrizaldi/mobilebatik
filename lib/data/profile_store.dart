@@ -8,6 +8,15 @@ class ProfileAddress {
   String recipient;
   String phone;
   String address;
+  String? province;
+  int? provinceId;
+  String? city;
+  int? cityId;
+  String? district;
+  int? districtId;
+  String? postalCode;
+  double? latitude;
+  double? longitude;
   bool isPrimary;
 
   ProfileAddress({
@@ -16,8 +25,58 @@ class ProfileAddress {
     required this.recipient,
     required this.phone,
     required this.address,
+    this.province,
+    this.provinceId,
+    this.city,
+    this.cityId,
+    this.district,
+    this.districtId,
+    this.postalCode,
+    this.latitude,
+    this.longitude,
     this.isPrimary = false,
   });
+
+  /// Format alamat lengkap sesuai website Laravel:
+  /// Alamat jalan, Kec. [Kecamatan], [Kota], [Provinsi] [Kode Pos]
+  String get displayAddress {
+    final parts = <String>[];
+    if (address.trim().isNotEmpty) {
+      parts.add(address.trim());
+    }
+    if (district != null &&
+        district!.trim().isNotEmpty &&
+        !address.toLowerCase().contains(district!.toLowerCase())) {
+      parts.add('Kec. ${district!.trim()}');
+    }
+    if (city != null &&
+        city!.trim().isNotEmpty &&
+        !address.toLowerCase().contains(city!.toLowerCase())) {
+      parts.add(city!.trim());
+    }
+    if (province != null &&
+        province!.trim().isNotEmpty &&
+        !address.toLowerCase().contains(province!.toLowerCase())) {
+      parts.add(province!.trim());
+    }
+    final combined = parts.join(', ');
+    if (postalCode != null &&
+        postalCode!.trim().isNotEmpty &&
+        !combined.contains(postalCode!.trim())) {
+      return '$combined ${postalCode!.trim()}';
+    }
+    return combined.isNotEmpty ? combined : address;
+  }
+
+  /// Ringkasan wilayah: "Provinsi, Kota, Kecamatan, Kode Pos"
+  String get regionSummary {
+    final parts = <String>[];
+    if (province != null && province!.isNotEmpty) parts.add(province!);
+    if (city != null && city!.isNotEmpty) parts.add(city!);
+    if (district != null && district!.isNotEmpty) parts.add('Kec. $district');
+    if (postalCode != null && postalCode!.isNotEmpty) parts.add(postalCode!);
+    return parts.join(', ');
+  }
 }
 
 class ProfileStore extends ChangeNotifier {
@@ -116,6 +175,15 @@ class ProfileStore extends ChangeNotifier {
               recipient: raw['recipient_name']?.toString() ?? name,
               phone: raw['phone']?.toString() ?? phone,
               address: raw['full_address']?.toString() ?? '',
+              province: raw['province']?.toString(),
+              provinceId: int.tryParse(raw['province_id']?.toString() ?? ''),
+              city: raw['city']?.toString(),
+              cityId: int.tryParse(raw['city_id']?.toString() ?? ''),
+              district: (raw['district'] ?? raw['kecamatan'])?.toString(),
+              districtId: int.tryParse(raw['district_id']?.toString() ?? ''),
+              postalCode: raw['postal_code']?.toString(),
+              latitude: double.tryParse(raw['latitude']?.toString() ?? ''),
+              longitude: double.tryParse(raw['longitude']?.toString() ?? ''),
               isPrimary: raw['is_primary'] == true,
             ),
           ),
@@ -151,6 +219,15 @@ class ProfileStore extends ChangeNotifier {
             recipientName: address.recipient,
             phone: address.phone,
             fullAddress: address.address,
+            province: address.province,
+            provinceId: address.provinceId,
+            city: address.city,
+            cityId: address.cityId,
+            district: address.district,
+            districtId: address.districtId,
+            postalCode: address.postalCode,
+            latitude: address.latitude,
+            longitude: address.longitude,
             isPrimary: address.isPrimary,
           );
         } else {
@@ -159,6 +236,15 @@ class ProfileStore extends ChangeNotifier {
             recipientName: address.recipient,
             phone: address.phone,
             fullAddress: address.address,
+            province: address.province,
+            provinceId: address.provinceId,
+            city: address.city,
+            cityId: address.cityId,
+            district: address.district,
+            districtId: address.districtId,
+            postalCode: address.postalCode,
+            latitude: address.latitude,
+            longitude: address.longitude,
             isPrimary: address.isPrimary,
           );
         }

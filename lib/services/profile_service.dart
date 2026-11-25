@@ -45,18 +45,38 @@ class ProfileService {
     required String recipientName,
     required String phone,
     required String fullAddress,
+    String? province,
+    int? provinceId,
+    String? city,
+    int? cityId,
+    String? district,
+    int? districtId,
+    String? postalCode,
+    double? latitude,
+    double? longitude,
     bool isPrimary = false,
   }) async {
-    final res = await ApiClient.instance.post(
-      '/addresses',
-      body: {
-        'label': label.trim(),
-        'recipient_name': recipientName.trim(),
-        'phone': phone.trim(),
-        'full_address': fullAddress.trim(),
-        'is_primary': isPrimary,
-      },
-    );
+    final body = <String, dynamic>{
+      'label': label.trim(),
+      'recipient_name': recipientName.trim(),
+      'phone': phone.trim(),
+      'full_address': fullAddress.trim(),
+      'is_primary': isPrimary,
+    };
+    if (province != null && province.isNotEmpty) body['province'] = province.trim();
+    if (provinceId != null) body['province_id'] = provinceId;
+    if (city != null && city.isNotEmpty) body['city'] = city.trim();
+    if (cityId != null) body['city_id'] = cityId;
+    if (district != null && district.isNotEmpty) {
+      body['district'] = district.trim();
+      body['kecamatan'] = district.trim();
+    }
+    if (districtId != null) body['district_id'] = districtId;
+    if (postalCode != null && postalCode.isNotEmpty) body['postal_code'] = postalCode.trim();
+    if (latitude != null) body['latitude'] = latitude;
+    if (longitude != null) body['longitude'] = longitude;
+
+    final res = await ApiClient.instance.post('/addresses', body: body);
     return (res['data'] as Map<String, dynamic>?) ?? {};
   }
 
@@ -66,18 +86,38 @@ class ProfileService {
     String? recipientName,
     String? phone,
     String? fullAddress,
+    String? province,
+    int? provinceId,
+    String? city,
+    int? cityId,
+    String? district,
+    int? districtId,
+    String? postalCode,
+    double? latitude,
+    double? longitude,
     bool? isPrimary,
   }) async {
-    final res = await ApiClient.instance.patch(
-      '/addresses/$id',
-      body: {
-        'label': ?label,
-        'recipient_name': ?recipientName,
-        'phone': ?phone,
-        'full_address': ?fullAddress,
-        'is_primary': ?isPrimary,
-      },
-    );
+    final body = <String, dynamic>{
+      'label': ?label,
+      'recipient_name': ?recipientName,
+      'phone': ?phone,
+      'full_address': ?fullAddress,
+      'is_primary': ?isPrimary,
+    };
+    if (province != null && province.isNotEmpty) body['province'] = province.trim();
+    if (provinceId != null) body['province_id'] = provinceId;
+    if (city != null && city.isNotEmpty) body['city'] = city.trim();
+    if (cityId != null) body['city_id'] = cityId;
+    if (district != null && district.isNotEmpty) {
+      body['district'] = district.trim();
+      body['kecamatan'] = district.trim();
+    }
+    if (districtId != null) body['district_id'] = districtId;
+    if (postalCode != null && postalCode.isNotEmpty) body['postal_code'] = postalCode.trim();
+    if (latitude != null) body['latitude'] = latitude;
+    if (longitude != null) body['longitude'] = longitude;
+
+    final res = await ApiClient.instance.patch('/addresses/$id', body: body);
     return (res['data'] as Map<String, dynamic>?) ?? {};
   }
 

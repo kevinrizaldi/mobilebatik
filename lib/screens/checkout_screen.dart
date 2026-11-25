@@ -106,6 +106,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           recipientName: _currentAddress.recipient,
           phone: _currentAddress.phone,
           fullAddress: _currentAddress.address,
+          province: _currentAddress.province,
+          provinceId: _currentAddress.provinceId,
+          city: _currentAddress.city,
+          cityId: _currentAddress.cityId,
+          district: _currentAddress.district,
+          districtId: _currentAddress.districtId,
+          postalCode: _currentAddress.postalCode,
+          latitude: _currentAddress.latitude,
+          longitude: _currentAddress.longitude,
           isPrimary: true,
         );
         final createdId = res['data']?['id'] ?? res['address']?['id'];
@@ -649,7 +658,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      address.address,
+                      address.displayAddress,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         color: AppTheme.textSubtle,
@@ -732,7 +741,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          addr.address,
+                          addr.displayAddress,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             color: AppTheme.textSubtle,
