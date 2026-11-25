@@ -4,6 +4,7 @@ import '../screens/pembayaran_screen.dart';
 import '../screens/detail_produk_screen.dart';
 import '../screens/beri_ulasan_screen.dart';
 import '../screens/forgot_password_screen.dart';
+import '../screens/otp_verification_screen.dart';
 import '../screens/detail_pesanan_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/keranjang_screen.dart';
@@ -69,9 +70,23 @@ class AppRouter {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
+        path: '/otp-verification',
+        name: 'otp-verification',
+        builder: (context, state) {
+          final extra = _extraMap(state.extra);
+          return OtpVerificationScreen(email: extra?['email'] as String? ?? '');
+        },
+      ),
+      GoRoute(
         path: '/reset-password',
         name: 'reset-password',
-        builder: (context, state) => const ResetPasswordScreen(),
+        builder: (context, state) {
+          final extra = _extraMap(state.extra);
+          return ResetPasswordScreen(
+            token: extra?['token'] as String? ?? '',
+            email: extra?['email'] as String? ?? '',
+          );
+        },
       ),
       GoRoute(
         path: '/home',

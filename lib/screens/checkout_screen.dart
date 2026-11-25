@@ -33,7 +33,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'badge': 'BCA Menunggu',
       'subtitle': 'BCA Rekening Resmi',
       'description':
-          'Transfer langsung ke rekening bank kami. Verifikasi manual dilakukan oleh tim kami setelah unggah bukti transfer.',
+          'Transfer langsung ke rekening bank kami. Pembayaran diverifikasi otomatis oleh Midtrans.',
       'icon': Icons.account_balance_outlined,
       'isManual': true,
     },
@@ -43,7 +43,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'badge': 'Otomatis',
       'subtitle': 'BCA, Mandiri, BRI, BNI',
       'description':
-          'Verifikasi otomatis 24 jam tanpa perlu unggah bukti transfer secara manual.',
+          'Verifikasi otomatis 24 jam oleh Midtrans — tanpa perlu mengunggah apa pun.',
       'icon': Icons.account_balance_wallet_outlined,
       'isManual': false,
     },

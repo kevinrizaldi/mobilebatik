@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_client.dart';
@@ -7,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
+import '../widgets/google_social_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,6 +29,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isObscuredConfirm = true;
   bool _agreeToTerms = false;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleGoogleRegister() async {
+    if (_isGoogleLoading) return;
+    if (!_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Anda harus menyetujui Syarat & Ketentuan terlebih dahulu.',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    setState(() => _isGoogleLoading = true);
+    try {
+      await AuthService.instance.loginWithGoogle();
+      if (!mounted) return;
+      context.go('/home');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showGoogleError(e.message);
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  void _showGoogleError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(color: Colors.white),
+        ),
+        backgroundColor: AppTheme.errorRed,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
 
   void _handleRegister() async {
     if (!_agreeToTerms) {
@@ -147,7 +193,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Daftar Akun Baru',
+                            'Buat Akun Baru',
                             style: GoogleFonts.outfit(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -156,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Bergabunglah bersama komunitas pecinta kriya sirkular dan nikmati layanan eksklusif.',
+                            'Daftar untuk mulai berbelanja busana batik Nusantara di Hamzah Style.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: AppTheme.textMuted,
@@ -168,7 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           // Nama Lengkap
                           CustomTextField(
                             label: 'Nama Lengkap',
-                            hintText: 'Contoh: Siti Rahmawati',
+                            hintText: 'Masukkan nama lengkap',
                             controller: _nameController,
                             prefixIcon: Icons.person_outline_rounded,
                             validator: (val) {
@@ -183,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           // Email
                           CustomTextField(
                             label: 'Email',
-                            hintText: 'nama@email.com',
+                            hintText: 'Masukkan email aktif',
                             controller: _emailController,
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
@@ -201,14 +247,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           // Nomor Telepon / WhatsApp
                           CustomTextField(
-                            label: 'Nomor WhatsApp',
-                            hintText: '081234567890',
+                            label: 'No. Telepon / WhatsApp (opsional)',
+                            hintText: 'Contoh: 081234567890',
                             controller: _phoneController,
                             prefixIcon: Icons.phone_android_outlined,
                             keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(15),
+                            ],
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Nomor WhatsApp tidak boleh kosong';
+                              final trimmed = val?.trim() ?? '';
+                              if (trimmed.isEmpty) return null;
+                              if (!RegExp(r'^[0-9]+$').hasMatch(trimmed)) {
+                                return 'Nomor telepon hanya boleh berupa angka';
+                              }
+                              if (trimmed.length < 10 || trimmed.length > 15) {
+                                return 'Nomor telepon harus antara 10 - 15 digit';
                               }
                               return null;
                             },
@@ -309,7 +364,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ),
                                       ),
                                       const TextSpan(
-                                        text: ' Hamzah Style Official.',
+                                        text: ' Hamzah Style.',
                                       ),
                                     ],
                                   ),
@@ -334,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: const [
-                                      Text('Daftar Akun Baru'),
+                                      Text('Daftar'),
                                       SizedBox(width: 8),
                                       Icon(
                                         Icons.check_circle_outline_rounded,
@@ -342,6 +397,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       ),
                                     ],
                                   ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Divider
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Divider(color: AppTheme.borderLight),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  'atau',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: AppTheme.textSubtle,
+                                  ),
+                                ),
+                              ),
+                              const Expanded(
+                                child: Divider(color: AppTheme.borderLight),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Google Social Register Button
+                          GoogleSocialButton(
+                            label: 'Daftar dengan Google',
+                            onPressed: _handleGoogleRegister,
+                            isLoading: _isGoogleLoading,
                           ),
                         ],
                       ),
@@ -355,7 +443,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Sudah memiliki akun? ',
+                        'Sudah punya akun? ',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           color: AppTheme.textMuted,
@@ -364,7 +452,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       GestureDetector(
                         onTap: () => context.go('/login'),
                         child: Text(
-                          'Masuk di sini',
+                          'Masuk sekarang',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,

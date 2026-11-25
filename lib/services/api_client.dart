@@ -131,6 +131,37 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, String> fields = const {},
+    List<({String filename, Uint8List bytes})> files = const [],
+    bool auth = true,
+  }) async {
+    final request = http.MultipartRequest('POST', _buildUri(path));
+    if (auth) {
+      final token = await getToken();
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+    }
+    request.fields.addAll(fields);
+    for (final file in files) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photos[]',
+          file.bytes,
+          filename: file.filename,
+        ),
+      );
+    }
+    return _send(() async {
+      final override = debugClientOverride;
+      final future = override != null ? override.send(request) : request.send();
+      final streamed = await future.timeout(_timeout);
+      return http.Response.fromStream(streamed);
+    });
+  }
+
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,

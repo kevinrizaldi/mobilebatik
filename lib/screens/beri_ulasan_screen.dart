@@ -147,21 +147,6 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.inputBg,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Text(
-                  'Terverifikasi Beli',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -622,11 +607,11 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
             height: 40,
             child: ElevatedButton.icon(
               onPressed: canSubmit && !_isSubmitting ? _submitReview : null,
-              icon: const Icon(Icons.verified_outlined, size: 15),
+              icon: const Icon(Icons.send_rounded, size: 15),
               label: Text(
                 _isSubmitting
                     ? 'Mengirim Ulasan...'
-                    : 'Kirim Ulasan Terverifikasi',
+                    : 'Kirim Ulasan',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -682,12 +667,17 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await OrderService.instance.submitReview(
+      final res = await OrderService.instance.submitReview(
         orderId: orderId,
         productId: int.tryParse('${widget.order['productId'] ?? ''}'),
         rating: _rating,
         comment: _reviewController.text.trim(),
+        photos: List.unmodifiable(_photos),
       );
+      final photoUrls = (res['data']?['photos'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const <String>[];
       if (!mounted) return;
       ProfileStore.instance.addReview(
         ProfileReview(
@@ -698,7 +688,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
           imageUrl: _imageUrl,
           orderId: _orderId,
           tags: _selectedTags.toList(),
-          photos: List.unmodifiable(_photos),
+          photos: List<String>.from(photoUrls),
         ),
       );
       if (!mounted) return;

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -161,6 +163,38 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('sanctum_api_token'), isNull);
       expect(ApiClient.instance.isLoggedIn, isFalse);
+    });
+  });
+
+  group('ApiClient.postMultipart', () {
+    test('mengirim field photos[] dengan filename dan Authorization', () async {
+      await ApiClient.instance.setToken('tok');
+      late http.Request captured;
+      ApiClient.debugClientOverride = record((request) {
+        captured = request;
+        return http.Response(
+          '{"data":{}}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final png = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+      );
+      final res = await ApiClient.instance.postMultipart(
+        '/orders/1/reviews',
+        fields: {'rating': '5'},
+        files: [(filename: 'photo_0.jpg', bytes: png)],
+      );
+
+      expect(res, {'data': {}});
+      expect(captured.method, 'POST');
+      expect(captured.headers['Authorization'], 'Bearer tok');
+      expect(captured.headers['content-type'], contains('boundary='));
+      final body = utf8.decode(captured.bodyBytes, allowMalformed: true);
+      expect(body, contains('name="rating"'));
+      expect(body, contains('name="photos[]"; filename="photo_0.jpg"'));
     });
   });
 }
