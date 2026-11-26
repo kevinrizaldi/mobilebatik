@@ -313,34 +313,51 @@ class _KatalogScreenState extends State<KatalogScreen> {
                   ),
                 ),
                 SizedBox(width: r.spacingSm),
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: AppTheme.inputBg,
-                    borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(
-                        Icons.notifications_none_rounded,
-                        color: AppTheme.textMain,
-                        size: r.iconMd,
-                      ),
-                      Positioned(
-                        right: 11,
-                        top: 11,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF401100),
-                            shape: BoxShape.circle,
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(
+                            content: Text('Belum ada notifikasi baru untuk Anda.'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
                           ),
-                        ),
+                        );
+                    },
+                    borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppTheme.inputBg,
+                        borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
                       ),
-                    ],
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.notifications_none_rounded,
+                            color: AppTheme.textMain,
+                            size: r.iconMd,
+                          ),
+                          Positioned(
+                            right: 11,
+                            top: 11,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF401100),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],

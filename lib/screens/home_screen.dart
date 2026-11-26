@@ -1,3 +1,5 @@
+import 'package:provider/provider.dart';
+import '../data/profile_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -130,35 +132,54 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(
                       width: 44,
                       height: 44,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.inputBg,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                const SnackBar(
+                                  content: Text('Belum ada notifikasi baru untuk Anda.'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                          },
                           borderRadius: BorderRadius.circular(
                             r.cardRadius * 0.75,
                           ),
-                        ),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: Icon(
-                                Icons.notifications_outlined,
-                                size: r.iconMd,
-                                color: AppTheme.textMuted,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.inputBg,
+                              borderRadius: BorderRadius.circular(
+                                r.cardRadius * 0.75,
                               ),
                             ),
-                            Positioned(
-                              right: 10,
-                              top: 10,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF401100),
-                                  shape: BoxShape.circle,
+                            child: Stack(
+                              children: [
+                                Center(
+                                  child: Icon(
+                                    Icons.notifications_outlined,
+                                    size: r.iconMd,
+                                    color: AppTheme.textMuted,
+                                  ),
                                 ),
-                              ),
+                                Positioned(
+                                  right: 10,
+                                  top: 10,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF401100),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -434,13 +455,43 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         SizedBox(width: r.spacingSm),
-        CircleAvatar(
-          radius: r.isMedium || r.isTablet ? 18 : 16,
-          backgroundColor: const Color(0xFF1C130D),
-          child: Icon(
-            Icons.person_outline_rounded,
-            color: Colors.white,
-            size: r.iconSm,
+        GestureDetector(
+          onTap: () => context.push('/profil'),
+          child: Tooltip(
+            message: 'Profil Saya',
+            child: CircleAvatar(
+              radius: r.isMedium || r.isTablet ? 18 : 16,
+              backgroundColor: const Color(0xFF1C130D),
+              child: Consumer<ProfileStore>(
+                builder: (context, profile, _) {
+                  final clean = profile.name.trim();
+                  if (clean.isNotEmpty) {
+                    final parts = clean.split(RegExp(r'\s+'));
+                    final chars = parts
+                        .where((p) => p.isNotEmpty)
+                        .take(2)
+                        .map((part) => part[0])
+                        .join()
+                        .toUpperCase();
+                    if (chars.isNotEmpty) {
+                      return Text(
+                        chars,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    }
+                  }
+                  return Icon(
+                    Icons.person_outline_rounded,
+                    color: Colors.white,
+                    size: r.iconSm,
+                  );
+                },
+              ),
+            ),
           ),
         ),
         SizedBox(width: r.pagePaddingH * 0.8),
