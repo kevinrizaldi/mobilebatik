@@ -6,6 +6,7 @@ import '../services/api_client.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/full_screen_image_viewer.dart';
 
 class EditProfilScreen extends StatefulWidget {
   const EditProfilScreen({super.key});
@@ -613,20 +614,14 @@ class UlasanSayaScreen extends StatelessWidget {
                             itemCount: review.photos.length,
                             separatorBuilder: (_, _) =>
                                 const SizedBox(width: 6),
-                            itemBuilder: (context, photoIndex) => ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: Image.network(
-                                review.photos[photoIndex],
-                                width: 54,
-                                height: 54,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(
-                                  Icons.broken_image_outlined,
-                                  size: 24,
-                                  color: AppTheme.textSubtle,
+                            itemBuilder: (context, photoIndex) =>
+                                ReviewPhotoThumbnail(
+                                  imageUrl: review.photos[photoIndex],
+                                  index: photoIndex,
+                                  allImageUrls: review.photos,
+                                  heroTagPrefix: 'profile_review_${review.orderId}_$photoIndex',
+                                  size: 54,
                                 ),
-                              ),
-                            ),
                           ),
                         ),
                       ],

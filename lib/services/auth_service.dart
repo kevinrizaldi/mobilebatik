@@ -178,6 +178,7 @@ class AuthService {
       // Tetap hapus token lokal meskipun request logout gagal.
     } finally {
       await ApiClient.instance.setToken(null);
+      ProfileStore.instance.clearUserData();
     }
   }
 }
