@@ -255,16 +255,18 @@ class _ProfileCard extends StatelessWidget {
                         color: AppTheme.textSubtle,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      profile.phone,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        color: AppTheme.textMuted,
+                    if (profile.phone.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        profile.phone,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          color: AppTheme.textMuted,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

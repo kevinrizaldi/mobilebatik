@@ -698,7 +698,7 @@ class _InfoRow extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            value,
+            value.trim().isEmpty ? '-' : value,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w600,
