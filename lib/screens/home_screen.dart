@@ -1,4 +1,3 @@
-import 'package:provider/provider.dart';
 import '../data/profile_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -462,9 +461,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: CircleAvatar(
               radius: r.isMedium || r.isTablet ? 18 : 16,
               backgroundColor: const Color(0xFF1C130D),
-              child: Consumer<ProfileStore>(
-                builder: (context, profile, _) {
-                  final clean = profile.name.trim();
+              child: Builder(
+                builder: (ctx) {
+                  final clean = ProfileStore.instance.name.trim();
                   if (clean.isNotEmpty) {
                     final parts = clean.split(RegExp(r'\s+'));
                     final chars = parts
