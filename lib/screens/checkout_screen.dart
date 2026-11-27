@@ -6,6 +6,7 @@ import '../data/profile_store.dart';
 import '../services/api_client.dart';
 import '../services/api_config.dart';
 import '../services/order_service.dart';
+import '../services/profile_service.dart';
 import '../services/shipping_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
@@ -32,7 +33,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'badge': 'BCA Menunggu',
       'subtitle': 'BCA Rekening Resmi',
       'description':
-          'Transfer langsung ke rekening bank kami. Verifikasi manual dilakukan oleh tim kami setelah unggah bukti transfer.',
+          'Transfer langsung ke rekening bank kami. Pembayaran diverifikasi otomatis oleh Midtrans.',
       'icon': Icons.account_balance_outlined,
       'isManual': true,
     },
@@ -42,7 +43,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'badge': 'Otomatis',
       'subtitle': 'BCA, Mandiri, BRI, BNI',
       'description':
-          'Verifikasi otomatis 24 jam tanpa perlu unggah bukti transfer secara manual.',
+          'Verifikasi otomatis 24 jam oleh Midtrans — tanpa perlu mengunggah apa pun.',
       'icon': Icons.account_balance_wallet_outlined,
       'isManual': false,
     },
@@ -91,10 +92,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _fetchShippingCosts() async {
-    final numericId = int.tryParse(_currentAddress.id);
-    if (numericId == null || !mounted) return;
+    int? numericId = int.tryParse(_currentAddress.id);
+    if (numericId == null) {
+      await ProfileStore.instance.syncAddressesFromServer();
+      numericId = int.tryParse(_currentAddress.id);
+    }
 
-    setState(() => _loadingServices = true);
+    if (numericId == null && mounted) {
+      // Jika alamat belum tersimpan di server, coba buatkan dari alamat aktif
+      try {
+        final res = await ProfileService.instance.createAddress(
+          label: _currentAddress.label,
+          recipientName: _currentAddress.recipient,
+          phone: _currentAddress.phone,
+          fullAddress: _currentAddress.address,
+          isPrimary: true,
+        );
+        final createdId = res['data']?['id'] ?? res['address']?['id'];
+        if (createdId != null) {
+          numericId = int.tryParse(createdId.toString());
+          await ProfileStore.instance.syncAddressesFromServer();
+        }
+      } catch (_) {}
+    }
+
+    if (numericId == null || !mounted) {
+      if (mounted) {
+        setState(() {
+          _servicesError = 'Alamat belum memiliki ID yang valid di server.';
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _loadingServices = true;
+      _servicesError = null;
+    });
     try {
       final totalQty = _checkoutItems.fold<int>(
         0,
@@ -115,11 +149,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _selectedCourierIndex = 0;
         }
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _liveServices = [];
-        _servicesError = 'Biaya ongkir tidak tersedia';
+        _servicesError = 'Gagal memuat ongkir: $e';
       });
     } finally {
       if (mounted) setState(() => _loadingServices = false);
@@ -261,7 +295,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'Biaya ongkir belum tersedia. Periksa koneksi internet lalu coba lagi.',
+            'Kurir pengiriman belum dipilih atau belum tersedia. Silakan pilih kurir terlebih dahulu.',
           ),
           backgroundColor: AppTheme.errorRed,
         ),
@@ -1074,7 +1108,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       );
     }
-    return const SizedBox.shrink();
+    return Row(
+      children: [
+        const Icon(Icons.local_shipping_outlined, size: 16, color: AppTheme.textSubtle),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Kurir pengiriman belum dimuat.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppTheme.textSubtle,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _loadingServices ? null : _fetchShippingCosts,
+          icon: const Icon(Icons.refresh, size: 14),
+          label: const Text('Hitung Ongkir'),
+        ),
+      ],
+    );
   }
 
   // --- 4. METODE PEMBAYARAN ---

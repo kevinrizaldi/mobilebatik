@@ -6,6 +6,7 @@ import '../services/api_client.dart';
 import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/full_screen_image_viewer.dart';
 
 class DetailProdukScreen extends StatefulWidget {
   final Map<String, dynamic>? product;
@@ -20,7 +21,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   int _selectedImageIndex = 0;
   String _selectedSize = 'L';
   int _quantity = 1;
-  bool _isFavorite = false;
   bool _isAddingToCart = false;
   Map<String, dynamic>? _fetchedProduct;
 
@@ -109,25 +109,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     } else {
       context.go('/katalog');
     }
-  }
-
-  void _toggleFavorite() {
-    setState(() => _isFavorite = !_isFavorite);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isFavorite
-              ? 'Produk berhasil ditambahkan ke Favorit'
-              : 'Produk dihapus dari Favorit',
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryDark,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   Future<void> _addToCart() async {
@@ -797,38 +778,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 ),
               ),
             ),
-            // Favorite Button
-            Positioned(
-              top: 12,
-              right: 12,
-              child: InkWell(
-                onTap: _toggleFavorite,
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: _isFavorite
-                        ? AppTheme.errorRed
-                        : AppTheme.primaryDark,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
+
             // Dots Indicator
             Positioned(
               bottom: 14,
@@ -859,47 +809,66 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Thumbnails Strip
+  // Thumbnails Strip (Kotak 1:1 Square)
   Widget _buildThumbnailStrip(Responsive r) {
     final images = galleryImages;
+    if (images.isEmpty) return const SizedBox.shrink();
+
+    final double thumbSize = r.isMobile ? 64.0 : 72.0;
 
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: r.isMobile && !r.isLandscape ? r.pagePaddingH : 0,
       ),
-      child: Row(
-        children: List.generate(images.length, (index) {
-          final isSelected = _selectedImageIndex == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedImageIndex = index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: 64,
-                margin: EdgeInsets.only(
-                  right: index < images.length - 1 ? 8 : 0,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppTheme.terracotta
-                        : AppTheme.borderLight,
-                    width: isSelected ? 2.5 : 1,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: List.generate(images.length, (index) {
+              final isSelected = _selectedImageIndex == index;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedImageIndex = index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: thumbSize,
+                  height: thumbSize,
+                  margin: EdgeInsets.only(
+                    right: index < images.length - 1 ? 10 : 0,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppTheme.terracotta
+                          : AppTheme.borderLight,
+                      width: isSelected ? 2.5 : 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: _safeImage(
+                      images[index],
+                      width: thumbSize,
+                      height: thumbSize,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _safeImage(
-                    images[index],
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
@@ -1216,14 +1185,34 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                             ]
                           : null,
                     ),
-                    child: Text(
-                      size,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontSm,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? Colors.white : AppTheme.textMain,
-                      ),
-                    ),
+                    child: Builder(builder: (context) {
+                      final sizeStock = productData['sizeStock'];
+                      final stockCount = sizeStock is Map ? (sizeStock[size] ?? 0) : 0;
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            size,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: r.fontSm,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.white : AppTheme.textMain,
+                            ),
+                          ),
+                          if (stockCount is int || stockCount is double)
+                            Text(
+                              '${stockCount} pcs',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: r.fontXs,
+                                fontWeight: FontWeight.w400,
+                                color: isSelected
+                                    ? Colors.white.withValues(alpha: 0.85)
+                                    : AppTheme.textSubtle,
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
                   ),
                 ),
               ),
@@ -1251,13 +1240,20 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                   color: AppTheme.textMain,
                 ),
               ),
-              Text(
-                'Maksimal 10 item per transaksi',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: r.fontXs,
-                  color: AppTheme.textSubtle,
-                ),
-              ),
+              Builder(builder: (context) {
+                final sizeStock = productData['sizeStock'];
+                final maxStock = sizeStock is Map && _selectedSize != null
+                    ? (sizeStock[_selectedSize] ?? productData['stock'] ?? 0)
+                    : (productData['stock'] ?? 0);
+                final maxInt = maxStock is int ? maxStock : int.tryParse('$maxStock') ?? 0;
+                return Text(
+                  maxInt > 0 ? 'Stok tersedia: $maxInt pcs' : 'Stok habis',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontXs,
+                    color: maxInt > 0 ? AppTheme.textSubtle : AppTheme.errorRed,
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -1289,13 +1285,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                   ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 16),
-                color: _quantity < 10 ? AppTheme.textMain : AppTheme.textSubtle,
-                onPressed: _quantity < 10
-                    ? () => setState(() => _quantity++)
-                    : null,
-              ),
+              Builder(builder: (context) {
+                final sizeStock = productData['sizeStock'];
+                final maxStock = sizeStock is Map && _selectedSize != null
+                    ? (sizeStock[_selectedSize] ?? productData['stock'] ?? 0)
+                    : (productData['stock'] ?? 0);
+                final maxInt = maxStock is int ? maxStock : int.tryParse('$maxStock') ?? 0;
+                final canAdd = maxInt <= 0 ? false : _quantity < maxInt;
+                return IconButton(
+                  icon: const Icon(Icons.add, size: 16),
+                  color: canAdd ? AppTheme.textMain : AppTheme.textSubtle,
+                  onPressed: canAdd ? () => setState(() => _quantity++) : null,
+                );
+              }),
             ],
           ),
         ),
@@ -1397,13 +1399,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Product Specifications
+  // Product Specifications / Description
   Widget _buildProductSpecifications(Responsive r) {
+    final material = (productData['material']?.toString().isNotEmpty == true)
+        ? productData['material'].toString()
+        : null;
+    final category = productData['category']?.toString() ?? '';
+    final description = productData['description']?.toString() ?? '';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Spesifikasi Produk',
+          'Deskripsi Produk',
           style: GoogleFonts.outfit(
             fontSize: r.fontMd,
             fontWeight: FontWeight.w700,
@@ -1422,26 +1430,73 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _specItem(
-                'Bahan Kain',
-                (productData['material']?.toString().isNotEmpty == true)
-                    ? productData['material'].toString()
-                    : 'Katun Primisima',
-                r,
-              ),
-              _specItem(
-                'Kategori',
-                productData['category']?.toString() ?? 'Batik',
-                r,
-              ),
-              if (productData['sku'] != null)
-                _specItem('SKU', productData['sku'].toString(), r),
-              if (productData['description']?.toString().isNotEmpty == true)
-                _specItem(
-                  'Deskripsi',
-                  productData['description'].toString(),
-                  r,
+              // Material + category summary line (like web)
+              if (material != null) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.layers_outlined,
+                      size: 14,
+                      color: AppTheme.textSubtle,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontXs,
+                            color: AppTheme.textSubtle,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: material,
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            if (description.isNotEmpty)
+                              TextSpan(text: '. $description'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                if (description.isNotEmpty) SizedBox(height: r.spacingSm),
+              ],
+              // Full description text
+              if (description.isNotEmpty && material == null)
+                Text(
+                  description,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontSm,
+                    color: AppTheme.textMuted,
+                    height: 1.5,
+                  ),
+                ),
+              // Category chip at bottom
+              if (category.isNotEmpty) ...[
+                SizedBox(height: r.spacingSm),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppTheme.terracottaLight,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        category,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontXs,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.terracotta,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -1497,7 +1552,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           children: [
             Flexible(
               child: Text(
-                'Ulasan Pembeli (${reviews.isNotEmpty ? reviews.length : (productData['sold'] ?? 0)})',
+                'Ulasan Pelanggan (${reviews.isNotEmpty ? reviews.length : (productData['sold'] ?? 0)})',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.outfit(
@@ -1528,25 +1583,64 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             ),
           )
         else
-          ...reviews.map(
-            (rev) => Padding(
-              padding: EdgeInsets.only(bottom: r.spacingSm),
-              child: _reviewCard(
-                name: (rev['user_name']?.toString().isNotEmpty == true)
-                    ? rev['user_name'].toString()
-                    : 'Pelanggan',
-                date: (rev['created_at']?.toString().split('T').first) ?? '',
-                rating: rev['rating'] is int
-                    ? rev['rating'] as int
-                    : int.tryParse('${rev['rating']}') ?? 5,
-                comment: rev['comment']?.toString() ?? '',
-                variant: 'Pembeli Terverifikasi',
-                r: r,
-              ),
-            ),
+          ...reviews.asMap().entries.map(
+            (entry) {
+              final revIndex = entry.key;
+              final rev = entry.value;
+              final reviewId = rev['id'] ?? revIndex;
+
+              final reviewPhotos = <String>[];
+              if (rev['photos'] is List) {
+                reviewPhotos.addAll(
+                  (rev['photos'] as List)
+                      .map((e) => e?.toString() ?? '')
+                      .where((s) => s.isNotEmpty),
+                );
+              }
+              final singleImg = rev['image_path'] ?? rev['image'];
+              if (singleImg != null && singleImg.toString().isNotEmpty) {
+                final sStr = singleImg.toString();
+                if (!reviewPhotos.contains(sStr)) {
+                  reviewPhotos.insert(0, sStr);
+                }
+              }
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: r.spacingSm),
+                child: _reviewCard(
+                  name: (rev['user_name']?.toString().isNotEmpty == true)
+                      ? rev['user_name'].toString()
+                      : 'Pelanggan',
+                  date: _relativeDate(rev['created_at']?.toString()),
+                  rating: rev['rating'] is int
+                      ? rev['rating'] as int
+                      : int.tryParse('${rev['rating']}') ?? 5,
+                  comment: rev['comment']?.toString() ?? '',
+                  photos: reviewPhotos,
+                  variant: '',
+                  r: r,
+                  reviewId: reviewId,
+                ),
+              );
+            },
           ),
       ],
     );
+  }
+
+  /// Format tanggal ke "1 Okt 2026"
+  String _relativeDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(isoString).toLocal();
+      const months = [
+        '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      ];
+      return '${dt.day} ${months[dt.month]} ${dt.year}';
+    } catch (_) {
+      return isoString.split('T').first;
+    }
   }
 
   Widget _reviewCard({
@@ -1554,8 +1648,10 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     required String date,
     required int rating,
     required String comment,
+    required List<String> photos,
     required String variant,
     required Responsive r,
+    dynamic reviewId,
   }) {
     return Container(
       padding: EdgeInsets.all(r.spacingMd),
@@ -1593,13 +1689,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                         color: AppTheme.textMain,
                       ),
                     ),
-                    Text(
-                      variant,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontXs,
-                        color: AppTheme.textSubtle,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -1634,6 +1723,24 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               height: 1.4,
             ),
           ),
+          if (photos.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 54,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: photos.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
+                itemBuilder: (context, index) => ReviewPhotoThumbnail(
+                  imageUrl: photos[index],
+                  index: index,
+                  allImageUrls: photos,
+                  heroTagPrefix: 'prod_review_${reviewId ?? name}',
+                  size: 54,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

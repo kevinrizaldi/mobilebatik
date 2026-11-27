@@ -19,7 +19,7 @@ class MobileBatikAuthApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Hamzah Style Official - Auth',
+      title: 'Hamzah Style - Auth',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,

@@ -15,6 +15,7 @@ class AuthService {
 
   Future<void> _ensureGoogleInitialized() {
     return _googleInitFuture ??= _googleSignIn.initialize(
+      clientId: kIsWeb ? ApiConfig.googleServerClientId : null,
       serverClientId: ApiConfig.googleServerClientId,
     );
   }
@@ -177,6 +178,7 @@ class AuthService {
       // Tetap hapus token lokal meskipun request logout gagal.
     } finally {
       await ApiClient.instance.setToken(null);
+      ProfileStore.instance.clearUserData();
     }
   }
 }

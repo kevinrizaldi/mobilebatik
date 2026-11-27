@@ -48,3 +48,5 @@ app.*.map.json
 opencode.json
 laporan_*.md
 laporan_*.txt
+# Widget Preview related
+.widget_preview/

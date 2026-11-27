@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'api_client.dart';
 
 class OrderService {
@@ -50,14 +52,26 @@ class OrderService {
     int? productId,
     required int rating,
     required String comment,
+    List<Uint8List> photos = const [],
   }) async {
-    return ApiClient.instance.post(
+    final fields = <String, String>{
+      'rating': '$rating',
+      'comment': comment.trim(),
+      if (productId != null) 'product_id': '$productId',
+    };
+    if (photos.isEmpty) {
+      return ApiClient.instance.post(
+        '/orders/$orderId/reviews',
+        body: Map<String, dynamic>.from(fields),
+      );
+    }
+    return ApiClient.instance.postMultipart(
       '/orders/$orderId/reviews',
-      body: {
-        'product_id': ?productId,
-        'rating': rating,
-        'comment': comment.trim(),
-      },
+      fields: fields,
+      files: [
+        for (var i = 0; i < photos.length; i++)
+          (filename: 'photo_$i.jpg', bytes: photos[i]),
+      ],
     );
   }
 

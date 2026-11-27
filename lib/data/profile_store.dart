@@ -25,49 +25,16 @@ class ProfileStore extends ChangeNotifier {
 
   static final ProfileStore instance = ProfileStore._();
 
-  String name = 'Budi Santoso';
-  String email = 'budi.santoso@email.com';
-  String phone = '+62 812-3456-7890';
-  DateTime? birthDate = DateTime(1995, 8, 17);
-  String gender = 'Laki-laki';
+  // User profile fields - initialized empty, populated from server on login
+  String name = '';
+  String email = '';
+  String phone = '';
+  DateTime? birthDate;
+  String gender = '';
   Uint8List? photoBytes;
 
-  final List<ProfileAddress> addresses = [
-    ProfileAddress(
-      id: 'home',
-      label: 'Rumah',
-      recipient: 'Budi Santoso',
-      phone: '+62 812-3456-7890',
-      address: 'Jl. Melati No. 18, Kebayoran Baru, Jakarta Selatan',
-      isPrimary: true,
-    ),
-    ProfileAddress(
-      id: 'office',
-      label: 'Kantor',
-      recipient: 'Budi Santoso',
-      phone: '+62 812-3456-7890',
-      address: 'Gedung Batik Nusantara Lt. 4, Jakarta Pusat',
-    ),
-  ];
-
-  final List<ProfileReview> reviews = [
-    ProfileReview(
-      product: 'Kain Batik Tulis Motif Truntum',
-      date: '30 Jan 2025',
-      rating: 5,
-      comment: 'Motifnya rapi dan kain terasa nyaman. Pengiriman juga cepat.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=240&q=80',
-    ),
-    ProfileReview(
-      product: 'Kemeja Batik Parang Seling',
-      date: '12 Jan 2025',
-      rating: 4,
-      comment: 'Warna sesuai foto, ukuran pas. Jahitannya terlihat bagus.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=240&q=80',
-    ),
-  ];
+  final List<ProfileAddress> addresses = [];
+  final List<ProfileReview> reviews = [];
   final Set<String> reviewedOrderIds = {};
 
   void updateProfile({
@@ -89,9 +56,33 @@ class ProfileStore extends ChangeNotifier {
     final newName = user['name']?.toString();
     final newEmail = user['email']?.toString();
     final newPhone = user['phone']?.toString();
+    final newBirthDate = user['birth_date']?.toString();
+    final newGender = user['gender']?.toString();
+    final newPhotoUrl = user['photo_url']?.toString();
+
     if (newName != null && newName.isNotEmpty) name = newName;
     if (newEmail != null && newEmail.isNotEmpty) email = newEmail;
     if (newPhone != null && newPhone.isNotEmpty) phone = newPhone;
+    if (newBirthDate != null && newBirthDate.isNotEmpty) {
+      try {
+        birthDate = DateTime.parse(newBirthDate);
+      } catch (_) {}
+    }
+    if (newGender != null && newGender.isNotEmpty) gender = newGender;
+    // photo_url handled separately via setPhoto if needed
+    notifyListeners();
+  }
+
+  void clearUserData() {
+    name = '';
+    email = '';
+    phone = '';
+    birthDate = null;
+    gender = '';
+    photoBytes = null;
+    addresses.clear();
+    reviews.clear();
+    reviewedOrderIds.clear();
     notifyListeners();
   }
 
@@ -215,7 +206,7 @@ class ProfileReview {
   final String imageUrl;
   final String orderId;
   final List<String> tags;
-  final List<Uint8List> photos;
+  final List<String> photos;
 
   const ProfileReview({
     required this.product,

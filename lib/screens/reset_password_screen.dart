@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_client.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/batik_header_logo.dart';
 import '../widgets/custom_text_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String token;
+  final String email;
+
+  const ResetPasswordScreen({
+    super.key,
+    required this.token,
+    required this.email,
+  });
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -23,11 +31,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _isLoading = false;
 
   void _handleResetPassword() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(milliseconds: 1000));
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ApiClient.instance.post(
+        '/reset-password',
+        body: {
+          'token': widget.token,
+          'email': widget.email,
+          'password': _newPasswordController.text,
+          'password_confirmation': _confirmPasswordController.text,
+        },
+        auth: false,
+      );
+
       if (!mounted) return;
-      setState(() => _isLoading = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -41,6 +61,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
 
       context.go('/login');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
     }
   }
 
@@ -62,7 +91,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: r.iconSm),
           color: AppTheme.primaryDark,
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/login'),
         ),
       ),
       body: SafeArea(
@@ -103,7 +132,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Buat Password Baru',
+                            'Buat Sandi Baru',
                             style: GoogleFonts.outfit(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -112,14 +141,44 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Silakan buat kombinasi kata sandi baru yang kuat untuk melindungi akun dan riwayat pesanan Anda.',
+                            'Kode OTP berhasil diverifikasi ✓ Silakan buat kata sandi baru yang kuat untuk mengamankan akun Anda.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: AppTheme.textMuted,
                               height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 8),
+
+                          // Info email yang di-reset
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.terracottaLight,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: AppTheme.terracottaBorder),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.person_outline_rounded,
+                                    size: 15, color: AppTheme.terracotta),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    widget.email,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      color: AppTheme.primaryDark,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
 
                           // New Password Field
                           CustomTextField(
@@ -130,7 +189,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             isPassword: true,
                             isObscured: _isObscuredNew,
                             onToggleVisibility: () {
-                              setState(() => _isObscuredNew = !_isObscuredNew);
+                              setState(
+                                  () => _isObscuredNew = !_isObscuredNew);
                             },
                             validator: (val) {
                               if (val == null || val.isEmpty) {
@@ -153,9 +213,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             isPassword: true,
                             isObscured: _isObscuredConfirm,
                             onToggleVisibility: () {
-                              setState(
-                                () => _isObscuredConfirm = !_isObscuredConfirm,
-                              );
+                              setState(() =>
+                                  _isObscuredConfirm = !_isObscuredConfirm);
                             },
                             validator: (val) {
                               if (val != _newPasswordController.text) {
@@ -172,7 +231,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             decoration: BoxDecoration(
                               color: AppTheme.inputBg,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppTheme.borderLight),
+                              border:
+                                  Border.all(color: AppTheme.borderLight),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +257,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                           // Submit CTA Button
                           ElevatedButton(
-                            onPressed: _isLoading ? null : _handleResetPassword,
+                            onPressed:
+                                _isLoading ? null : _handleResetPassword,
                             child: _isLoading
                                 ? const SizedBox(
                                     height: 20,
@@ -208,9 +269,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                     ),
                                   )
                                 : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
                                     children: const [
-                                      Text('Simpan Password Baru'),
+                                      Text('Simpan Kata Sandi Baru'),
                                       SizedBox(width: 8),
                                       Icon(Icons.shield_outlined, size: 18),
                                     ],

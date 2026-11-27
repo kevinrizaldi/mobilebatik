@@ -920,6 +920,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     return Row(
       children: [
         Expanded(
+          flex: 2,
           child: OutlinedButton.icon(
             onPressed: _fetchPayment,
             icon: const Icon(Icons.refresh_rounded, size: 14),
@@ -942,21 +943,23 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           ),
         ),
         const SizedBox(width: 8),
-        OutlinedButton(
-          onPressed: () => context.go('/pesanan'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.textMuted,
-            side: const BorderSide(color: AppTheme.borderLight),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => context.go('/pesanan'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.textMuted,
+              side: const BorderSide(color: AppTheme.borderLight),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          ),
-          child: Text(
-            'Pesanan',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+            child: Text(
+              'Pesanan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),

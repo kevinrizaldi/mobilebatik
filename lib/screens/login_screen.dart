@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Masuk ke akun Anda untuk melanjutkan belanja koleksi batik dan kriya sirkular.',
+                            'Masuk ke akun Anda untuk melanjutkan belanja koleksi batik Nusantara.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: isLandscape ? 12 : 13,
                               color: AppTheme.textMuted,
