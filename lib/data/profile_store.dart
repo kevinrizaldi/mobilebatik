@@ -156,29 +156,38 @@ class ProfileStore extends ChangeNotifier {
 
     try {
       final serverList = await ProfileService.instance.fetchAddresses();
-      addresses
-        ..clear()
-        ..addAll(
-          serverList.map(
-            (raw) => ProfileAddress(
-              id: raw['id'].toString(),
-              label: raw['label']?.toString() ?? 'Rumah',
-              recipient: raw['recipient_name']?.toString() ?? name,
-              phone: raw['phone']?.toString() ?? phone,
-              address: raw['full_address']?.toString() ?? '',
-              province: raw['province']?.toString(),
-              provinceId: int.tryParse(raw['province_id']?.toString() ?? ''),
-              city: raw['city']?.toString(),
-              cityId: int.tryParse(raw['city_id']?.toString() ?? ''),
-              district: (raw['district'] ?? raw['kecamatan'])?.toString(),
-              districtId: int.tryParse(raw['district_id']?.toString() ?? ''),
-              postalCode: raw['postal_code']?.toString(),
-              latitude: double.tryParse(raw['latitude']?.toString() ?? ''),
-              longitude: double.tryParse(raw['longitude']?.toString() ?? ''),
-              isPrimary: raw['is_primary'] == true,
-            ),
+      bool hasPrimary = false;
+      final parsed = <ProfileAddress>[];
+      for (final raw in serverList) {
+        final rawPrimary = raw['is_primary'] == true || raw['is_primary'] == 1;
+        final isPrimary = rawPrimary && !hasPrimary;
+        if (isPrimary) hasPrimary = true;
+        parsed.add(
+          ProfileAddress(
+            id: raw['id'].toString(),
+            label: raw['label']?.toString() ?? 'Rumah',
+            recipient: raw['recipient_name']?.toString() ?? name,
+            phone: raw['phone']?.toString() ?? phone,
+            address: raw['full_address']?.toString() ?? '',
+            province: raw['province']?.toString(),
+            provinceId: int.tryParse(raw['province_id']?.toString() ?? ''),
+            city: raw['city']?.toString(),
+            cityId: int.tryParse(raw['city_id']?.toString() ?? ''),
+            district: (raw['district'] ?? raw['kecamatan'])?.toString(),
+            districtId: int.tryParse(raw['district_id']?.toString() ?? ''),
+            postalCode: raw['postal_code']?.toString(),
+            latitude: double.tryParse(raw['latitude']?.toString() ?? ''),
+            longitude: double.tryParse(raw['longitude']?.toString() ?? ''),
+            isPrimary: isPrimary,
           ),
         );
+      }
+      if (!hasPrimary && parsed.isNotEmpty) {
+        parsed.first.isPrimary = true;
+      }
+      addresses
+        ..clear()
+        ..addAll(parsed);
       notifyListeners();
     } catch (_) {
       // Pertahankan state alamat terakhir bila gagal sync.
