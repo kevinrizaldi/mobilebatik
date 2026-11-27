@@ -70,18 +70,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.bgCard,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: _ProfileMenuRow(
-                icon: Icons.tune_rounded,
-                title: 'Pengaturan Aplikasi',
-                onTap: () => _showNotice(context, 'Pengaturan Aplikasi'),
-              ),
-            ),
             const SizedBox(height: 18),
             SizedBox(
               height: 42,
@@ -172,17 +160,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
         ),
       ],
     );
-  }
-
-  static void _showNotice(BuildContext context, String text) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('$text akan tersedia berikutnya.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
   }
 }
 
