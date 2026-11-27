@@ -245,105 +245,51 @@ class _KatalogScreenState extends State<KatalogScreen> {
           // Search bar
           Padding(
             padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.inputBg,
-                      borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => setState(() {}),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontMd,
-                        color: AppTheme.textMain,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Cari produk batik...',
-                        hintStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: r.fontMd,
-                          color: AppTheme.textSubtle,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          size: r.iconSm,
-                          color: AppTheme.textSubtle,
-                        ),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear_rounded,
-                                  size: r.iconSm - 2,
-                                  color: AppTheme.textSubtle,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {});
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: r.spacingMd,
-                          vertical: r.spacingSm,
-                        ),
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
-                  ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.inputBg,
+                borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: r.fontMd,
+                  color: AppTheme.textMain,
                 ),
-                SizedBox(width: r.spacingSm),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            content: Text('Belum ada notifikasi baru untuk Anda.'),
-                            behavior: SnackBarBehavior.floating,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                    },
-                    borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-                    child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppTheme.inputBg,
-                        borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.notifications_none_rounded,
-                            color: AppTheme.textMain,
-                            size: r.iconMd,
-                          ),
-                          Positioned(
-                            right: 11,
-                            top: 11,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF401100),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                decoration: InputDecoration(
+                  hintText: 'Cari produk batik...',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontMd,
+                    color: AppTheme.textSubtle,
                   ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    size: r.iconSm,
+                    color: AppTheme.textSubtle,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear_rounded,
+                            size: r.iconSm - 2,
+                            color: AppTheme.textSubtle,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: r.spacingMd,
+                    vertical: r.spacingSm,
+                  ),
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                 ),
-              ],
+              ),
             ),
           ),
 
