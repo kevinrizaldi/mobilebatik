@@ -425,24 +425,29 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
         height: height,
         color: AppTheme.terracottaLight,
         alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.image_outlined,
-              size: 36,
-              color: AppTheme.terracotta,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Batik Hamzah',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.all(4),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.image_outlined,
+                size: 32,
                 color: AppTheme.terracotta,
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                'Batik Hamzah',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.terracotta,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

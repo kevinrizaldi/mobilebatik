@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../data/profile_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -187,11 +189,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Hero Banner
+            // Hero Banner (Carousel Produk Unggulan Sesuai Laravel Web)
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
-                child: _HeroBanner(r: r),
+                child: _HeroBanner(
+                  r: r,
+                  products: _featuredProducts,
+                  isLoading: _isLoading,
+                ),
               ),
             ),
 
@@ -499,27 +505,116 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ─── Hero Banner ─────────────────────────────────────────────────────────────
-class _HeroBanner extends StatelessWidget {
+// ─── Hero Banner (Carousel Produk Unggulan Sesuai Laravel Web) ───────────────
+class _HeroBanner extends StatefulWidget {
   final Responsive r;
-  const _HeroBanner({required this.r});
+  final List<Map<String, dynamic>> products;
+  final bool isLoading;
+
+  const _HeroBanner({
+    required this.r,
+    required this.products,
+    required this.isLoading,
+  });
+
+  @override
+  State<_HeroBanner> createState() => _HeroBannerState();
+}
+
+class _HeroBannerState extends State<_HeroBanner> {
+  late final PageController _pageController;
+  Timer? _autoplayTimer;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _startAutoplay();
+  }
+
+  @override
+  void didUpdateWidget(covariant _HeroBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.products.length != widget.products.length) {
+      _startAutoplay();
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoplayTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoplay() {
+    _autoplayTimer?.cancel();
+    final count = _slideCount;
+    if (count > 1) {
+      _autoplayTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
+        if (!_pageController.hasClients) return;
+        final nextIndex = (_currentIndex + 1) % count;
+        _pageController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOutCubic,
+        );
+      });
+    }
+  }
+
+  void _goToSlide(int index) {
+    final count = _slideCount;
+    if (count <= 1 || !_pageController.hasClients) return;
+    final target = (index + count) % count;
+    _pageController.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
+    );
+  }
+
+  List<Map<String, dynamic>> get _bannerItems {
+    if (widget.products.isEmpty) return const [];
+    return widget.products.take(5).toList();
+  }
+
+  int get _slideCount => _bannerItems.isNotEmpty ? _bannerItems.length : 1;
 
   @override
   Widget build(BuildContext context) {
+    final r = widget.r;
+    final items = _bannerItems;
+
+    if (widget.isLoading && items.isEmpty) {
+      return Container(
+        height: r.bannerHeight,
+        decoration: BoxDecoration(
+          color: AppTheme.inputBg,
+          borderRadius: BorderRadius.circular(r.cardRadius),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.terracotta,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+
+    if (items.isEmpty) {
+      return _buildStaticFallback(r);
+    }
+
     return Container(
       height: r.bannerHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(r.cardRadius),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1762111908858-201b9da429dc?w=800&q=80',
-          ),
-          fit: BoxFit.cover,
-        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -529,85 +624,251 @@ class _HeroBanner extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black54,
-                    Color(0xCC110703),
-                  ],
-                  stops: [0.3, 0.7, 1.0],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 24,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: r.spacingSm,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.terracotta.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'KOLEKSI TERBARU',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: r.fontXs,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: r.spacingSm),
-                  Text(
-                    'Batik Nusantara\nPenuh Makna',
-                    style: GoogleFonts.outfit(
-                      fontSize: r.isLandscape && r.isMobile
-                          ? r.fontLg
-                          : r.fontXl,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: r.spacingMd),
-                  GestureDetector(
-                    onTap: () => context.go('/katalog'),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: r.spacingMd,
-                        vertical: r.spacingSm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Lihat Koleksi',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: r.fontMd,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryDark,
+            // PageView Slider
+            PageView.builder(
+              controller: _pageController,
+              itemCount: items.length,
+              onPageChanged: (idx) {
+                setState(() => _currentIndex = idx);
+              },
+              itemBuilder: (context, index) {
+                final product = items[index];
+                final name = product['name']?.toString() ?? 'Batik Nusantara';
+                final price = product['price']?.toString() ?? 'Rp 0';
+                final imageUrl = product['imageUrl']?.toString() ?? '';
+
+                return GestureDetector(
+                  onTap: () => context.push('/detail-produk', extra: product),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Background Image
+                      imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (_, _, _) => _fallbackImage(),
+                            )
+                          : _fallbackImage(),
+
+                      // Gradient Overlay (identik dengan welcome.blade.php web Laravel)
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Color(0x591F1916), // 35% opacity
+                              Color(0xF21F1916), // 95% opacity
+                            ],
+                            stops: [0.35, 0.65, 1.0],
+                          ),
                         ),
                       ),
-                    ),
+
+                      // Text Content at Bottom Left
+                      Positioned(
+                        left: 20,
+                        right: 20,
+                        bottom: 26,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                fontSize: r.isLandscape && r.isMobile ? 22 : 26,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1.15,
+                                letterSpacing: -0.3,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.black87,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              price,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.black87,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
+
+            // Left Arrow Button (Previous)
+            if (items.length > 1)
+              Positioned(
+                left: 10,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _ArrowButton(
+                    icon: Icons.chevron_left_rounded,
+                    onTap: () => _goToSlide(_currentIndex - 1),
+                    tooltip: 'Produk sebelumnya',
+                  ),
+                ),
+              ),
+
+            // Right Arrow Button (Next)
+            if (items.length > 1)
+              Positioned(
+                right: 10,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _ArrowButton(
+                    icon: Icons.chevron_right_rounded,
+                    onTap: () => _goToSlide(_currentIndex + 1),
+                    tooltip: 'Produk berikutnya',
+                  ),
+                ),
+              ),
+
+            // Bottom Indicators (Pill active, Dots inactive - identik dengan web)
+            if (items.length > 1)
+              Positioned(
+                bottom: 10,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(items.length, (idx) {
+                    final isActive = idx == _currentIndex;
+                    return GestureDetector(
+                      onTap: () => _goToSlide(idx),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: isActive ? 28 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(3),
+                          boxShadow: isActive
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 4,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fallbackImage() {
+    return Container(
+      color: AppTheme.primaryDark,
+      child: const Center(
+        child: Icon(
+          Icons.image_outlined,
+          color: Colors.white54,
+          size: 40,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaticFallback(Responsive r) {
+    return Container(
+      height: r.bannerHeight,
+      decoration: BoxDecoration(
+        color: AppTheme.primaryDark,
+        borderRadius: BorderRadius.circular(r.cardRadius),
+      ),
+      child: Center(
+        child: Text(
+          'Koleksi Batik Nusantara',
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArrowButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  const _ArrowButton({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0x8C201A17), // rgba(32, 26, 23, 0.55)
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 22,
+          ),
         ),
       ),
     );
