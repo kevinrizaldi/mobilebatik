@@ -7,6 +7,7 @@ import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/full_screen_image_viewer.dart';
+import '../widgets/notification_button.dart';
 
 class DetailProdukScreen extends StatefulWidget {
   final Map<String, dynamic>? product;
@@ -599,6 +600,8 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           ],
         ),
         SizedBox(width: r.spacingSm),
+        const NotificationButton(),
+        SizedBox(width: r.pagePaddingH),
       ],
     );
   }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import '../data/profile_store.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/notification_button.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -164,27 +164,13 @@ class _ProfilScreenState extends State<ProfilScreen> {
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            'Profil',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: r.fontMd,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textMain,
-            ),
-          ),
-          const SizedBox(width: 9),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppTheme.primaryBlack,
-            child: Icon(
-              Icons.person_outline_rounded,
-              color: Colors.white,
-              size: r.iconSm,
-            ),
-          ),
         ],
       ),
+      actions: [
+        NotificationButton(
+          padding: EdgeInsets.only(right: r.pagePaddingH),
+        ),
+      ],
     );
   }
 

@@ -6,6 +6,7 @@ import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/notification_button.dart';
 
 class KatalogScreen extends StatefulWidget {
   const KatalogScreen({super.key});
@@ -234,27 +235,9 @@ class _KatalogScreenState extends State<KatalogScreen> {
           ],
         ),
         actions: [
-          Center(
-            child: Text(
-              'Produk',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textMain,
-              ),
-            ),
+          NotificationButton(
+            padding: EdgeInsets.only(right: pad),
           ),
-          SizedBox(width: r.spacingSm),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: const Color(0xFF1C130D),
-            child: Icon(
-              Icons.person_outline_rounded,
-              color: Colors.white,
-              size: r.iconSm,
-            ),
-          ),
-          SizedBox(width: pad * 0.8),
         ],
       ),
       body: Column(

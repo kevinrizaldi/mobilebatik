@@ -10,6 +10,7 @@ import '../services/profile_service.dart';
 import '../services/shipping_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/notification_button.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Map<String, dynamic>? checkoutData;
@@ -414,6 +415,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         centerTitle: true,
         actions: [
+          const NotificationButton(),
           IconButton(
             tooltip: 'Tutup',
             icon: const Icon(Icons.close_rounded, size: 20),

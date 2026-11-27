@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import '../data/profile_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +10,7 @@ import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/notification_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -387,64 +387,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
-        Padding(
+        NotificationButton(
           padding: EdgeInsets.only(right: r.pagePaddingH),
-          child: Center(
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        const SnackBar(
-                          content: Text('Belum ada notifikasi baru untuk Anda.'),
-                          behavior: SnackBarBehavior.floating,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                  },
-                  borderRadius: BorderRadius.circular(
-                    r.cardRadius * 0.75,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.inputBg,
-                      borderRadius: BorderRadius.circular(
-                        r.cardRadius * 0.75,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Icon(
-                            Icons.notifications_outlined,
-                            size: r.iconMd,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF401100),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
         ),
       ],
     );

@@ -9,6 +9,7 @@ import '../services/api_client.dart';
 import '../services/order_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/notification_button.dart';
 
 class BeriUlasanScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -83,17 +84,8 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 14),
-            child: CircleAvatar(
-              radius: 14,
-              backgroundColor: AppTheme.primaryBlack,
-              child: Icon(
-                Icons.person_outline_rounded,
-                color: Colors.white,
-                size: r.iconSm - 1,
-              ),
-            ),
+          NotificationButton(
+            padding: EdgeInsets.only(right: r.pagePaddingH),
           ),
         ],
       ),

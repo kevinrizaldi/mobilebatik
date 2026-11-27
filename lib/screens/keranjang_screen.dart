@@ -6,6 +6,7 @@ import '../services/api_config.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/notification_button.dart';
 
 class KeranjangScreen extends StatefulWidget {
   const KeranjangScreen({super.key});
@@ -108,27 +109,13 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                     ),
                   ],
                 ),
-                const Spacer(),
-                Text(
-                  'Keranjang Belanja',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: r.fontMd,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMain,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppTheme.primaryBlack,
-                  child: Icon(
-                    Icons.person_outline_rounded,
-                    color: Colors.white,
-                    size: r.iconSm,
-                  ),
-                ),
               ],
             ),
+            actions: [
+              NotificationButton(
+                padding: EdgeInsets.only(right: r.pagePaddingH),
+              ),
+            ],
           ),
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,

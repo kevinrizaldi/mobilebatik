@@ -9,6 +9,7 @@ import '../services/shipping_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/full_screen_image_viewer.dart';
+import '../widgets/notification_button.dart';
 
 class EditProfilScreen extends StatefulWidget {
   const EditProfilScreen({super.key});
@@ -2214,6 +2215,11 @@ class _SubpageScaffold extends StatelessWidget {
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
         ),
+        actions: const [
+          NotificationButton(
+            padding: EdgeInsets.only(right: 16),
+          ),
+        ],
       ),
       floatingActionButton: floatingActionButton,
       body: child,

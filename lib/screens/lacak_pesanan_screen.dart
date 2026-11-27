@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/profile_store.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/notification_button.dart';
 
 class LacakPesananScreen extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -54,17 +55,8 @@ class LacakPesananScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 14),
-            child: CircleAvatar(
-              radius: 14,
-              backgroundColor: AppTheme.primaryBlack,
-              child: Icon(
-                Icons.person_outline_rounded,
-                size: r.iconSm - 1,
-                color: Colors.white,
-              ),
-            ),
+          NotificationButton(
+            padding: EdgeInsets.only(right: r.pagePaddingH),
           ),
         ],
       ),

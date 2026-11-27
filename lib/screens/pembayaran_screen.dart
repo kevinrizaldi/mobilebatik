@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_client.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/notification_button.dart';
 
 /// Layar pembayaran nyata: membaca status + Snap dari
 /// `GET /api/orders/{id}/payment` dan membuka halaman Snap Midtrans
@@ -273,6 +274,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         ),
         centerTitle: true,
         actions: [
+          const NotificationButton(),
           IconButton(
             tooltip: 'Tutup',
             icon: const Icon(Icons.close_rounded, size: 20),
