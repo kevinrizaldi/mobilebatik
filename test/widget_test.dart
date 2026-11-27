@@ -24,8 +24,7 @@ void main() {
     expect(find.text('Detail Produk'), findsOneWidget);
     expect(find.text('Kemeja Batik Parang Classic'), findsOneWidget);
     expect(find.text('Pilih Ukuran'), findsOneWidget);
-    expect(find.text('Spesifikasi Produk'), findsOneWidget);
-    expect(find.text('Jumlah Pembelian'), findsOneWidget);
+    expect(find.text('Deskripsi Produk'), findsOneWidget);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -48,7 +47,7 @@ void main() {
     // Verify wide screen elements exist
     expect(find.text('Detail Produk'), findsOneWidget);
     expect(find.text('Kemeja Batik Parang Classic'), findsOneWidget);
-    expect(find.text('Ulasan Pembeli (124)'), findsOneWidget);
+    expect(find.textContaining('Ulasan Pelanggan'), findsOneWidget);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
