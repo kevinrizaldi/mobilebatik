@@ -244,12 +244,15 @@ class _KatalogScreenState extends State<KatalogScreen> {
         children: [
           // Search bar
           Padding(
-            padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
+            padding: EdgeInsets.fromLTRB(pad, 12, pad, 8),
             child: Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
                 color: AppTheme.inputBg,
                 borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
               ),
+              alignment: Alignment.center,
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
@@ -257,22 +260,32 @@ class _KatalogScreenState extends State<KatalogScreen> {
                   fontSize: r.fontMd,
                   color: AppTheme.textMain,
                 ),
+                textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
+                  isDense: true,
                   hintText: 'Cari produk batik...',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: r.fontMd,
                     color: AppTheme.textSubtle,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    size: r.iconSm,
-                    color: AppTheme.textSubtle,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(right: 10),
+                    child: Icon(
+                      Icons.search_rounded,
+                      size: 20,
+                      color: AppTheme.textSubtle,
+                    ),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 30,
+                    minHeight: 20,
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: Icon(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(
                             Icons.clear_rounded,
-                            size: r.iconSm - 2,
+                            size: 18,
                             color: AppTheme.textSubtle,
                           ),
                           onPressed: () {
@@ -281,11 +294,12 @@ class _KatalogScreenState extends State<KatalogScreen> {
                           },
                         )
                       : null,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: r.spacingMd,
-                    vertical: r.spacingSm,
+                  suffixIconConstraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 20,
                   ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                 ),

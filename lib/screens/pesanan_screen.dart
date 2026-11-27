@@ -370,40 +370,64 @@ class _PesananScreenState extends State<PesananScreen> {
         children: [
           Container(height: 1, color: AppTheme.borderLight),
           Padding(
-            padding: EdgeInsets.fromLTRB(r.pagePaddingH, 10, r.pagePaddingH, 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                color: AppTheme.textMain,
+            padding: EdgeInsets.fromLTRB(r.pagePaddingH, 12, r.pagePaddingH, 8),
+            child: Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.inputBg,
+                borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
               ),
-              decoration: InputDecoration(
-                hintText: 'Cari nomor pesanan atau nama produk...',
-                hintStyle: GoogleFonts.plusJakartaSans(
-                  fontSize: r.fontSm,
-                  color: AppTheme.textSubtle,
+              alignment: Alignment.center,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: r.fontMd,
+                  color: AppTheme.textMain,
                 ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  size: r.iconSm,
-                  color: AppTheme.textSubtle,
-                ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                filled: true,
-                fillColor: AppTheme.inputBg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
-                  borderSide: const BorderSide(color: AppTheme.terracotta),
+                textAlignVertical: TextAlignVertical.center,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: 'Cari nomor pesanan atau nama produk...',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontMd,
+                    color: AppTheme.textSubtle,
+                  ),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(right: 10),
+                    child: Icon(
+                      Icons.search_rounded,
+                      size: 20,
+                      color: AppTheme.textSubtle,
+                    ),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 30,
+                    minHeight: 20,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(
+                            Icons.clear_rounded,
+                            size: 18,
+                            color: AppTheme.textSubtle,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                  suffixIconConstraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 20,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                 ),
               ),
             ),

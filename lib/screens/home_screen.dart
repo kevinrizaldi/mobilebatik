@@ -95,10 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: GestureDetector(
                   onTap: () => context.go('/katalog'),
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: r.spacingMd,
-                      vertical: r.spacingSm,
-                    ),
+                    height: 46,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       color: AppTheme.inputBg,
                       borderRadius: BorderRadius.circular(
@@ -107,12 +105,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.search_rounded,
-                          size: r.iconSm,
+                          size: 20,
                           color: AppTheme.textSubtle,
                         ),
-                        SizedBox(width: r.spacingSm),
+                        const SizedBox(width: 10),
                         Text(
                           'Cari produk batik...',
                           style: GoogleFonts.plusJakartaSans(
