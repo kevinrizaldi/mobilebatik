@@ -27,20 +27,23 @@ class ApiConfig {
   static String? debugBaseUrlOverride;
 
   /// Base URL untuk Laravel API.
-  /// - Android Emulator memakai `10.0.2.2` untuk mengarah ke `127.0.0.1` laptop.
-  /// - Web / Desktop / iOS Simulator memakai `127.0.0.1`.
-  /// - Untuk HP fisik via WiFi, jalankan dengan:
-  ///   `flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8000/api`
+  ///
+  /// Mode koneksi:
+  /// - **USB (adb reverse):** jalankan `adb reverse tcp:8000 tcp:8000` lalu
+  ///   `flutter run` biasa → `localhost:8000` di HP = `localhost:8000` laptop.
+  /// - **WiFi / HP fisik:** `flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8000/api`
+  /// - **Android Emulator:** gunakan `--dart-define=API_BASE_URL=http://10.0.2.2:8000/api`
   static String get baseUrl {
     final override = debugBaseUrlOverride;
     if (override != null) return override;
     if (_envBaseUrl.isNotEmpty) {
       return _envBaseUrl;
     }
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000/api';
-    }
-    return 'http://127.0.0.1:8000/api';
+    // localhost bekerja untuk:
+    // - HP fisik via USB (adb reverse tcp:8000 tcp:8000)
+    // - Web / Desktop / iOS Simulator
+    // Untuk Android Emulator, gunakan --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+    return 'http://localhost:8000/api';
   }
 
   /// Format angka menjadi string Rupiah, misal `285000` -> `Rp 285.000`.

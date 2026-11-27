@@ -204,16 +204,6 @@ class _ProfileCard extends StatelessWidget {
   final ProfileStore profile;
   const _ProfileCard({required this.profile});
 
-  Future<void> _pickPhoto(BuildContext context) async {
-    final photo = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-      maxWidth: 1000,
-    );
-    if (photo == null) return;
-    profile.setPhoto(await photo.readAsBytes());
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -227,49 +217,18 @@ class _ProfileCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: AppTheme.primaryDark,
-                    foregroundImage: profile.photoBytes == null
-                        ? null
-                        : MemoryImage(profile.photoBytes!),
-                    child: profile.photoBytes == null
-                        ? Text(
-                            _initials(profile.name),
-                            style: GoogleFonts.outfit(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          )
-                        : null,
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: AppTheme.primaryDark,
+                child: Text(
+                  _initials(profile.name),
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
-                  Positioned(
-                    right: -2,
-                    bottom: -1,
-                    child: InkWell(
-                      onTap: () => _pickPhoto(context),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryBlack,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt_outlined,
-                          size: 11,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -296,16 +255,18 @@ class _ProfileCard extends StatelessWidget {
                         color: AppTheme.textSubtle,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      profile.phone,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        color: AppTheme.textMuted,
+                    if (profile.phone.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        profile.phone,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          color: AppTheme.textMuted,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -337,8 +298,11 @@ class _ProfileCard extends StatelessWidget {
   }
 
   String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    return parts.take(2).map((part) => part[0]).join().toUpperCase();
+    final clean = name.trim();
+    if (clean.isEmpty) return 'P';
+    final parts = clean.split(RegExp(r'\s+'));
+    final chars = parts.where((p) => p.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
+    return chars.isNotEmpty ? chars : 'P';
   }
 }
 

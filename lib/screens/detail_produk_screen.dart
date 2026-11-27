@@ -6,6 +6,7 @@ import '../services/api_client.dart';
 import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/full_screen_image_viewer.dart';
 
 class DetailProdukScreen extends StatefulWidget {
   final Map<String, dynamic>? product;
@@ -808,47 +809,66 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     );
   }
 
-  // Thumbnails Strip
+  // Thumbnails Strip (Kotak 1:1 Square)
   Widget _buildThumbnailStrip(Responsive r) {
     final images = galleryImages;
+    if (images.isEmpty) return const SizedBox.shrink();
+
+    final double thumbSize = r.isMobile ? 64.0 : 72.0;
 
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: r.isMobile && !r.isLandscape ? r.pagePaddingH : 0,
       ),
-      child: Row(
-        children: List.generate(images.length, (index) {
-          final isSelected = _selectedImageIndex == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedImageIndex = index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: 64,
-                margin: EdgeInsets.only(
-                  right: index < images.length - 1 ? 8 : 0,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppTheme.terracotta
-                        : AppTheme.borderLight,
-                    width: isSelected ? 2.5 : 1,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: List.generate(images.length, (index) {
+              final isSelected = _selectedImageIndex == index;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedImageIndex = index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: thumbSize,
+                  height: thumbSize,
+                  margin: EdgeInsets.only(
+                    right: index < images.length - 1 ? 10 : 0,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppTheme.terracotta
+                          : AppTheme.borderLight,
+                      width: isSelected ? 2.5 : 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: _safeImage(
+                      images[index],
+                      width: thumbSize,
+                      height: thumbSize,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _safeImage(
-                    images[index],
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
@@ -1563,26 +1583,46 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             ),
           )
         else
-          ...reviews.map(
-            (rev) => Padding(
-              padding: EdgeInsets.only(bottom: r.spacingSm),
-              child: _reviewCard(
-                name: (rev['user_name']?.toString().isNotEmpty == true)
-                    ? rev['user_name'].toString()
-                    : 'Pelanggan',
-                date: _relativeDate(rev['created_at']?.toString()),
-                rating: rev['rating'] is int
-                    ? rev['rating'] as int
-                    : int.tryParse('${rev['rating']}') ?? 5,
-                comment: rev['comment']?.toString() ?? '',
-                photos: (rev['photos'] as List?)
-                        ?.map((e) => e.toString())
-                        .toList() ??
-                    const [],
-                variant: '',
-                r: r,
-              ),
-            ),
+          ...reviews.asMap().entries.map(
+            (entry) {
+              final revIndex = entry.key;
+              final rev = entry.value;
+              final reviewId = rev['id'] ?? revIndex;
+
+              final reviewPhotos = <String>[];
+              if (rev['photos'] is List) {
+                reviewPhotos.addAll(
+                  (rev['photos'] as List)
+                      .map((e) => e?.toString() ?? '')
+                      .where((s) => s.isNotEmpty),
+                );
+              }
+              final singleImg = rev['image_path'] ?? rev['image'];
+              if (singleImg != null && singleImg.toString().isNotEmpty) {
+                final sStr = singleImg.toString();
+                if (!reviewPhotos.contains(sStr)) {
+                  reviewPhotos.insert(0, sStr);
+                }
+              }
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: r.spacingSm),
+                child: _reviewCard(
+                  name: (rev['user_name']?.toString().isNotEmpty == true)
+                      ? rev['user_name'].toString()
+                      : 'Pelanggan',
+                  date: _relativeDate(rev['created_at']?.toString()),
+                  rating: rev['rating'] is int
+                      ? rev['rating'] as int
+                      : int.tryParse('${rev['rating']}') ?? 5,
+                  comment: rev['comment']?.toString() ?? '',
+                  photos: reviewPhotos,
+                  variant: '',
+                  r: r,
+                  reviewId: reviewId,
+                ),
+              );
+            },
           ),
       ],
     );
@@ -1611,6 +1651,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     required List<String> photos,
     required String variant,
     required Responsive r,
+    dynamic reviewId,
   }) {
     return Container(
       padding: EdgeInsets.all(r.spacingMd),
@@ -1690,19 +1731,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 scrollDirection: Axis.horizontal,
                 itemCount: photos.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 6),
-                itemBuilder: (context, index) => ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.network(
-                    photos[index],
-                    width: 54,
-                    height: 54,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const Icon(
-                      Icons.broken_image_outlined,
-                      size: 24,
-                      color: AppTheme.textSubtle,
-                    ),
-                  ),
+                itemBuilder: (context, index) => ReviewPhotoThumbnail(
+                  imageUrl: photos[index],
+                  index: index,
+                  allImageUrls: photos,
+                  heroTagPrefix: 'prod_review_${reviewId ?? name}',
+                  size: 54,
                 ),
               ),
             ),
