@@ -32,7 +32,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     return const ['S', 'M', 'L', 'XL', 'XXL'];
   }
 
-  int get _cartCount => CartStore.instance.itemCount;
+  int get _cartCount => CartStore.instance.productCount;
 
   Map<String, dynamic> get productData {
     return _fetchedProduct ??

@@ -82,7 +82,8 @@ class BottomNavBar extends StatelessWidget {
                               child: AnimatedBuilder(
                                 animation: CartStore.instance,
                                 builder: (context, _) {
-                                  final count = CartStore.instance.itemCount;
+                                  // Sesuai website Laravel: menampilkan jumlah produk (items.length), bukan total pcs
+                                  final count = CartStore.instance.productCount;
                                   if (count == 0)
                                     return const SizedBox.shrink();
                                   return Container(

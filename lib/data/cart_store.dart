@@ -49,6 +49,12 @@ class CartStore extends ChangeNotifier {
     );
   }
 
+  /// Total kuantitas semua item (pcs) di keranjang.
+  int get totalQuantity => items.fold(0, (total, item) => total + item.quantity);
+
+  /// Jumlah jenis produk yang ada di keranjang, sesuai dengan website Laravel (CartItem::count() / items.length).
+  int get productCount => items.length;
+
   int get itemCount => items.fold(0, (total, item) => total + item.quantity);
 
   int get selectedItemCount => items

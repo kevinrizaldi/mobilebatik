@@ -158,7 +158,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       Text(
-                        'Pilih Semua (${store.itemCount} item)',
+                        'Pilih Semua (${store.productCount} item)',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: r.fontSm,
                           fontWeight: FontWeight.w600,
