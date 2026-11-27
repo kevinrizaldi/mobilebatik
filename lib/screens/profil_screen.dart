@@ -176,84 +176,60 @@ class _ProfileCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.65)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AppTheme.primaryDark,
-                child: Text(
-                  _initials(profile.name),
-                  style: GoogleFonts.outfit(
-                    fontSize: 18,
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: AppTheme.primaryDark,
+            child: Text(
+              _initials(profile.name),
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
+                    color: AppTheme.textMain,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textMain,
-                      ),
+                const SizedBox(height: 2),
+                Text(
+                  profile.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    color: AppTheme.textSubtle,
+                  ),
+                ),
+                if (profile.phone.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    profile.phone,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      color: AppTheme.textMuted,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      profile.email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        color: AppTheme.textSubtle,
-                      ),
-                    ),
-                    if (profile.phone.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        profile.phone,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 11),
-          Row(
-            children: [
-              Expanded(
-                child: _ProfileButton(
-                  icon: Icons.edit_outlined,
-                  label: 'Edit Profil',
-                  onPressed: () => context.push('/profil/edit'),
-                ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: _ProfileButton(
-                  icon: Icons.location_on_outlined,
-                  label: 'Kelola Alamat',
-                  onPressed: () => context.push('/profil/daftar-alamat'),
-                ),
-              ),
-            ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -266,35 +242,6 @@ class _ProfileCard extends StatelessWidget {
     final parts = clean.split(RegExp(r'\s+'));
     final chars = parts.where((p) => p.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
     return chars.isNotEmpty ? chars : 'P';
-  }
-}
-
-class _ProfileButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  const _ProfileButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 34,
-      child: TextButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 13),
-        label: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10)),
-        style: TextButton.styleFrom(
-          foregroundColor: AppTheme.textMain,
-          backgroundColor: AppTheme.terracottaLight,
-          padding: const EdgeInsets.symmetric(horizontal: 5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-        ),
-      ),
-    );
   }
 }
 
