@@ -61,13 +61,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   trailing: '1 Aktif',
                   onTap: () => context.go('/pesanan'),
                 ),
-                _ProfileMenuRow(
-                  icon: Icons.rate_review_outlined,
-                  title: 'Ulasan Saya',
-                  subtitle: 'Produk yang sudah Anda ulas',
-                  trailing: '${profile.reviews.length} Ulasan',
-                  onTap: () => context.push('/profil/ulasan-saya'),
-                ),
               ],
             ),
             const SizedBox(height: 18),
