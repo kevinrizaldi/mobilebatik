@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/profile_store.dart';
 import '../services/api_client.dart';
@@ -38,7 +41,12 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
     _birthDateController = TextEditingController(
       text: _formatDate(profile.birthDate),
     );
-    _gender = profile.gender;
+    String? initialGender;
+    if (profile.gender.isNotEmpty &&
+        (profile.gender == 'Laki-laki' || profile.gender == 'Perempuan')) {
+      initialGender = profile.gender;
+    }
+    _gender = initialGender ?? 'Laki-laki';
   }
 
   @override
@@ -54,7 +62,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
     return _SubpageScaffold(
-      title: 'Edit Profil',
+      title: 'Edit Data Diri',
       child: Form(
         key: _formKey,
         child: ListView(
@@ -163,6 +171,9 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
+    final tanggalLahirFormatted = _birthDate != null
+        ? '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}'
+        : null;
 
     ProfileStore.instance.updateProfile(
       name: name,
@@ -179,9 +190,19 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
           name: name,
           email: email,
           phone: phone,
+          jenisKelamin: _gender,
+          tanggalLahir: tanggalLahirFormatted,
         );
       }
-      if (mounted) context.pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data diri berhasil diperbarui'),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
+        context.pop();
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1396,6 +1417,14 @@ class _AddressEditorState extends State<_AddressEditor> {
   bool _isSaving = false;
   String? _regionError;
 
+  late final MapController _mapController = MapController();
+  bool _isLocating = false;
+  bool _isSearchingMap = false;
+  bool _isResolvingAddress = false;
+  String? _pinAddressHint;
+  String? _geoErrorMsg;
+  bool _autoSyncedFromMap = false;
+
   @override
   void initState() {
     super.initState();
@@ -1427,10 +1456,17 @@ class _AddressEditorState extends State<_AddressEditor> {
     _latitude = initial?.latitude;
     _longitude = initial?.longitude;
     _primary = initial?.isPrimary ?? ProfileStore.instance.addresses.isEmpty;
+
+    if (_latitude != null && _longitude != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _reverseGeocode(_latitude!, _longitude!);
+      });
+    }
   }
 
   @override
   void dispose() {
+    _mapController.dispose();
     _recipient.dispose();
     _phone.dispose();
     _address.dispose();
@@ -1474,6 +1510,7 @@ class _AddressEditorState extends State<_AddressEditor> {
         _districtId = res.districtId;
         _postalCode = res.postalCode;
         _regionError = null;
+        _autoSyncedFromMap = false;
       });
     }
   }
@@ -1655,17 +1692,83 @@ class _AddressEditorState extends State<_AddressEditor> {
                   color: Colors.red.shade700,
                 ),
               ),
+            ] else if (_autoSyncedFromMap && _regionDisplay.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 13,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Wilayah otomatis disinkronkan dengan titik lokasi peta.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: const Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
             const SizedBox(height: 14),
 
             // Baris 3: Nama Jalan, Gedung, No. Rumah
-            Text(
-              'Nama Jalan, Gedung, No. Rumah *',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF6B5E51),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Nama Jalan, Gedung, No. Rumah *',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF6B5E51),
+                  ),
+                ),
+                InkWell(
+                  onTap: _isSearchingMap ? null : _searchAddressLocation,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isSearchingMap)
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF8C6226),
+                            ),
+                          )
+                        else
+                          const Icon(
+                            Icons.search,
+                            size: 14,
+                            color: Color(0xFF8C6226),
+                          ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _isSearchingMap ? 'Mencari...' : 'Cari di Peta',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF8C6226),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             TextFormField(
@@ -1680,85 +1783,380 @@ class _AddressEditorState extends State<_AddressEditor> {
             ),
             const SizedBox(height: 14),
 
-            // Baris 4: Titik Lokasi (Opsional)
+            // Baris 4: Titik Pin Lokasi (Peta)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Titik Lokasi (Opsional)',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF6B5E51),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TITIK PIN LOKASI (PETA)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF6B5E51),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Klik peta atau geser pin merah ke lokasi rumah yang tepat.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (_latitude != null && _longitude != null)
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _latitude = null;
-                        _longitude = null;
-                      });
-                    },
-                    child: Text(
-                      'Hapus Titik',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        color: Colors.red.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFAF3EA),
+                    side: const BorderSide(color: Color(0xFFDECDB8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  onPressed: _isLocating ? null : _getCurrentLocation,
+                  icon: _isLocating
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF8C6226),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.my_location,
+                          size: 14,
+                          color: Color(0xFF8C6226),
+                        ),
+                  label: Text(
+                    _isLocating ? 'Mencari...' : 'Gunakan Lokasi Saya',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF8C6226),
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
+
+            // Leaflet Map Container
             Container(
-              padding: const EdgeInsets.all(12),
+              height: 230,
               decoration: BoxDecoration(
-                color: const Color(0xFFFAF7F2),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFECE4D8)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.pin_drop_outlined,
-                        size: 16,
-                        color: Color(0xFF8C6226),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          _latitude ?? -7.5666,
+                          _longitude ?? 110.8290,
+                        ),
+                        initialZoom: _latitude != null ? 16.0 : 13.0,
+                        onTap: (tapPosition, point) {
+                          final lat = double.parse(
+                            point.latitude.toStringAsFixed(7),
+                          );
+                          final lng = double.parse(
+                            point.longitude.toStringAsFixed(7),
+                          );
+                          setState(() {
+                            _latitude = lat;
+                            _longitude = lng;
+                            _geoErrorMsg = null;
+                          });
+                          _reverseGeocode(lat, lng);
+                        },
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                        ),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _latitude != null && _longitude != null
-                              ? '📍 ${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)}'
-                              : 'Titik koordinat opsional (membantu kurir menemukan alamat).',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: _latitude != null
-                                ? const Color(0xFF8C6226)
-                                : AppTheme.textMuted,
-                            fontWeight: _latitude != null
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.hamzahstyle.mobilebatik',
+                          maxZoom: 19,
+                        ),
+                        if (_latitude != null && _longitude != null)
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(_latitude!, _longitude!),
+                                width: 42,
+                                height: 42,
+                                alignment: Alignment.topCenter,
+                                child: const Icon(
+                                  Icons.location_on,
+                                  size: 40,
+                                  color: Color(0xFFE53935),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+
+                    // Zoom Controls overlay (+ / -) in top-left
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFDECDB8)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                final currentZoom = _mapController.camera.zoom;
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  (currentZoom + 1).clamp(3.0, 19.0),
+                                );
+                              },
+                              child: const SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 18,
+                                    color: Color(0xFF4A3E31),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 24,
+                              height: 1,
+                              color: const Color(0xFFECE4D8),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                final currentZoom = _mapController.camera.zoom;
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  (currentZoom - 1).clamp(3.0, 19.0),
+                                );
+                              },
+                              child: const SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.remove,
+                                    size: 18,
+                                    color: Color(0xFF4A3E31),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Resolving address indicator overlay
+                    if (_isResolvingAddress)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFDECDB8)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 8,
+                                height: 8,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF8C6226),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Mencari nama jalan...',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textMain,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Koordinat, Patokan & Action Bar below map
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_latitude != null && _longitude != null) ...[
+                        Text(
+                          '📍 Koordinat: ${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF4A3E31),
+                          ),
+                        ),
+                        if (_pinAddressHint != null &&
+                            _pinAddressHint!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'Patokan: $_pinAddressHint',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: AppTheme.textMuted,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ] else
+                        Text(
+                          'Belum ada titik pin yang dipilih.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_latitude != null && _longitude != null)
+                      TextButton(
+                        style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
+                            horizontal: 6,
                             vertical: 4,
                           ),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          side: const BorderSide(color: Color(0xFFDECDB8)),
                         ),
-                        onPressed: _showCoordinateDialog,
+                        onPressed: () {
+                          setState(() {
+                            _latitude = null;
+                            _longitude = null;
+                            _pinAddressHint = null;
+                          });
+                        },
                         child: Text(
-                          _latitude != null ? 'Ubah' : 'Input Lat/Lng',
+                          'Hapus Pin',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                      ),
+                    if (_latitude != null && _longitude != null)
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.primaryDark,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        onPressed: _confirmLocation,
+                        icon: const Icon(
+                          Icons.check,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'Konfirmasi Lokasi',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    else
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          side: const BorderSide(color: Color(0xFFDECDB8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        onPressed: _confirmLocation,
+                        child: Text(
+                          'Konfirmasi Lokasi',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -1766,11 +2164,54 @@ class _AddressEditorState extends State<_AddressEditor> {
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
+
+            // Pesan Status Geolocation Non-blocking
+            if (_geoErrorMsg != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('ℹ️', style: TextStyle(fontSize: 13)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _geoErrorMsg!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: const Color(0xFF92400E),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => setState(() => _geoErrorMsg = null),
+                      child: const Padding(
+                        padding: EdgeInsets.all(2),
+                        child: Text(
+                          '✕',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
 
             // Baris 5: Tandai Sebagai
@@ -1938,7 +2379,7 @@ class _AddressEditorState extends State<_AddressEditor> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          'Input Titik Koordinat (Opsional)',
+          'Konfirmasi Titik Koordinat',
           style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         content: Column(
@@ -1977,13 +2418,319 @@ class _AddressEditorState extends State<_AddressEditor> {
                 _latitude = lat;
                 _longitude = lng;
               });
+              if (lat != null && lng != null) {
+                try {
+                  _mapController.move(LatLng(lat, lng), 16.5);
+                } catch (_) {}
+                _reverseGeocode(lat, lng);
+              }
               Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Titik lokasi berhasil dikonfirmasi.'),
+                  duration: Duration(seconds: 2),
+                  backgroundColor: Color(0xFF2E7D32),
+                ),
+              );
             },
-            child: const Text('Terapkan'),
+            child: const Text('Konfirmasi Lokasi'),
           ),
         ],
       ),
     );
+  }
+
+  void _confirmLocation() {
+    if (_latitude != null && _longitude != null) {
+      _reverseGeocode(_latitude!, _longitude!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Titik lokasi berhasil dikonfirmasi (${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)})',
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: const Color(0xFF2E7D32),
+        ),
+      );
+    } else {
+      _showCoordinateDialog();
+    }
+  }
+
+  Future<void> _reverseGeocode(double lat, double lng) async {
+    if (!mounted) return;
+    setState(() => _isResolvingAddress = true);
+    try {
+      final res = await ApiClient.instance.get(
+        '/alamat/reverse-geocode',
+        query: {'lat': lat.toString(), 'lng': lng.toString()},
+        auth: false,
+      );
+      if (mounted && res['success'] == true) {
+        final hint = res['display_name'] as String?;
+        final matched = res['matched_region'];
+        final addr = res['address'] as Map<String, dynamic>?;
+        final rawPostcode = res['postcode']?.toString();
+
+        setState(() {
+          if (hint != null && hint.isNotEmpty) {
+            _pinAddressHint = hint;
+          }
+
+          if (matched is Map) {
+            final prov = matched['province']?.toString();
+            final provId = matched['province_id'] != null
+                ? int.tryParse(matched['province_id'].toString())
+                : null;
+            final city = matched['city']?.toString();
+            final cityId = matched['city_id'] != null
+                ? int.tryParse(matched['city_id'].toString())
+                : null;
+            final district = matched['district']?.toString();
+            final districtId = matched['district_id'] != null
+                ? int.tryParse(matched['district_id'].toString())
+                : null;
+            final postal = matched['postal_code']?.toString() ?? rawPostcode;
+
+            if (prov != null && prov.isNotEmpty) {
+              _province = prov;
+              _provinceId = provId;
+            }
+            if (city != null && city.isNotEmpty) {
+              _city = city;
+              _cityId = cityId;
+            }
+            if (district != null && district.isNotEmpty) {
+              _district = district;
+              _districtId = districtId;
+            }
+            if (postal != null && postal.isNotEmpty) {
+              _postalCode = postal;
+            }
+            _regionError = null;
+            _autoSyncedFromMap = true;
+          } else if (rawPostcode != null &&
+              (_postalCode == null || _postalCode!.isEmpty)) {
+            _postalCode = rawPostcode;
+          }
+        });
+
+        // Jika backend belum dapat mencocokkan kecamatan secara lengkap, bantu cocokan client-side
+        if ((_district == null || _district!.isEmpty) && addr != null) {
+          _matchDistrictClientSide(addr);
+        }
+      }
+    } catch (_) {
+      // Non-blocking reverse geocode
+    } finally {
+      if (mounted) {
+        setState(() => _isResolvingAddress = false);
+      }
+    }
+  }
+
+  Future<void> _matchDistrictClientSide(Map<String, dynamic> addr) async {
+    if (_cityId == null) return;
+    try {
+      final districts = await ShippingService.instance.fetchDistricts(_cityId!);
+      if (districts.isEmpty) return;
+
+      final candidateNames = [
+        addr['suburb']?.toString() ?? '',
+        addr['village']?.toString() ?? '',
+        addr['neighbourhood']?.toString() ?? '',
+        addr['quarter']?.toString() ?? '',
+        addr['city_district']?.toString() ?? '',
+      ].where((s) => s.trim().isNotEmpty).toList();
+
+      for (final d in districts) {
+        final dName = (d['district_name'] ?? '').toString().toLowerCase();
+        for (final cand in candidateNames) {
+          final cClean = cand
+              .toLowerCase()
+              .replaceAll(RegExp(r'\b(kecamatan|kec\.|kelurahan|desa)\b'), '')
+              .trim();
+          if (cClean.isEmpty) continue;
+          if (dName == cClean || dName.contains(cClean) || cClean.contains(dName)) {
+            if (mounted) {
+              setState(() {
+                _district = d['district_name']?.toString();
+                _districtId = d['district_id'] != null
+                    ? int.tryParse(d['district_id'].toString())
+                    : null;
+                _autoSyncedFromMap = true;
+              });
+            }
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _searchAddressLocation() async {
+    final jalan = _address.text.trim();
+    final kec = _district ?? '';
+    final kota = _city ?? '';
+    final prov = _province ?? '';
+
+    if (jalan.isEmpty && kec.isEmpty && kota.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Isi nama jalan atau pilih wilayah terlebih dahulu.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSearchingMap = true;
+      _geoErrorMsg = null;
+    });
+
+    try {
+      final queryParams = <String, String>{};
+      if (jalan.isNotEmpty) queryParams['jalan'] = jalan;
+      if (kec.isNotEmpty) queryParams['kecamatan'] = kec;
+      if (kota.isNotEmpty) queryParams['kota'] = kota;
+      if (prov.isNotEmpty) queryParams['provinsi'] = prov;
+
+      final res = await ApiClient.instance.get(
+        '/alamat/geocode',
+        query: queryParams,
+        auth: false,
+      );
+
+      if (res['success'] == true && res['found'] == true) {
+        final lat = (res['latitude'] as num).toDouble();
+        final lng = (res['longitude'] as num).toDouble();
+        if (mounted) {
+          setState(() {
+            _latitude = lat;
+            _longitude = lng;
+            _pinAddressHint = res['display_name'] as String?;
+          });
+          try {
+            _mapController.move(LatLng(lat, lng), 16.5);
+          } catch (_) {}
+          _reverseGeocode(lat, lng);
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _geoErrorMsg =
+                'Titik lokasi belum ditemukan otomatis di peta.\nTips: Anda bisa langsung mengetuk lokasi rumah Anda pada peta.';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _geoErrorMsg =
+              'Gagal mencari lokasi di peta. Silakan ketuk peta secara manual.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSearchingMap = false);
+      }
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLocating = true;
+      _geoErrorMsg = null;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _geoErrorMsg =
+              'Layanan GPS/lokasi di perangkat belum aktif. Silakan aktifkan GPS atau ketuk lokasi di peta.';
+          _isLocating = false;
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _geoErrorMsg =
+                'Izin akses lokasi ditolak oleh pengguna. Anda tetap dapat menentukan titik dengan mengetuk peta.';
+            _isLocating = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _geoErrorMsg =
+              'Izin lokasi ditolak permanen di pengaturan HP. Silakan ketuk peta langsung untuk menentukan titik pin.';
+          _isLocating = false;
+        });
+        return;
+      }
+
+      // Coba ambil lokasi terakhir yang tersimpan dulu (sangat cepat & hemat baterai)
+      Position? pos = await Geolocator.getLastKnownPosition();
+
+      // Jika belum ada, minta posisi live dengan akurasi medium (cepat di dalam maupun luar ruangan)
+      pos ??= await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 12),
+        ),
+      );
+
+      final lat = double.parse(pos.latitude.toStringAsFixed(7));
+      final lng = double.parse(pos.longitude.toStringAsFixed(7));
+
+      if (mounted) {
+        setState(() {
+          _latitude = lat;
+          _longitude = lng;
+        });
+        try {
+          _mapController.move(LatLng(lat, lng), 16.5);
+        } catch (_) {}
+        await _reverseGeocode(lat, lng);
+      }
+    } catch (e) {
+      if (mounted) {
+        final errText = e.toString().toLowerCase();
+        String msg = 'Gagal mendeteksi lokasi otomatis.';
+        if (errText.contains('missingplugin') || errText.contains('channel')) {
+          msg =
+              'Plugin GPS belum terpasang di sistem aplikasi HP saat ini.\n'
+              'Solusi: Lakukan STOP aplikasi di terminal/VS Code, lalu jalankan "flutter run" ulang agar plugin native dan izin lokasi terkompilasi ke dalam APK.';
+        } else if (errText.contains('timeout')) {
+          msg =
+              'Waktu pencarian sinyal GPS habis (bisa karena berada di dalam ruangan).\n'
+              'Tips: Silakan coba lagi atau langsung ketuk lokasi rumah Anda pada peta.';
+        } else if (errText.contains('permission')) {
+          msg =
+              'Izin lokasi Android belum aktif di APK yang sedang berjalan.\n'
+              'Solusi: Restart penuh aplikasi dengan "flutter run" ulang agar AndroidManifest baru dimuat.';
+        } else {
+          msg =
+              'Gagal mendeteksi lokasi: $e.\n'
+              'Tips: Anda tetap bisa langsung mengetuk lokasi pada peta.';
+        }
+        setState(() {
+          _geoErrorMsg = msg;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLocating = false);
+      }
+    }
   }
 
   Future<void> _save() async {

@@ -10,6 +10,8 @@ class ProfileService {
     required String name,
     required String email,
     String? phone,
+    String? jenisKelamin,
+    String? tanggalLahir,
   }) async {
     final res = await ApiClient.instance.patch(
       '/user',
@@ -17,6 +19,10 @@ class ProfileService {
         'name': name.trim(),
         'email': email.trim(),
         if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+        if (jenisKelamin != null && jenisKelamin.trim().isNotEmpty)
+          'jenis_kelamin': jenisKelamin.trim(),
+        if (tanggalLahir != null && tanggalLahir.trim().isNotEmpty)
+          'tanggal_lahir': tanggalLahir.trim(),
       },
     );
 

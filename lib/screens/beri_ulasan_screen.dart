@@ -664,6 +664,7 @@ class _BeriUlasanScreenState extends State<BeriUlasanScreen> {
         productId: int.tryParse('${widget.order['productId'] ?? ''}'),
         rating: _rating,
         comment: _reviewController.text.trim(),
+        tags: _selectedTags.toList(),
         photos: List.unmodifiable(_photos),
       );
       final photoUrls = (res['data']?['photos'] as List?)

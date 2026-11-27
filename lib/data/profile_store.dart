@@ -115,8 +115,8 @@ class ProfileStore extends ChangeNotifier {
     final newName = user['name']?.toString();
     final newEmail = user['email']?.toString();
     final newPhone = user['phone']?.toString();
-    final newBirthDate = user['birth_date']?.toString();
-    final newGender = user['gender']?.toString();
+    final newBirthDate = (user['birth_date'] ?? user['tanggal_lahir'])?.toString();
+    final newGender = (user['gender'] ?? user['jenis_kelamin'])?.toString();
     final newPhotoUrl = user['photo_url']?.toString();
 
     if (newName != null && newName.isNotEmpty) name = newName;
