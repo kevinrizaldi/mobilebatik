@@ -722,36 +722,6 @@ class _HeroBannerState extends State<_HeroBanner> {
               },
             ),
 
-            // Left Arrow Button (Previous)
-            if (items.length > 1)
-              Positioned(
-                left: 10,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: _ArrowButton(
-                    icon: Icons.chevron_left_rounded,
-                    onTap: () => _goToSlide(_currentIndex - 1),
-                    tooltip: 'Produk sebelumnya',
-                  ),
-                ),
-              ),
-
-            // Right Arrow Button (Next)
-            if (items.length > 1)
-              Positioned(
-                right: 10,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: _ArrowButton(
-                    icon: Icons.chevron_right_rounded,
-                    onTap: () => _goToSlide(_currentIndex + 1),
-                    tooltip: 'Produk berikutnya',
-                  ),
-                ),
-              ),
-
             // Bottom Indicators (Pill active, Dots inactive - identik dengan web)
             if (items.length > 1)
               Positioned(
@@ -821,53 +791,6 @@ class _HeroBannerState extends State<_HeroBanner> {
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ArrowButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final String tooltip;
-
-  const _ArrowButton({
-    required this.icon,
-    required this.onTap,
-    required this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0x8C201A17), // rgba(32, 26, 23, 0.55)
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.6),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 22,
           ),
         ),
       ),
