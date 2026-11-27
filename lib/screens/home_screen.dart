@@ -88,103 +88,41 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: const BottomNavBar(currentIndex: 0),
         body: CustomScrollView(
           slivers: [
-            // Search bar
+            // Search bar (Full Width)
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(pad, 12, pad, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => context.go('/katalog'),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: r.spacingMd,
-                            vertical: r.spacingSm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.inputBg,
-                            borderRadius: BorderRadius.circular(
-                              r.cardRadius * 0.75,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.search_rounded,
-                                size: r.iconSm,
-                                color: AppTheme.textSubtle,
-                              ),
-                              SizedBox(width: r.spacingSm),
-                              Text(
-                                'Cari produk batik...',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: r.fontMd,
-                                  color: AppTheme.textSubtle,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                child: GestureDetector(
+                  onTap: () => context.go('/katalog'),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: r.spacingMd,
+                      vertical: r.spacingSm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.inputBg,
+                      borderRadius: BorderRadius.circular(
+                        r.cardRadius * 0.75,
                       ),
                     ),
-                    SizedBox(width: r.spacingSm),
-                    // Notification button
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                const SnackBar(
-                                  content: Text('Belum ada notifikasi baru untuk Anda.'),
-                                  behavior: SnackBarBehavior.floating,
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                          },
-                          borderRadius: BorderRadius.circular(
-                            r.cardRadius * 0.75,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.inputBg,
-                              borderRadius: BorderRadius.circular(
-                                r.cardRadius * 0.75,
-                              ),
-                            ),
-                            child: Stack(
-                              children: [
-                                Center(
-                                  child: Icon(
-                                    Icons.notifications_outlined,
-                                    size: r.iconMd,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  top: 10,
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF401100),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.search_rounded,
+                          size: r.iconSm,
+                          color: AppTheme.textSubtle,
+                        ),
+                        SizedBox(width: r.spacingSm),
+                        Text(
+                          'Cari produk batik...',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontMd,
+                            color: AppTheme.textSubtle,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -449,57 +387,65 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
-        Center(
-          child: Text(
-            'Home',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: r.fontSm,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textMain,
-            ),
-          ),
-        ),
-        SizedBox(width: r.spacingSm),
-        GestureDetector(
-          onTap: () => context.push('/profil'),
-          child: Tooltip(
-            message: 'Profil Saya',
-            child: CircleAvatar(
-              radius: r.isMedium || r.isTablet ? 18 : 16,
-              backgroundColor: const Color(0xFF1C130D),
-              child: Builder(
-                builder: (ctx) {
-                  final clean = ProfileStore.instance.name.trim();
-                  if (clean.isNotEmpty) {
-                    final parts = clean.split(RegExp(r'\s+'));
-                    final chars = parts
-                        .where((p) => p.isNotEmpty)
-                        .take(2)
-                        .map((part) => part[0])
-                        .join()
-                        .toUpperCase();
-                    if (chars.isNotEmpty) {
-                      return Text(
-                        chars,
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+        Padding(
+          padding: EdgeInsets.only(right: r.pagePaddingH),
+          child: Center(
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        const SnackBar(
+                          content: Text('Belum ada notifikasi baru untuk Anda.'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
                         ),
                       );
-                    }
-                  }
-                  return Icon(
-                    Icons.person_outline_rounded,
-                    color: Colors.white,
-                    size: r.iconSm,
-                  );
-                },
+                  },
+                  borderRadius: BorderRadius.circular(
+                    r.cardRadius * 0.75,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.inputBg,
+                      borderRadius: BorderRadius.circular(
+                        r.cardRadius * 0.75,
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            size: r.iconMd,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF401100),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        SizedBox(width: r.pagePaddingH * 0.8),
       ],
     );
   }
