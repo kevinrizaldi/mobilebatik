@@ -68,6 +68,13 @@ class CartStore extends ChangeNotifier {
   bool get allSelected =>
       items.isNotEmpty && items.every((item) => item.isSelected);
 
+  /// Membersihkan isi keranjang di memori lokal (misalnya saat pengguna keluar/logout).
+  void clear() {
+    items.clear();
+    isSyncing = false;
+    notifyListeners();
+  }
+
   Future<void> syncFromServer() async {
     final token = await ApiClient.instance.getToken();
     if (token == null || token.isEmpty) return;

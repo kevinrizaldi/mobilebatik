@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../data/cart_store.dart';
 import '../data/profile_store.dart';
 import 'api_client.dart';
 import 'api_config.dart';
@@ -37,6 +38,7 @@ class AuthService {
     final token = (data?['token'] ?? res['token'])?.toString();
     if (token != null && token.isNotEmpty) {
       await ApiClient.instance.setToken(token);
+      CartStore.instance.syncFromServer();
     }
 
     final user = data?['user'] ?? res['user'];
@@ -73,6 +75,7 @@ class AuthService {
     final token = (data?['token'] ?? res['token'])?.toString();
     if (token != null && token.isNotEmpty) {
       await ApiClient.instance.setToken(token);
+      CartStore.instance.syncFromServer();
     }
 
     final user = data?['user'] ?? res['user'];
@@ -127,6 +130,7 @@ class AuthService {
     final token = (data?['token'] ?? res['token'])?.toString();
     if (token != null && token.isNotEmpty) {
       await ApiClient.instance.setToken(token);
+      CartStore.instance.syncFromServer();
     }
 
     final user = data?['user'] ?? res['user'];
@@ -179,6 +183,7 @@ class AuthService {
     } finally {
       await ApiClient.instance.setToken(null);
       ProfileStore.instance.clearUserData();
+      CartStore.instance.clear();
     }
   }
 }
