@@ -675,8 +675,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                       _buildGalleryCard(r, height: 400),
                       SizedBox(height: r.spacingMd),
                       _buildThumbnailStrip(r),
-                      SizedBox(height: r.spacingLg),
-                      _buildTrustBadges(r),
                     ],
                   ),
                 ),
@@ -736,8 +734,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 _buildSizeSelector(r),
                 SizedBox(height: r.spacingMd),
                 _buildQuantitySelector(r),
-                SizedBox(height: r.spacingLg),
-                _buildTrustBadges(r),
                 SizedBox(height: r.spacingLg),
                 _buildProductSpecifications(r),
                 SizedBox(height: r.spacingLg),
@@ -926,63 +922,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // Trust Badges
-  Widget _buildTrustBadges(Responsive r) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: r.spacingMd,
-        vertical: r.spacingSm,
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(r.cardRadius * 0.75),
-        border: Border.all(color: AppTheme.borderLight.withValues(alpha: 0.7)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _trustBadgeItem(Icons.verified_outlined, '100% Asli', r),
-          ),
-          Container(width: 1, height: 24, color: AppTheme.borderLight),
-          Expanded(
-            child: _trustBadgeItem(Icons.replay_rounded, 'Garansi 7 Hari', r),
-          ),
-          Container(width: 1, height: 24, color: AppTheme.borderLight),
-          Expanded(
-            child: _trustBadgeItem(
-              Icons.local_shipping_outlined,
-              'Kirim Cepat',
-              r,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _trustBadgeItem(IconData icon, String label, Responsive r) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppTheme.terracotta),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: r.fontXs,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
