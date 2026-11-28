@@ -844,40 +844,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 ),
               ),
             ),
-            // Exclusive Badge
-            Positioned(
-              top: 14,
-              left: 14,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryDark.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Color(0xFFD4AF37),
-                      size: 14,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Batik Tulis Premium',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
             // Dots Indicator
             Positioned(
