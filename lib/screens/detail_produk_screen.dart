@@ -24,6 +24,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   int _quantity = 1;
   bool _isAddingToCart = false;
   Map<String, dynamic>? _fetchedProduct;
+  List<Map<String, dynamic>> _fallbackRelated = [];
 
   List<String> get _sizes {
     final sizeStock = productData['sizeStock'];
@@ -80,6 +81,19 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant DetailProdukScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.product?['id'] != oldWidget.product?['id']) {
+      _selectedImageIndex = 0;
+      _quantity = 1;
+      _fetchedProduct = null;
+      _fallbackRelated = [];
+      _syncSizesSelection();
+      _loadDetailIfNeeded();
+    }
+  }
+
   void _syncSizesSelection() {
     final available = _sizes;
     if (available.isNotEmpty && !available.contains(_selectedSize)) {
@@ -94,13 +108,33 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
 
     try {
       final detail = await ProductService.instance.fetchProductDetail(id);
-      if (!mounted || detail.isEmpty) return;
-      setState(() {
-        _fetchedProduct = detail;
-        _syncSizesSelection();
-      });
+      if (mounted && detail.isNotEmpty) {
+        setState(() {
+          _fetchedProduct = detail;
+          _syncSizesSelection();
+        });
+      }
     } catch (_) {
       // Tetap tampilkan data awal dari katalog jika request detail gagal.
+    }
+
+    // Jika produk terkait belum ada di detail payload, muat fallback dari katalog produk lain
+    final currentRelated = (productData['relatedProducts'] as List?) ?? [];
+    if (currentRelated.isEmpty && mounted) {
+      try {
+        final all = await ProductService.instance.fetchProducts();
+        if (mounted && all.isNotEmpty) {
+          final fallback = all
+              .where((p) => p['id'] != id)
+              .take(4)
+              .toList();
+          if (fallback.isNotEmpty) {
+            setState(() {
+              _fallbackRelated = fallback;
+            });
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -394,6 +428,20 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     double? height,
     BoxFit fit = BoxFit.cover,
   }) {
+    if (url.trim().isEmpty) {
+      return Container(
+        width: width,
+        height: height,
+        color: AppTheme.terracottaLight,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(4),
+        child: const Icon(
+          Icons.image_outlined,
+          size: 28,
+          color: AppTheme.terracotta,
+        ),
+      );
+    }
     return Image.network(
       url,
       width: width,
@@ -1756,29 +1804,18 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
 
   // Related Products
   Widget _buildRelatedProducts(Responsive r) {
-    final related = [
-      {
-        'name': 'Kain Batik Tulis Mega Mendung',
-        'price': 'Rp 450.000',
-        'rating': '4.9',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1762111908757-2444be02131d?w=400&q=80',
-      },
-      {
-        'name': 'Dress Batik Kawung Modern',
-        'price': 'Rp 320.000',
-        'rating': '4.7',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1762111908768-f49f42610859?w=400&q=80',
-      },
-      {
-        'name': 'Blouse Batik Sogan Elegan',
-        'price': 'Rp 265.000',
-        'rating': '4.8',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1762111908673-4c0f4643baa9?w=400&q=80',
-      },
-    ];
+    List<Map<String, dynamic>> related = [];
+    final rawRelated = productData['relatedProducts'];
+    if (rawRelated is List && rawRelated.isNotEmpty) {
+      related = rawRelated.whereType<Map<String, dynamic>>().toList();
+    }
+    if (related.isEmpty && _fallbackRelated.isNotEmpty) {
+      related = _fallbackRelated;
+    }
+
+    if (related.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1799,55 +1836,64 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
             itemCount: related.length,
             itemBuilder: (context, index) {
               final item = related[index];
-              return Container(
-                width: 140,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.bgCard,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(9),
+              final name = item['name']?.toString() ?? 'Produk Batik';
+              final price = item['price']?.toString() ?? '';
+              final imageUrl = item['imageUrl']?.toString() ?? '';
+
+              return GestureDetector(
+                onTap: () {
+                  context.push('/detail-produk', extra: item);
+                },
+                child: Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.bgCard,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.borderLight),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(9),
+                        ),
+                        child: _safeImage(
+                          imageUrl,
+                          height: 100,
+                          width: double.infinity,
+                        ),
                       ),
-                      child: _safeImage(
-                        item['imageUrl']!,
-                        height: 100,
-                        width: double.infinity,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['name']!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textMain,
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textMain,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item['price']!,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.terracotta,
+                            const SizedBox(height: 2),
+                            Text(
+                              price,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.terracotta,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },

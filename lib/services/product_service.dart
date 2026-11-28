@@ -105,6 +105,12 @@ class ProductService {
       'imageUrl': raw['image_url']?.toString() ?? '',
       'otherImages': raw['other_images'] is List ? raw['other_images'] : [],
       'reviews': raw['reviews'] is List ? raw['reviews'] : [],
+      'relatedProducts': raw['related_products'] is List
+          ? (raw['related_products'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map(toUiProduct)
+              .toList()
+          : <Map<String, dynamic>>[],
     };
   }
 }
