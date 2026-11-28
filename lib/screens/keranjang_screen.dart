@@ -49,6 +49,17 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
   String _formatPrice(int price) => ApiConfig.formatRupiah(price);
 
+  void _openProductDetail(BuildContext context, CartItem item) {
+    final productMap = <String, dynamic>{
+      if (item.productId != null) 'id': item.productId,
+      'name': item.name,
+      'price': _formatPrice(item.unitPrice),
+      'rawPrice': item.unitPrice,
+      'imageUrl': item.imageUrl,
+    };
+    context.push('/detail-produk', extra: productMap);
+  }
+
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
@@ -144,15 +155,17 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                         visualDensity: VisualDensity.compact,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      Text(
-                        'Pilih Semua (${store.productCount} item)',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: r.fontSm,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textMain,
+                      Expanded(
+                        child: Text(
+                          'Pilih Semua (${store.productCount} item)',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontSm,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textMain,
+                          ),
                         ),
                       ),
-                      const Spacer(),
                       GestureDetector(
                         onTap: store.selectedItemCount == 0
                             ? null
@@ -241,20 +254,24 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           const SizedBox(width: 4),
-          ClipRRect(
+          InkWell(
+            onTap: () => _openProductDetail(context, item),
             borderRadius: BorderRadius.circular(7),
-            child: Image.network(
-              item.imageUrl,
-              width: r.isTablet ? 92 : 76,
-              height: 88,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: Image.network(
+                item.imageUrl,
                 width: r.isTablet ? 92 : 76,
                 height: 88,
-                color: AppTheme.terracottaLight,
-                child: const Icon(
-                  Icons.checkroom_rounded,
-                  color: AppTheme.terracotta,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  width: r.isTablet ? 92 : 76,
+                  height: 88,
+                  color: AppTheme.terracottaLight,
+                  child: const Icon(
+                    Icons.checkroom_rounded,
+                    color: AppTheme.terracotta,
+                  ),
                 ),
               ),
             ),
@@ -268,14 +285,18 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: r.fontSm + 1,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textMain,
+                      child: InkWell(
+                        onTap: () => _openProductDetail(context, item),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: r.fontSm + 1,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textMain,
+                          ),
                         ),
                       ),
                     ),
@@ -296,13 +317,17 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   ],
                 ),
                 const SizedBox(height: 1),
-                Text(
-                  item.variant,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: r.fontXs + 1,
-                    color: AppTheme.textSubtle,
+                InkWell(
+                  onTap: () => _openProductDetail(context, item),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Text(
+                    item.variant,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: r.fontXs + 1,
+                      color: AppTheme.textSubtle,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
