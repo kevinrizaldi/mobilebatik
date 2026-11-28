@@ -99,6 +99,7 @@ class ProductService {
       'description': raw['description']?.toString() ?? '',
       'material': raw['material']?.toString() ?? '',
       'size': raw['size']?.toString() ?? '',
+      'sizeGuide': raw['panduan_ukuran']?.toString() ?? '',
       'sizeStock': raw['size_stock'] is Map ? raw['size_stock'] : {},
       'rating': ratingVal > 0 ? ratingVal.toStringAsFixed(1) : '5.0',
       'sold': (raw['reviews_count'] ?? 0).toString(),

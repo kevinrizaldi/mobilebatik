@@ -236,6 +236,8 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   }
 
   void _showSizeGuide(BuildContext context, Responsive r) {
+    final specialGuide = productData['sizeGuide']?.toString().trim() ?? '';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -270,7 +272,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Panduan Ukuran (Size Chart)',
+                    'Panduan Ukuran Baju',
                     style: GoogleFonts.outfit(
                       fontSize: r.fontLg,
                       fontWeight: FontWeight.w700,
@@ -283,14 +285,60 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                   ),
                 ],
               ),
+              if (specialGuide.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  margin: EdgeInsets.only(bottom: r.spacingMd),
+                  padding: EdgeInsets.all(r.spacingMd),
+                  decoration: BoxDecoration(
+                    color: AppTheme.bgCard,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.borderLight),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            size: 14,
+                            color: AppTheme.terracotta,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'PANDUAN KHUSUS PRODUK INI',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: AppTheme.terracotta,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        specialGuide,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: r.fontSm,
+                          color: AppTheme.textMain,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               Text(
-                'Standar ukuran kemeja batik pria Hamzah Style (dalam cm):',
+                'Panduan Ukuran Baju (cm)',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: r.fontSm,
+                  fontWeight: FontWeight.w600,
                   color: AppTheme.textMuted,
                 ),
               ),
-              SizedBox(height: r.spacingMd),
+              SizedBox(height: r.spacingSm),
               Table(
                 border: TableBorder.all(
                   color: AppTheme.borderLight,
@@ -308,17 +356,17 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                       color: AppTheme.terracottaLight,
                     ),
                     children: [
-                      _tableHeader('Size'),
+                      _tableHeader('Ukuran'),
                       _tableHeader('Lingkar Dada'),
                       _tableHeader('Panjang Baju'),
                       _tableHeader('Panjang Lengan'),
                     ],
                   ),
-                  _tableRow('S', '100 cm', '70 cm', '60 cm'),
-                  _tableRow('M', '104 cm', '72 cm', '61 cm'),
-                  _tableRow('L', '108 cm', '74 cm', '62 cm'),
-                  _tableRow('XL', '112 cm', '76 cm', '63 cm'),
-                  _tableRow('XXL', '118 cm', '78 cm', '64 cm'),
+                  _tableRow('S', '104 cm', '72 cm', '60 cm'),
+                  _tableRow('M', '108 cm', '74 cm', '61 cm'),
+                  _tableRow('L', '112 cm', '76 cm', '62 cm'),
+                  _tableRow('XL', '116 cm', '78 cm', '63 cm'),
+                  _tableRow('XXL', '120 cm', '80 cm', '64 cm'),
                 ],
               ),
               SizedBox(height: r.spacingMd),
@@ -1103,6 +1151,57 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
 
   // Size Selector
   Widget _buildSizeSelector(Responsive r) {
+    final category = productData['category']?.toString() ?? '';
+    final isKain = category.toLowerCase().contains('kain');
+
+    if (isKain) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ukuran Kain',
+            style: GoogleFonts.outfit(
+              fontSize: r.fontMd,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textMain,
+            ),
+          ),
+          SizedBox(height: r.spacingSm),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.bgCard,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.borderLight),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🧵', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                Text(
+                  'Lembaran Kain Batik (2,4 m × 1,15 m)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: r.fontSm,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textMain,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Kain batik siap dijahit sesuai model pakaian yang Anda inginkan.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: r.fontXs,
+              color: AppTheme.textMuted,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
