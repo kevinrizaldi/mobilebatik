@@ -1398,9 +1398,12 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
   Widget _buildProductSpecifications(Responsive r) {
     final material = (productData['material']?.toString().isNotEmpty == true)
         ? productData['material'].toString()
-        : null;
+        : 'Katun Primissima Halus Benang 60s';
     final category = productData['category']?.toString() ?? '';
-    final description = productData['description']?.toString() ?? '';
+    final isKain = category.toLowerCase().contains('kain');
+    final description = productData['description']?.toString().isNotEmpty == true
+        ? productData['description'].toString()
+        : 'Koleksi batik berkualitas tinggi yang nyaman dipakai untuk sehari-hari maupun acara formal.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1425,74 +1428,94 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Material + category summary line (like web)
-              if (material != null) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.layers_outlined,
-                      size: 14,
-                      color: AppTheme.textSubtle,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: r.fontXs,
-                            color: AppTheme.textSubtle,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: material,
-                              style: const TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            if (description.isNotEmpty)
-                              TextSpan(text: '. $description'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+              // Paragraf deskripsi utama
+              Text(
+                description,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: r.fontSm,
+                  color: AppTheme.textMain,
+                  height: 1.6,
                 ),
-                if (description.isNotEmpty) SizedBox(height: r.spacingSm),
-              ],
-              // Full description text
-              if (description.isNotEmpty && material == null)
-                Text(
-                  description,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: r.fontSm,
-                    color: AppTheme.textMuted,
-                    height: 1.5,
-                  ),
+              ),
+              const SizedBox(height: 12),
+              const Divider(color: AppTheme.borderLight, height: 1),
+              const SizedBox(height: 12),
+              // Rincian spesifikasi produk (sesuai format website)
+              if (!isKain) ...[
+                _buildSpecBullet(
+                  'Model',
+                  'Regular Fit yang pas di badan, kerah rapi dengan kancing dalam',
+                  r,
                 ),
-              // Category chip at bottom
-              if (category.isNotEmpty) ...[
-                SizedBox(height: r.spacingSm),
-                Wrap(
-                  spacing: 6,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppTheme.terracottaLight,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        category,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: r.fontXs,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.terracotta,
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 6),
+                _buildSpecBullet('Bahan', material, r),
+                const SizedBox(height: 6),
+                _buildSpecBullet(
+                  'Kancing',
+                  'Kancing batok kelapa alami dengan jahitan kuat dan rapi',
+                  r,
+                ),
+                const SizedBox(height: 6),
+                _buildSpecBullet(
+                  'Saku',
+                  'Satu saku di dada kiri dengan motif batik yang menyatu rapi',
+                  r,
+                ),
+              ] else ...[
+                _buildSpecBullet('Bahan', material, r),
+                const SizedBox(height: 6),
+                _buildSpecBullet(
+                  'Ukuran',
+                  (productData['size']?.toString().isNotEmpty == true)
+                      ? productData['size'].toString()
+                      : '2.2m x 1.15m',
+                  r,
+                ),
+                const SizedBox(height: 6),
+                _buildSpecBullet(
+                  'Teknik',
+                  'Batik Cap kombinasi Tulis Canting Tradisional',
+                  r,
                 ),
               ],
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpecBullet(String label, String value, Responsive r) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '• ',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: r.fontSm,
+            color: AppTheme.textMuted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: r.fontSm,
+                color: AppTheme.textMain,
+                height: 1.4,
+              ),
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(
+                  text: value,
+                  style: const TextStyle(color: AppTheme.textMuted),
+                ),
+              ],
+            ),
           ),
         ),
       ],
