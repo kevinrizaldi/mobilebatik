@@ -34,8 +34,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
     return const ['S', 'M', 'L', 'XL', 'XXL'];
   }
 
-  int get _cartCount => CartStore.instance.productCount;
-
   Map<String, dynamic> get productData {
     return _fetchedProduct ??
         widget.product ??
@@ -1176,7 +1174,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
                           ),
                           if (stockCount is int || stockCount is double)
                             Text(
-                              '${stockCount} pcs',
+                              '$stockCount pcs',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: r.fontXs,
                                 fontWeight: FontWeight.w400,
@@ -1217,7 +1215,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               ),
               Builder(builder: (context) {
                 final sizeStock = productData['sizeStock'];
-                final maxStock = sizeStock is Map && _selectedSize != null
+                final maxStock = sizeStock is Map
                     ? (sizeStock[_selectedSize] ?? productData['stock'] ?? 0)
                     : (productData['stock'] ?? 0);
                 final maxInt = maxStock is int ? maxStock : int.tryParse('$maxStock') ?? 0;
@@ -1262,7 +1260,7 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
               ),
               Builder(builder: (context) {
                 final sizeStock = productData['sizeStock'];
-                final maxStock = sizeStock is Map && _selectedSize != null
+                final maxStock = sizeStock is Map
                     ? (sizeStock[_selectedSize] ?? productData['stock'] ?? 0)
                     : (productData['stock'] ?? 0);
                 final maxInt = maxStock is int ? maxStock : int.tryParse('$maxStock') ?? 0;
@@ -1499,39 +1497,6 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _specItem(String label, String value, Responsive r) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSubtle,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: r.fontSm,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textMain,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

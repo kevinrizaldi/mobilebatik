@@ -34,7 +34,7 @@ class BatikHeaderLogo extends StatelessWidget {
             borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryDark.withOpacity(0.18),
+                color: AppTheme.primaryDark.withValues(alpha: 0.18),
                 blurRadius: isCompact ? 10 : 16,
                 offset: Offset(0, isCompact ? 4 : 6),
               ),
@@ -59,7 +59,7 @@ class BatikHeaderLogo extends StatelessWidget {
             Container(
               width: isCompact ? 12 : 16,
               height: 1,
-              color: AppTheme.terracotta.withOpacity(0.5),
+              color: AppTheme.terracotta.withValues(alpha: 0.5),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -76,7 +76,7 @@ class BatikHeaderLogo extends StatelessWidget {
             Container(
               width: isCompact ? 12 : 16,
               height: 1,
-              color: AppTheme.terracotta.withOpacity(0.5),
+              color: AppTheme.terracotta.withValues(alpha: 0.5),
             ),
           ],
         ),

@@ -2249,7 +2249,7 @@ class _AddressEditorState extends State<_AddressEditor> {
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: _primary,
-              activeColor: AppTheme.primaryDark,
+              activeThumbColor: AppTheme.primaryDark,
               activeTrackColor: AppTheme.primaryDark.withValues(alpha: 0.5),
               title: Text(
                 'Atur sebagai Alamat Utama',
@@ -3096,19 +3096,3 @@ String _formatDate(DateTime? date) {
   final month = date.month.toString().padLeft(2, '0');
   return '$day/$month/${date.year}';
 }
-
-Widget _smallTag(String label) => Container(
-  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-  decoration: BoxDecoration(
-    color: AppTheme.terracottaLight,
-    borderRadius: BorderRadius.circular(4),
-  ),
-  child: Text(
-    label,
-    style: GoogleFonts.plusJakartaSans(
-      fontSize: 9,
-      fontWeight: FontWeight.w600,
-      color: AppTheme.primaryDark,
-    ),
-  ),
-);

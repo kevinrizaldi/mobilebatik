@@ -316,7 +316,7 @@ class _KatalogScreenState extends State<KatalogScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: pad),
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => SizedBox(width: r.spacingXs),
+                separatorBuilder: (_, _) => SizedBox(width: r.spacingXs),
                 itemBuilder: (context, index) {
                   final cat = _categories[index];
                   final isSelected = _selectedCategory == cat;
@@ -536,7 +536,7 @@ class _KatalogProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(r.cardRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

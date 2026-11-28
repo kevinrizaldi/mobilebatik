@@ -58,7 +58,7 @@ class OrderService {
     final fields = <String, dynamic>{
       'rating': rating,
       'comment': comment.trim(),
-      if (productId != null) 'product_id': productId,
+      'product_id': ?productId,
       if (tags.isNotEmpty) 'tags': tags,
     };
     if (photos.isEmpty) {

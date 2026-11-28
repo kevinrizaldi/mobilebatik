@@ -76,97 +76,105 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   List<Map<String, dynamic>> _liveServices = [];
   bool _loadingServices = false;
   String? _servicesError;
+  bool _isFetchingShipping = false;
 
   @override
   void initState() {
     super.initState();
     _initItems();
     ProfileStore.instance.addListener(_onProfileChanged);
-    ProfileStore.instance.syncAddressesFromServer();
     _fetchShippingCosts();
   }
 
   void _onProfileChanged() {
     if (!mounted) return;
     setState(() {});
-    _fetchShippingCosts();
+    if (!_isFetchingShipping) {
+      _fetchShippingCosts();
+    }
   }
 
   Future<void> _fetchShippingCosts() async {
-    int? numericId = int.tryParse(_currentAddress.id);
-    if (numericId == null) {
-      await ProfileStore.instance.syncAddressesFromServer();
-      numericId = int.tryParse(_currentAddress.id);
-    }
-
-    if (numericId == null && mounted) {
-      // Jika alamat belum tersimpan di server, coba buatkan dari alamat aktif
-      try {
-        final res = await ProfileService.instance.createAddress(
-          label: _currentAddress.label,
-          recipientName: _currentAddress.recipient,
-          phone: _currentAddress.phone,
-          fullAddress: _currentAddress.address,
-          province: _currentAddress.province,
-          provinceId: _currentAddress.provinceId,
-          city: _currentAddress.city,
-          cityId: _currentAddress.cityId,
-          district: _currentAddress.district,
-          districtId: _currentAddress.districtId,
-          postalCode: _currentAddress.postalCode,
-          latitude: _currentAddress.latitude,
-          longitude: _currentAddress.longitude,
-          isPrimary: true,
-        );
-        final createdId = res['data']?['id'] ?? res['address']?['id'];
-        if (createdId != null) {
-          numericId = int.tryParse(createdId.toString());
-          await ProfileStore.instance.syncAddressesFromServer();
-        }
-      } catch (_) {}
-    }
-
-    if (numericId == null || !mounted) {
-      if (mounted) {
-        setState(() {
-          _servicesError = 'Alamat belum memiliki ID yang valid di server.';
-        });
-      }
-      return;
-    }
-
-    setState(() {
-      _loadingServices = true;
-      _servicesError = null;
-    });
+    if (_isFetchingShipping) return;
+    _isFetchingShipping = true;
     try {
-      final totalQty = _checkoutItems.fold<int>(
-        0,
-        (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
-      );
-      final weight = totalQty * 300 < 1000 ? 1000 : totalQty * 300;
-      final services = await ShippingService.instance.fetchCosts(
-        addressId: numericId,
-        weightGrams: weight,
-      );
-      if (!mounted) return;
-      setState(() {
-        _liveServices = services;
-        _servicesError = services.isEmpty
-            ? 'Biaya ongkir tidak tersedia'
-            : null;
-        if (_selectedCourierIndex >= services.length) {
-          _selectedCourierIndex = 0;
+      int? numericId = int.tryParse(_currentAddress.id);
+      if (numericId == null) {
+        await ProfileStore.instance.syncAddressesFromServer();
+        numericId = int.tryParse(_currentAddress.id);
+      }
+
+      if (numericId == null && mounted) {
+        // Jika alamat belum tersimpan di server, coba buatkan dari alamat aktif
+        try {
+          final res = await ProfileService.instance.createAddress(
+            label: _currentAddress.label,
+            recipientName: _currentAddress.recipient,
+            phone: _currentAddress.phone,
+            fullAddress: _currentAddress.address,
+            province: _currentAddress.province,
+            provinceId: _currentAddress.provinceId,
+            city: _currentAddress.city,
+            cityId: _currentAddress.cityId,
+            district: _currentAddress.district,
+            districtId: _currentAddress.districtId,
+            postalCode: _currentAddress.postalCode,
+            latitude: _currentAddress.latitude,
+            longitude: _currentAddress.longitude,
+            isPrimary: true,
+          );
+          final createdId = res['data']?['id'] ?? res['address']?['id'];
+          if (createdId != null) {
+            numericId = int.tryParse(createdId.toString());
+            await ProfileStore.instance.syncAddressesFromServer();
+          }
+        } catch (_) {}
+      }
+
+      if (numericId == null || !mounted) {
+        if (mounted) {
+          setState(() {
+            _servicesError = 'Alamat belum memiliki ID yang valid di server.';
+          });
         }
-      });
-    } catch (e) {
-      if (!mounted) return;
+        return;
+      }
+
       setState(() {
-        _liveServices = [];
-        _servicesError = 'Gagal memuat ongkir: $e';
+        _loadingServices = true;
+        _servicesError = null;
       });
+      try {
+        final totalQty = _checkoutItems.fold<int>(
+          0,
+          (sum, item) => sum + ((item['quantity'] as int?) ?? 1),
+        );
+        final weight = totalQty * 300 < 1000 ? 1000 : totalQty * 300;
+        final services = await ShippingService.instance.fetchCosts(
+          addressId: numericId,
+          weightGrams: weight,
+        );
+        if (!mounted) return;
+        setState(() {
+          _liveServices = services;
+          _servicesError = services.isEmpty
+              ? 'Biaya ongkir tidak tersedia'
+              : null;
+          if (_selectedCourierIndex >= services.length) {
+            _selectedCourierIndex = 0;
+          }
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _liveServices = [];
+          _servicesError = 'Gagal memuat ongkir: $e';
+        });
+      } finally {
+        if (mounted) setState(() => _loadingServices = false);
+      }
     } finally {
-      if (mounted) setState(() => _loadingServices = false);
+      _isFetchingShipping = false;
     }
   }
 

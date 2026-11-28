@@ -59,7 +59,7 @@ class CustomTextField extends StatelessWidget {
             prefixIcon: Icon(
               prefixIcon,
               size: 20,
-              color: AppTheme.textMuted.withOpacity(0.7),
+              color: AppTheme.textMuted.withValues(alpha: 0.7),
             ),
             suffixIcon: isPassword
                 ? IconButton(
@@ -68,7 +68,7 @@ class CustomTextField extends StatelessWidget {
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                       size: 20,
-                      color: AppTheme.textMuted.withOpacity(0.7),
+                      color: AppTheme.textMuted.withValues(alpha: 0.7),
                     ),
                     onPressed: onToggleVisibility,
                   )

@@ -23,12 +23,12 @@ class FullScreenImageViewer extends StatefulWidget {
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.black.withValues(alpha: 0.95),
-        pageBuilder: (_, __, ___) => FullScreenImageViewer(
+        pageBuilder: (context, _, _) => FullScreenImageViewer(
           imageUrls: imageUrls,
           initialIndex: initialIndex,
           heroTagPrefix: heroTagPrefix,
         ),
-        transitionsBuilder: (_, animation, __, child) {
+        transitionsBuilder: (context, animation, _, child) {
           return FadeTransition(opacity: animation, child: child);
         },
       ),
