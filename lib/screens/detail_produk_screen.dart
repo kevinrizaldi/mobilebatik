@@ -610,94 +610,9 @@ class _DetailProdukScreenState extends State<DetailProdukScreen> {
       ),
       centerTitle: true,
       actions: [
-        IconButton(
-          tooltip: 'Bagikan',
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.bgCard,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.share_outlined,
-              size: 18,
-              color: AppTheme.primaryDark,
-            ),
-          ),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Tautan produk disalin ke clipboard!',
-                  style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                ),
-                backgroundColor: AppTheme.primaryDark,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            );
-          },
+        NotificationButton(
+          padding: EdgeInsets.only(right: r.pagePaddingH),
         ),
-        Stack(
-          children: [
-            IconButton(
-              tooltip: 'Keranjang',
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.bgCard,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 18,
-                  color: AppTheme.primaryDark,
-                ),
-              ),
-              onPressed: () {},
-            ),
-            if (_cartCount > 0)
-              Positioned(
-                top: 4,
-                right: 6,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.terracotta,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$_cartCount',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        SizedBox(width: r.spacingSm),
-        const NotificationButton(),
-        SizedBox(width: r.pagePaddingH),
       ],
     );
   }
