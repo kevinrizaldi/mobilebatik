@@ -213,7 +213,7 @@ class ProfileStore extends ChangeNotifier {
       final serverOrders = await OrderService.instance.fetchOrders();
       activeOrdersCount = serverOrders.where((raw) {
         final status = (raw['status']?.toString() ?? '').toLowerCase();
-        final isCancelled = status.contains('batal') || raw['cancel_requested'] == true;
+        final isCancelled = status.contains('batal');
         final isFinished = status.contains('selesai') || status.contains('diterima');
         return !isCancelled && !isFinished;
       }).length;
