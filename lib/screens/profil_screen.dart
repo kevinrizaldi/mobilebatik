@@ -21,6 +21,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
     super.initState();
     AuthService.instance.fetchCurrentUser().catchError((_) => null);
     ProfileStore.instance.syncAddressesFromServer();
+    ProfileStore.instance.syncOrdersCountFromServer();
   }
 
   @override
@@ -58,7 +59,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   icon: Icons.shopping_bag_outlined,
                   title: 'Pesanan Saya',
                   subtitle: 'Lihat status dan riwayat pesanan',
-                  trailing: '1 Aktif',
+                  trailing: '${profile.activeOrdersCount} Aktif',
                   onTap: () => context.go('/pesanan'),
                 ),
               ],

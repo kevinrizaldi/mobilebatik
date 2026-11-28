@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_client.dart';
+import '../services/order_service.dart';
 import '../services/profile_service.dart';
 
 class ProfileAddress {
@@ -91,6 +92,7 @@ class ProfileStore extends ChangeNotifier {
   DateTime? birthDate;
   String gender = '';
   Uint8List? photoBytes;
+  int activeOrdersCount = 0;
 
   final List<ProfileAddress> addresses = [];
   final List<ProfileReview> reviews = [];
@@ -128,6 +130,10 @@ class ProfileStore extends ChangeNotifier {
       } catch (_) {}
     }
     if (newGender != null && newGender.isNotEmpty) gender = newGender;
+    final dynamic activeCount = user['active_orders_count'] ?? user['pesanan_aktif'];
+    if (activeCount != null) {
+      activeOrdersCount = int.tryParse('$activeCount') ?? activeOrdersCount;
+    }
     // photo_url handled separately via setPhoto if needed
     notifyListeners();
   }
@@ -139,6 +145,7 @@ class ProfileStore extends ChangeNotifier {
     birthDate = null;
     gender = '';
     photoBytes = null;
+    activeOrdersCount = 0;
     addresses.clear();
     reviews.clear();
     reviewedOrderIds.clear();
@@ -191,6 +198,28 @@ class ProfileStore extends ChangeNotifier {
       notifyListeners();
     } catch (_) {
       // Pertahankan state alamat terakhir bila gagal sync.
+    }
+  }
+
+  Future<void> syncOrdersCountFromServer() async {
+    final token = await ApiClient.instance.getToken();
+    if (token == null || token.isEmpty) {
+      activeOrdersCount = 0;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final serverOrders = await OrderService.instance.fetchOrders();
+      activeOrdersCount = serverOrders.where((raw) {
+        final status = (raw['status']?.toString() ?? '').toLowerCase();
+        final isCancelled = status.contains('batal') || raw['cancel_requested'] == true;
+        final isFinished = status.contains('selesai') || status.contains('diterima');
+        return !isCancelled && !isFinished;
+      }).length;
+      notifyListeners();
+    } catch (_) {
+      // Pertahankan state hitungan terakhir bila gagal sync.
     }
   }
 
